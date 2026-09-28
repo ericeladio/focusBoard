@@ -14,6 +14,7 @@ Postgres (Neon) + R2 (Cloudflare) a través de la API de Vercel.
 | `npm test`          | suites de Node (`tests/*.test.mjs`)             |
 | `npm run lint`      | oxlint                                          |
 | `npm run db:migrate`| aplica `db/schema.sql` con `DATABASE_URL`       |
+| `node scripts/smoke.mjs` | prueba login, sync e imágenes contra BD y R2 |
 | `npm run icons`     | regenera los iconos PWA                         |
 
 ## Entorno
@@ -45,17 +46,21 @@ van los mismos nombres en **Project → Settings → Environment Variables**.
   imágenes y outbox de operaciones pendientes).
 - **Sync**: LWW por registro (`updatedAt` sellado con
   `max(Date.now(), serverTime+1)`); cada sync hace *pull → subir imágenes →
-  subir outbox*; borrados dejan lápidas de 90 días. Conflictos: gana el sello
-  más nuevo, a empate gana el borrado.
+  subir outbox → borrar objetos ya no usados*; borrados dejan lápidas de 90 días.
+  Conflictos: gana el sello más nuevo, a empate gana el borrado.
 - **Imágenes**: WebP máx. 2048px calidad .9 (JPEG en Safari), blob local +
-  `PUT /api/images/[key]` a R2 privado; se sirven por el proxy con caché
-  `CacheFirst` y, sin red, el SW reencola la subida (Background Sync).
+  `PUT /api/images/<clave>` a R2 privado dentro de la carpeta `img-goals/` (la
+  clave es `img-goals/<uuid>`: una sola barra, sin puntos ni espacios). Se sirven
+  por el proxy con caché `CacheFirst` y, sin red, el SW reencola la subida
+  (Background Sync). Al reemplazar o borrar una foto se envía `DELETE` al volver
+  la red; si otra meta la sigue usando, el servidor responde 409 y se conserva.
 
 ## Estructura
 
 ```
 api/            funciones de Vercel (sync, login, proxy de imágenes)
 db/schema.sql   esquema idempotente (Neon/Postgres)
+scripts/        migrate.mjs (esquema), smoke.mjs (prueba de punta a punta)
 src/lib/        store React + lww, sync, idb, image, api
 src/components/ tarjetas, formularios, SyncBadge, LoginSheet
 tests/          node --test

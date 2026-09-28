@@ -218,9 +218,12 @@ pisar ediciones en vuelo. Conflicto: gana el sello más nuevo; a igual sello, el
 borrado.
 
 Imágenes: WebP a máx. 2048px y calidad .9 (JPEG como plan B en Safari), blob en
-IndexedDB (`imagenKey`) subido a un bucket R2 privado por `PUT /api/images/[key]`
-y servido por el mismo proxy con caché `CacheFirst`; sin red, el service worker
-reencola la subida (Background Sync). El tablero abre sin red: el shell va en
+IndexedDB (`imagenKey`) subido a un bucket R2 privado por `PUT /api/images/<clave>`
+dentro de la carpeta `img-goals/` (clave `img-goals/<uuid>`, una sola barra, sin
+puntos ni espacios) y servido por el mismo proxy con caché `CacheFirst`; sin red,
+el service worker reencola la subida (Background Sync). Al borrar una foto (o
+reemplazarla) el objeto se pide con `DELETE` al volver la red y el servidor lo
+borra solo si ninguna meta viva lo referencia. El tablero abre sin red: el shell va en
 precache y los datos ya están locales; el badge dice cuánto falta por subir.
 
 Acceso: passcode propio (env `PASSCODE`) + cookie firmada por 30 días. Sin
