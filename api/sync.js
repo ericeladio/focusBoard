@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { jsonBody } from './_lib/body.js'
 import { db, ensureUser, rows } from './_lib/db.js'
 import { requireSession } from './_lib/session.js'
@@ -17,6 +19,11 @@ import {
 } from './_lib/shape.js'
 
 const EPOCH = '1970-01-01T00:00:00.000Z'
+
+function fingerprint(req) {
+  const raw = `${req.headers.cookie ?? ''}|${req.headers['user-agent'] ?? ''}`
+  return createHash('sha256').update(raw).digest('hex').slice(0, 8)
+}
 
 const GOAL_COLUMNS = `id, nombre, tipo_id, seguimiento, componentes, valor, marcas,
   ultimo_movimiento, imagen_key, created_at, en_muro, updated_at, deleted_at`
@@ -101,10 +108,34 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const since = toIso(req.query?.since) ?? EPOCH
-      return res.status(200).json(await pull(userId, since))
+      const rawSince = req.query?.since
+      const since = toIso(rawSince) ?? EPOCH
+      const payload = await pull(userId, since)
+      const now = Date.parse(payload.serverTime)
+      const ageS = Math.round((now - Date.parse(since)) / 1000)
+      console.log(
+        'sync.pull',
+        JSON.stringify({
+          fp: fingerprint(req),
+          since: since === EPOCH ? 'epoch' : since,
+          rawSince: rawSince == null ? null : String(rawSince).slice(0, 40),
+          ageS,
+          goals: payload.goals.length,
+          types: payload.types.length,
+        }),
+      )
+      return res.status(200).json(payload)
     }
     const result = await push(userId, jsonBody(req))
+    console.log(
+      'sync.push',
+      JSON.stringify({
+        fp: fingerprint(req),
+        status: result.status,
+        acked: result.body?.acked?.length ?? 0,
+        failed: result.body?.failed?.length ?? 0,
+      }),
+    )
     return res.status(result.status).json(result.body)
   } catch (error) {
     console.error('sync failed:', error)
