@@ -42,3 +42,12 @@ body {
   min-height: 100svh;
   background: #e7e4d6;
 }
+
+* {
+  scrollbar-color: #b0ac9a #e7e4d6;
+}
+
+::selection {
+  background: #cfc9ad;
+  color: #2f2a24;
+}

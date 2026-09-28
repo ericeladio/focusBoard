@@ -9,6 +9,16 @@ colors:
   photo-dark-deep: "#1d1b18"
   ink: "#2f2a24"
   ink-soft: "#56503f"
+  ink-hover: "#453f36"
+  caption-ink: "#4b453a"
+  selection: "#cfc9ad"
+  metal-hi: "#fdfdff"
+  metal-mid: "#b9bec9"
+  metal-deep: "#6f7684"
+  pin-shadow: "rgba(0, 0, 0, 0.32)"
+  tape-shadow: "rgba(0, 0, 0, 0.12)"
+  clip-shadow: "rgba(0, 0, 0, 0.2)"
+  link-shadow: "rgba(74, 68, 50, 0.18)"
   paper-lined: "#f7ebe6"
   paper-rule: "rgba(122, 146, 178, 0.35)"
   paper-margin: "rgba(197, 107, 107, 0.55)"
@@ -31,10 +41,32 @@ typography:
     fontSize: "0.95rem"
     fontWeight: 400
     lineHeight: 1.5
+  label:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "0.78rem"
+    fontWeight: 600
+    lineHeight: 1.5
+    letterSpacing: "0.14em"
+  small:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "0.85rem"
+    fontWeight: 400
+    lineHeight: 1.4
+  hand-small:
+    fontFamily: "Caveat, 'Segoe Script', cursive"
+    fontSize: "1.4rem"
+    fontWeight: 700
+    lineHeight: 1.2
+  hand-title:
+    fontFamily: "Caveat, 'Segoe Script', cursive"
+    fontSize: "1.9rem"
+    fontWeight: 700
+    lineHeight: 1.15
 rounded:
   polaroid: "0"
   note: "0"
   pin: "50%"
+  clip: "13px"
 spacing:
   wall-inline: "clamp(1.25rem, 4vw, 3rem)"
   wall-block: "clamp(2.5rem, 6vw, 5rem)"
@@ -59,7 +91,9 @@ components:
 Un muro físico traducido a pantalla: elementos sujetos con cinta washi, chinches
 y clip sobre una pared crema. El sketch (`public/sketch.webp`) es la referencia
 de composición; la portada de *Matantei Loki Ragnarok* es el material fotográfico.
-Modo Experience: el artefacto lidera, la interfaz desaparece.
+Modo Experience: el artefacto lidera, la interfaz desaparece. Dos rutas: el muro
+(`/`) con hasta 7 objetivos en foco, y el pool (`/pool`) con todos los objetivos
+y filtro por tipo.
 
 ## Colors
 
@@ -101,10 +135,27 @@ rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 **Nota rayada** — papel con líneas y margen rojo; clip metálico dibujado en CSS.
 **Post-it** — papel sólido, misma elevación y hover que el resto.
 
+**Goal card** — polaroid con foto 4:5, etiqueta de tipo en `label`, nombre en
+`hand-small` y su seguimiento: slider con lectura en `handwriting` o botón
+`btn--ink` "Hoy" + contador de racha. Acciones fantasma debajo de una línea fina.
+
+**Botón-polaroid** — el "Añadir" del muro: marco con foto punteada y `+` dibujado
+en CSS; deshabilitado con pie "Muro lleno" a 7/7.
+
+**Tape-link** — navegación como etiqueta de cinta salvia en Caveat.
+
+**Chip** — filtro del pool como etiqueta de cinta: borde tinta, activa con fondo
+`tape`. **Sheet** — modal de papel con margen rojo, esquinas rectas y sombra alta;
+`opt` son las fichas de opción (seguimiento).
+
+**Buttons** — `btn` papel con borde tinta, hover `sticky`; `btn--ink` relleno
+tinta; `btn--ghost` subrayado discreto.
+
 ## Do's and Don'ts
 
 - Do: mantener rotaciones entre -5deg y 5deg; enderezar solo en hover.
 - Do: sombras con offset y blur suave; foto siempre en marco con proporción 4:5.
+- Do: tope de 7 objetivos en el muro; el pool no tiene cota y se filtra por tipo.
 - Don't: gradiente en texto, glassmorphism decorativo, tarjetas redondeadas.
-- Don't: añadir elementos fuera de los siete; el número es la intención.
+- Don't: más de 7 en foco; con el muro lleno, el objetivo nuevo va al pool.
 - Don't: iconos Unicode/emoji; la chinche y el clip se dibujan en CSS.

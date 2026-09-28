@@ -5,30 +5,32 @@ primary_target: "src/VisionBoard.jsx"
 related_targets: []
 ---
 
-# Vision Board (foxus-board)
+# Vision Board + Objetivos (foxus-board)
 
-Scope: surface nuevo, modo Experience. Audiencia: el propio usuario.
+Scope: surface con dos rutas (`/` muro, `/pool` pool), modo Experience.
 
 ## Direction contract
 
-THESIS: Un tablero de visión físico — polaroids con cinta y chinches sobre una
-pared color crema — y no una cuadrícula de tarjetas de galería web.
+THESIS: un tablero físico donde los objetivos SON las fotos del muro — polaroids
+sujetos con cinta y chinches sobre pared crema — y no una lista de tarjetas web.
+Rechaza: cuadrícula de cards con iconos y dashboard de progreso.
 
-OWN-WORLD: Pared sage-crema #e7e4d6 con textura de papel tenue; marcos polaroid
-blancos #fbf9f3 con foto oscura #23211d; cinta washi salvia translúcida, chinche
-metálico con brillo, papel rayado rosa #f7ebe6 con línea roja de margen y post-it
-#ece0a6. Tinta #2f2a24. Letra manuscrita Caveat para notas y pies de foto.
+OWN-WORLD: pared sage-crema #e7e4d6 con textura tenue; polaroid #fbf9f3 con foto
+4:5; tinta #2f2a24 / #56503f; papel rayado #f7ebe6 con margen rojo; post-it
+#ece0a6; cinta salvia rgba(176,182,156,.78); Caveat self-host para títulos,
+nombres y pies; sistema para el resto. Esquinas rectas, sombra doble, sin glass.
 
-STORY: el visitante entiende que es el muro personal de intenciones: siete
-elementos, foto y metas a mano. Se queda, mira, se inspira.
+STORY: el visitante ve su muro, entiende que hay tope 7 en foco y un pool con
+filtro por tipo, y crea objetivos con nombre, tipo, imagen y seguimiento
+(porcentaje con slider o racha de días) validados con zod.
 
-FIRST VIEWPORT: fondo crema a pantalla completa, título manuscrito arriba al
-centro, debajo un muro de 7 elementos (2 polaroids con la portada de Matantei
-Loki Ragnarok en encuadres distintos, 3 polaroids vacías oscuras como en el
-sketch, 1 nota rayada de metas, 1 post-it) en grilla auto-fit de 4 columnas con
-rotaciones de -5deg a +5deg. Hover levanta el marco y lo endereza.
+FIRST VIEWPORT: título manuscrito + subtítulo "{n} de 7 en el muro" + tape-link
+al pool; grilla con polaroids de objetivos, la nota rayada "Este año" con los
+nombres, el post-it y el botón-polaroid "Añadir objetivo" (deshabilitado con
+"Muro lleno" a 7/7). Pool: chips = catálogo de tipos + "Todos", barra con
+"Tipos" y "Nuevo objetivo", tarjetas con "Poner en el muro".
 
-FORM: réplica del sketch.webp (mood board con polaroids), elección del usuario,
-pinned por brief. Seed: pinned-request, sin roll.
+FORM: réplica del sketch.webp (pinned por brief) ampliada a app de objetivos.
+Seed key: pinned-request, sin roll.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
