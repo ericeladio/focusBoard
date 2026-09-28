@@ -28,7 +28,7 @@ const login = (await import(P('api/login.js'))).default
 const logout = (await import(P('api/logout.js'))).default
 const sync = (await import(P('api/sync.js'))).default
 const images = (await import(P('api/images/[...key].js'))).default
-const { db } = await import(P('api/_lib/db.js'))
+const { db, rows } = await import(P('api/_lib/db.js'))
 
 function fakeRes() {
   const res = {
@@ -89,6 +89,10 @@ assert.equal(res.code, 200, 'pull inicial → 200')
 assert.ok(res.body.serverTime && Array.isArray(res.body.goals), 'trae serverTime y listas')
 paso(4, `pull inicial → 200 (goals=${res.body.goals.length}, types=${res.body.types.length}) ✓`)
 
+// La nota es una sola fila por usuario: guardamos la real para restaurarla.
+const originalNote = res.body.note ?? null
+const NOTA_SMOKE = 'nota de prueba'
+
 const TS = new Date().toISOString()
 const IMG_KEY = `img-goals/smoke-${Date.now().toString(36)}`
 const ops = [
@@ -114,7 +118,7 @@ const ops = [
       updatedAt: TS,
     },
   },
-  { seq: 2, entity: 'note', op: 'put', id: 'note', ts: TS, data: { texto: 'nota de prueba' } },
+  { seq: 2, entity: 'note', op: 'put', id: 'note', ts: TS, data: { texto: NOTA_SMOKE } },
   {
     seq: 3,
     entity: 'goal',
@@ -154,7 +158,7 @@ assert.equal(goal.valor, 10, 'el sello viejo no pisó el valor')
 assert.equal(goal.imagenKey, IMG_KEY, 'imagenKey con carpeta intacta')
 assert.equal(res.body.goals.find((g) => g.id === 'smoke-mala'), undefined, 'la meta con clave mala no existe')
 assert.equal(res.body.types.find((t) => t.id === 'smoke-tipo')?.nombre, 'Smoke', 'el tipo volvió')
-assert.equal(res.body.note?.texto, 'nota de prueba', 'la nota volvió')
+assert.equal(res.body.note?.texto, NOTA_SMOKE, 'la nota volvió')
 paso(6, 'pull → meta/tipo/nota correctos y LWW respetado ✓')
 
 // --- imágenes ---
@@ -213,7 +217,27 @@ assert.match(res.headers['Set-Cookie'], /^fb_session=;/, 'cookie borrada')
 paso(12, 'logout → cookie expirada ✓')
 
 const sql = db()
-for (const table of ['goals', 'types', 'notes', 'images']) {
-  await sql.query(`delete from ${table} where user_id = 'local'`)
+// La BD puede tener datos reales: solo borramos lo que creó este smoke.
+await sql.query(`delete from goals where user_id = 'local' and id like 'smoke-%'`)
+await sql.query(`delete from types where user_id = 'local' and id like 'smoke-%'`)
+await sql.query(
+  `delete from images where user_id = 'local' and (key like 'img-goals/smoke-%' or key like 'smoke-%')`,
+)
+
+// La nota es única por usuario: la restauramos solo si sigue siendo la nuestra
+// (si alguien la editó después, manda lo suyo y no tocamos nada).
+const actualNote = rows(await sql.query(`select texto from notes where user_id = 'local'`))[0]
+let notaEstado = 'intacta'
+if (actualNote?.texto === NOTA_SMOKE) {
+  if (originalNote) {
+    await sql.query(
+      `update notes set texto = $1, updated_at = $2 where user_id = 'local' and texto = $3`,
+      [originalNote.texto ?? null, new Date().toISOString(), NOTA_SMOKE],
+    )
+    notaEstado = 'restaurada'
+  } else {
+    await sql.query(`delete from notes where user_id = 'local' and texto = $1`, [NOTA_SMOKE])
+    notaEstado = 'eliminada'
+  }
 }
-console.log('\nSMOKE OK — BD limpia (solo queda el usuario).')
+console.log(`\nSMOKE OK — solo se borró lo que creó el smoke (nota: ${notaEstado}).`)
