@@ -213,9 +213,9 @@ Local-first: el estado vive en `localStorage`/IndexedDB y el servidor es un
 espejo con sello LWW por registro (`updatedAt`). Toda edición local se sella con
 `nextTs()` = `max(Date.now(), serverTime+1)` y entra a un outbox que sube en
 tandas; los borrados dejan lápidas (90 días) que también viajan. El orden de cada
-sync es pull → imágenes → outbox, así lo del servidor manda sobre lo local sin
-pisar ediciones en vuelo. Conflicto: gana el sello más nuevo; a igual sello, el
-borrado.
+sync es pull → imágenes → outbox → borrado de objetos ya no usados, así lo del
+servidor manda sobre lo local sin pisar ediciones en vuelo. Conflicto: gana el
+sello más nuevo; a igual sello, el borrado.
 
 Imágenes: WebP a máx. 2048px y calidad .9 (JPEG como plan B en Safari), blob en
 IndexedDB (`imagenKey`) subido a un bucket R2 privado por `PUT /api/images/<clave>`
@@ -226,9 +226,23 @@ reemplazarla) el objeto se pide con `DELETE` al volver la red y el servidor lo
 borra solo si ninguna meta viva lo referencia. El tablero abre sin red: el shell va en
 precache y los datos ya están locales; el badge dice cuánto falta por subir.
 
+El badge de estado (cinta rotada arriba a la derecha) es el único indicador y
+tiene texto propio para cada caso: `Sincronizando` (mientras hay una ronda),
+`Entrar` (online sin sesión), `N por subir` (hay cola), `Sin conexión` (offline),
+`Sin servidor` (la API no responde o responde HTML: un fallo de despliegue, no
+de red) y `Sincronizado`; el `title` añade el motivo. Nunca se informa "todo
+bien" mientras quede cola, y los cambios siempre quedan guardados en el
+dispositivo aunque el servidor esté caído.
+
 Acceso: passcode propio (env `PASSCODE`) + cookie firmada por 30 días. Sin
 sesión el muro sigue siendo usable en local y la hoja de entrada aparece sola
 cuando el servidor rechaza.
+
+En desarrollo, `npm run dev` monta las mismas funciones de `api/` mediante el
+plugin `scripts/dev-api.mjs`, así `/api/*` existe también en local (mismo
+Neon, mismo R2, sin Vercel CLI); la única diferencia es que la cookie sale sin
+`Secure` porque el navegador la descartaría en `http://localhost`. Ese plugin
+se activa solo en `serve` y escribe en los datos reales, igual que producción.
 
 ## Do's and Don'ts
 

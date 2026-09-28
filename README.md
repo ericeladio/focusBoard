@@ -8,7 +8,7 @@ Postgres (Neon) + R2 (Cloudflare) a través de la API de Vercel.
 
 | Comando             | Qué hace                                        |
 | ------------------- | ----------------------------------------------- |
-| `npm run dev`       | desarrollo con HMR                              |
+| `npm run dev`       | desarrollo con HMR + API local en `/api/*`       |
 | `npm run build`     | build de producción + service worker            |
 | `npm run preview`   | sirve `dist/` en local                          |
 | `npm test`          | suites de Node (`tests/*.test.mjs`)             |
@@ -31,6 +31,24 @@ van los mismos nombres en **Project → Settings → Environment Variables**.
 | `R2_BUCKET`         | bucket de fotos (`focusboard`)                        |
 | `PASSCODE`          | PIN de entrada (mínimo 4 caracteres)                  |
 | `SESSION_SECRET`    | firma de la cookie de sesión (32+ bytes hex)          |
+
+## Desarrollo local
+
+`npm run dev` levanta la API con la app: `scripts/dev-api.mjs` es un plugin de
+Vite que enruta `/api/login`, `/api/logout`, `/api/sync` y `/api/images/*` a
+las mismas funciones de `api/` que corren en Vercel, con `.env.local` cargado
+en el proceso. Funciona igual que producción, sin Vercel CLI.
+
+- **Escribe en los datos reales**: local y despliegue comparten `USER_ID` y
+  `PASSCODE`, así que lo que pruebes en local aparece en la app en línea.
+- Único ajuste: en `http://localhost` la cookie de sesión sale sin `Secure`
+  (el navegador la descartaría); en producción la emite `api/_lib/session.js`
+  con `Secure` intacto.
+- Si falta alguna variable, el servidor la lista al arrancar. `npm run build`
+  no toca el plugin (va con `apply: 'serve'`).
+- Si `/api/*` no está disponible (por ejemplo `vite` solo, sin el plugin), el
+  cliente ya no falla en silencio: el badge del sync dice **Sin servidor** y en
+  el `title` explica el motivo; los cambios siguen guardados en IndexedDB.
 
 ## Deploy en Vercel
 
@@ -60,7 +78,7 @@ van los mismos nombres en **Project → Settings → Environment Variables**.
 ```
 api/            funciones de Vercel (sync, login, proxy de imágenes)
 db/schema.sql   esquema idempotente (Neon/Postgres)
-scripts/        migrate.mjs (esquema), smoke.mjs (prueba de punta a punta)
+scripts/        migrate.mjs (esquema), smoke.mjs (prueba de punta a punta), dev-api.mjs (API en dev)
 src/lib/        store React + lww, sync, idb, image, api
 src/components/ tarjetas, formularios, SyncBadge, LoginSheet
 tests/          node --test
