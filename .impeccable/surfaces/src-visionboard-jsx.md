@@ -26,7 +26,9 @@ tipo. Crea objetivos con nombre, tipo, imagen y seguimiento (porcentaje con
 slider o racha de días) validados con zod. La racha se deriva de la cadena de
 marcas: `Hoy` la extiende, `Deshacer hoy` la revierte, y si se rompe el hilo se
 pinta 0 sola. Doble clic en una fila del pool abre el form con los datos
-cargados; orden por `createdAt` descendente.
+cargados; orden por `createdAt` descendente. Los % que llevan 3+ días sin
+subir (con valor > 0) muestran "N días sin avance" en rojo `paper-margin`, en
+muro y pool; resetea solo al subir el slider.
 
 FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-link al
 pool; polaroids de objetivos, nota rayada "Este año", post-it y botón-polaroid

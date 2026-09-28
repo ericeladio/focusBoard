@@ -173,7 +173,7 @@
 
 .note--lined {
   background:
-    linear-gradient(90deg, transparent 0 1.7rem, rgba(197, 107, 107, 0.55) 1.7rem 1.75rem, transparent 1.75rem),
+    linear-gradient(90deg, transparent 0 1.7rem, var(--paper-margin-rule) 1.7rem 1.75rem, transparent 1.75rem),
     repeating-linear-gradient(
       to bottom,
       transparent 0 1.85rem,

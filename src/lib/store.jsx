@@ -19,6 +19,7 @@ const SEED_GOALS = [
     seguimiento: 'percent',
     valor: 35,
     marcas: [],
+    ultimoMovimiento: pastISO(4),
     createdAt: 1,
     enMuro: true,
   },
@@ -43,6 +44,12 @@ function normalizeGoal(goal, index = 0) {
   const legacyMarca = rest.ultimoMarca
   delete rest.racha
   delete rest.ultimoMarca
+  if (
+    rest.seguimiento === 'percent' &&
+    (typeof rest.ultimoMovimiento !== 'string' || rest.ultimoMovimiento.length < 8)
+  ) {
+    rest.ultimoMovimiento = todayISO()
+  }
   if (Array.isArray(goal.marcas)) {
     const last = goal.marcas[goal.marcas.length - 1]
     const live = last === todayISO() || last === yesterdayISO()
@@ -129,6 +136,7 @@ export function StoreProvider({ children }) {
           seguimiento: values.seguimiento,
           valor: 0,
           marcas: [],
+          ultimoMovimiento: todayISO(),
           createdAt: Date.now(),
           enMuro: current.filter((goal) => goal.enMuro).length < MAX_FOCUS,
         },
@@ -173,11 +181,15 @@ export function StoreProvider({ children }) {
   const setPercent = useCallback((id, valor) => {
     const clamped = Math.max(0, Math.min(100, Number(valor)))
     setGoals((current) =>
-      current.map((goal) =>
-        goal.id === id && goal.seguimiento === 'percent'
-          ? { ...goal, valor: clamped }
-          : goal,
-      ),
+      current.map((goal) => {
+        if (goal.id !== id || goal.seguimiento !== 'percent') return goal
+        const increased = clamped > goal.valor
+        return {
+          ...goal,
+          valor: clamped,
+          ...(increased ? { ultimoMovimiento: todayISO() } : {}),
+        }
+      }),
     )
   }, [])
 

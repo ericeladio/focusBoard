@@ -51,3 +51,20 @@ export function streakOf(marcas = []) {
 export function markedToday(marcas = []) {
   return marcas[marcas.length - 1] === todayISO()
 }
+
+// Días calendario transcurridos desde `iso` (0 = hoy), a prueba de DST.
+export function daysSince(iso) {
+  const [year, month, day] = iso.split('-').map(Number)
+  const then = Date.UTC(year, month - 1, day)
+  const now = new Date()
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.max(0, Math.round((today - then) / 86400000))
+}
+
+// Objetivo en %: días seguidos sin subir. 0 = no se muestra nada.
+export function inactiveDays(goal) {
+  if (goal.seguimiento !== 'percent') return 0
+  if (!goal.valor || goal.valor <= 0) return 0
+  if (typeof goal.ultimoMovimiento !== 'string') return 0
+  return daysSince(goal.ultimoMovimiento)
+}

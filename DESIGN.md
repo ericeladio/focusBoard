@@ -21,7 +21,8 @@ colors:
   link-shadow: "rgba(74, 68, 50, 0.18)"
   paper-lined: "#f7ebe6"
   paper-rule: "rgba(122, 146, 178, 0.35)"
-  paper-margin: "rgba(197, 107, 107, 0.55)"
+  paper-margin: "#963434"
+  paper-margin-rule: "rgba(197, 107, 107, 0.55)"
   sticky: "#ece0a6"
   tape: "rgba(176, 182, 156, 0.78)"
   metal: "#8f959e"
@@ -101,6 +102,9 @@ Pared `#e7e4d6` (crema-sage, luz de día indirecta), polaroid `#fbf9f3`, foto
 siempre oscura `#23211d`, tinta `#2f2a24`. Acentos materiales: cinta salvia
 translúcida, post-it `#ece0a6`, papel rayado rosa con línea roja de margen.
 Nunca gris puro para texto secundario: teñir desde la tinta (`#56503f`).
+El rojo de margen `#963434` es de una sola voz: borde del sheet, margen de la
+nota y alerta de "% sin avance". La variante al 55% `paper-margin-rule` existe
+solo para la línea vertical de la nota rayada.
 
 ## Typography
 
@@ -141,12 +145,15 @@ rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 `hand-small` y su seguimiento: slider con lectura en `handwriting` o el toggle
 `Hoy` / `Deshacer hoy` (`btn--ink`, estado `is-active`) + contador de racha.
 La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
-pinta 0 sola. Acciones fantasma debajo de una línea fina.
+pinta 0 sola. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
+días sin subir aparece en rojo `paper-margin` "N días sin avance" (reset solo
+cuando el slider sube). Acciones fantasma debajo de una línea fina.
 
 **Goal row** — fila de papel del pool: miniatura 4:5, tipo y nombre, seguimiento
 solo lectura (barra fina de tinta + `%` o días) y acciones fantasma (Editar,
 Poner/Quitar del muro, Borrar). Doble clic en la fila abre el form con los datos
-cargados. Hover: sube 2px con la misma sombra, a media suavidad. Orden: los más
+cargados. Lleva el mismo indicador rojo "N días sin avance" que la tarjeta.
+Hover: sube 2px con la misma sombra, a media suavidad. Orden: los más
 recientes primero (`createdAt`).
 
 **Botón-polaroid** — el "Añadir" del muro: marco con foto punteada y `+` dibujado
@@ -166,6 +173,7 @@ tinta; `btn--ghost` subrayado discreto.
 - Do: mantener rotaciones entre -5deg y 5deg; enderezar solo en hover.
 - Do: sombras con offset y blur suave; foto siempre en marco con proporción 4:5.
 - Do: tope de 7 objetivos en el muro; el pool no tiene cota y se filtra por tipo.
+- Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
 - Don't: gradiente en texto, glassmorphism decorativo, tarjetas redondeadas.
 - Don't: más de 7 en foco; con el muro lleno, el objetivo nuevo va al pool.
 - Don't: iconos Unicode/emoji; la chinche y el clip se dibujan en CSS.

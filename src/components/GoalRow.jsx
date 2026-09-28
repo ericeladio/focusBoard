@@ -1,5 +1,5 @@
 import { useStore } from '../lib/storeContext.js'
-import { streakOf } from '../lib/dates.js'
+import { inactiveDays, streakOf } from '../lib/dates.js'
 
 function GoalRow({ goal, onEdit }) {
   const { types, placeInWall, removeFromWall, removeGoal, wallFull } = useStore()
@@ -32,6 +32,11 @@ function GoalRow({ goal, onEdit }) {
               />
             </span>
             <span className="goal__value">{goal.valor}%</span>
+            {inactiveDays(goal) >= 3 && (
+              <span className="goal__value goal__value--alert">
+                {inactiveDays(goal)} días sin avance
+              </span>
+            )}
           </>
         ) : (
           <span className="goal__value">

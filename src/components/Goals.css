@@ -9,6 +9,7 @@
   --polaroid: #fbf9f3;
   --paper: #f7ebe6;
   --paper-margin: #963434;
+  --paper-margin-rule: rgba(197, 107, 107, 0.55);
   --sticky: #ece0a6;
   --tape: rgba(176, 182, 156, 0.78);
   --shadow-rest: 0 14px 30px -12px rgba(74, 68, 50, 0.45),
@@ -58,8 +59,9 @@
 
 .goal__track {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.35rem 0.6rem;
   padding-top: 0.35rem;
 }
 
@@ -563,6 +565,12 @@
   background: var(--ink-hover);
 }
 
+.goal__value--alert {
+  flex: 1 0 100%;
+  color: var(--paper-margin);
+  font-weight: 700;
+}
+
 /* --- lista del pool (filas de papel) --- */
 
 .pool__list {
@@ -627,8 +635,9 @@
 
 .row__track {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.35rem 0.6rem;
   min-width: 8.5rem;
   justify-content: flex-end;
 }

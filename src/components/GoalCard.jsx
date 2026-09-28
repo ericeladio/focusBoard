@@ -1,5 +1,5 @@
 import { useStore } from '../lib/storeContext.js'
-import { markedToday, streakOf } from '../lib/dates.js'
+import { inactiveDays, markedToday, streakOf } from '../lib/dates.js'
 
 const TILTS = ['-4deg', '3deg', '-2deg', '4.5deg', '-3.5deg', '2deg', '-5deg']
 
@@ -50,6 +50,11 @@ function GoalCard({ goal, index = 0, variant = 'wall' }) {
               aria-label={`Avance de ${goal.nombre}`}
             />
             <span className="goal__value">{goal.valor}%</span>
+            {inactiveDays(goal) >= 3 && (
+              <span className="goal__value goal__value--alert">
+                {inactiveDays(goal)} días sin avance
+              </span>
+            )}
           </div>
         ) : (
           <div className="goal__track">
