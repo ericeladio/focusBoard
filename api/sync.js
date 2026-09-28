@@ -20,9 +20,16 @@ import {
 
 const EPOCH = '1970-01-01T00:00:00.000Z'
 
-function fingerprint(req) {
-  const raw = `${req.headers.cookie ?? ''}|${req.headers['user-agent'] ?? ''}`
-  return createHash('sha256').update(raw).digest('hex').slice(0, 8)
+function clientInfo(req) {
+  const ua = req.headers['user-agent'] ?? ''
+  const raw = `${req.headers.cookie ?? ''}|${ua}`
+  const fp = createHash('sha256').update(raw).digest('hex').slice(0, 8)
+  const device = /Mobile|Android|iPhone|iPad/i.test(ua)
+    ? 'movil'
+    : /bot|crawl|spider|curl|node|python/i.test(ua)
+      ? 'script'
+      : 'escritorio'
+  return { fp, device }
 }
 
 const GOAL_COLUMNS = `id, nombre, tipo_id, seguimiento, componentes, valor, marcas,
@@ -116,7 +123,7 @@ export default async function handler(req, res) {
       console.log(
         'sync.pull',
         JSON.stringify({
-          fp: fingerprint(req),
+          ...clientInfo(req),
           since: since === EPOCH ? 'epoch' : since,
           rawSince: rawSince == null ? null : String(rawSince).slice(0, 40),
           ageS,
@@ -130,7 +137,7 @@ export default async function handler(req, res) {
     console.log(
       'sync.push',
       JSON.stringify({
-        fp: fingerprint(req),
+        ...clientInfo(req),
         status: result.status,
         acked: result.body?.acked?.length ?? 0,
         failed: result.body?.failed?.length ?? 0,
