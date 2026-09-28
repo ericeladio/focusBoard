@@ -19,13 +19,30 @@ async function request(path, options = {}) {
   } catch {
     throw new OfflineError()
   }
+
+  let raw = ''
+  try {
+    raw = await response.text()
+  } catch {
+    raw = ''
+  }
+  if (response.status === 401) throw new AuthError()
+
   let data = null
   try {
-    data = await response.json()
+    data = raw ? JSON.parse(raw) : null
   } catch {
     data = null
   }
-  if (response.status === 401) throw new AuthError()
+  // Un 200 con HTML no es un error de red: es que aquí no hay backend (por
+  // ejemplo `npm run dev` sin el servidor de API). Sin esto el fallo se
+  // traga más abajo y nunca se sube nada.
+  if (data === null || typeof data !== 'object') {
+    const error = new Error('api_no_disponible')
+    error.status = response.status
+    error.noJson = true
+    throw error
+  }
   if (!response.ok) {
     const error = new Error(data?.error ?? `http_${response.status}`)
     error.status = response.status

@@ -269,6 +269,11 @@
   font-weight: 700;
 }
 
+.syncbadge.is-error {
+  color: var(--paper-margin);
+  font-weight: 700;
+}
+
 .syncbadge.is-pending {
   color: var(--ink);
 }

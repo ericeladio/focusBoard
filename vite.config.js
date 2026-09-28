@@ -1,10 +1,13 @@
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vite'
+import { apiDev } from './scripts/dev-api.mjs'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    // /api/* en local contra el mismo Neon y R2 que producción (solo en serve).
+    apiDev(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',

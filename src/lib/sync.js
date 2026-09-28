@@ -78,6 +78,12 @@ async function handleError(error) {
     emit({ online: false, error: 'offline' })
     return
   }
+  // API ausente o rota: seguimos "en línea" y lo decimos, para que no se
+  // confunda con "sin conexión" ni con un error de cuenta.
+  if (error?.noJson || (error?.status && error.status >= 500)) {
+    emit({ online: true, error: 'server_error' })
+    return
+  }
   emit({ error: error?.message ?? 'error' })
 }
 
