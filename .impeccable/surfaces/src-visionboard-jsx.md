@@ -40,11 +40,12 @@ subir (con valor > 0) muestran "N días sin avance" en rojo `paper-margin`, en
 muro y pool; resetea solo al subir el slider.
 
 FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-link al
-pool; polaroids de objetivos, nota rayada "Este año" (editable) y botón-polaroid
+pool + sync badge de cinta (estado del sync; "Entrar" abre la hoja de passcode);
+polaroids de objetivos, nota rayada "Este año" (editable) y botón-polaroid
 "Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
 columnas con cada foto a su proporción real; en celular la tarjeta es foto +
 nombre y el doble clic/segundo toque abre la modal con las opciones. FIRST VIEWPORT (`/pool`): título + select de
-tipo + barra Tipos/Nuevo objetivo; lista de filas (miniatura, tipo, nombre,
+tipo + barra Tipos/Nuevo objetivo + el mismo sync badge en la nav; lista de filas (miniatura, tipo, nombre,
 seguimiento solo lectura, Editar/Poner/Borrar) y hint de doble clic.
 
 FORM: réplica del sketch.webp (pinned por brief) ampliada a app de objetivos.

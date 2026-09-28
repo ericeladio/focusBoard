@@ -1,16 +1,62 @@
-# React + Vite
+# focusBoard · Vision Board
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Muro de visión local-first: polaroids con objetivos, rachas, compuestas y una
+nota rayada sobre pared crema. PWA (funciona sin red) con sync opcional a
+Postgres (Neon) + R2 (Cloudflare) a través de la API de Vercel.
 
-Currently, two official plugins are available:
+## Comandos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Comando             | Qué hace                                        |
+| ------------------- | ----------------------------------------------- |
+| `npm run dev`       | desarrollo con HMR                              |
+| `npm run build`     | build de producción + service worker            |
+| `npm run preview`   | sirve `dist/` en local                          |
+| `npm test`          | suites de Node (`tests/*.test.mjs`)             |
+| `npm run lint`      | oxlint                                          |
+| `npm run db:migrate`| aplica `db/schema.sql` con `DATABASE_URL`       |
+| `npm run icons`     | regenera los iconos PWA                         |
 
-## React Compiler
+## Entorno
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Copia `.env.example` a `.env.local` (gitignored) y pega tus valores. En Vercel
+van los mismos nombres en **Project → Settings → Environment Variables**.
 
-## Expanding the Oxlint configuration
+| Variable            | Para qué                                              |
+| ------------------- | ----------------------------------------------------- |
+| `DATABASE_URL`      | Neon Postgres (usa la cadena del **pooler**)          |
+| `R2_ACCOUNT_ID`     | Cloudflare R2 (dashboard R2 → overview)               |
+| `R2_ACCESS_KEY_ID`  | token R2 (API Tokens)                                 |
+| `R2_SECRET_ACCESS_KEY` | idem                                                 |
+| `R2_BUCKET`         | bucket de fotos (`focusboard`)                        |
+| `PASSCODE`          | PIN de entrada (mínimo 4 caracteres)                  |
+| `SESSION_SECRET`    | firma de la cookie de sesión (32+ bytes hex)          |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Deploy en Vercel
+
+1. Importa el repo: `vercel.json` ya fija `npm run build` → `dist/` y el rewrite
+   SPA (`/api/*` queda fuera).
+2. Pega las variables de entorno (incluida la nueva `DATABASE_URL`).
+3. `npm run db:migrate` desde tu máquina (o un job temporal) para crear tablas.
+4. Deploy. Sin sesión la app funciona en local; con passcode sincroniza.
+
+## Cómo guarda datos
+
+- **Local**: `localStorage` (metas, tipos, nota, lápidas) + IndexedDB (blobs de
+  imágenes y outbox de operaciones pendientes).
+- **Sync**: LWW por registro (`updatedAt` sellado con
+  `max(Date.now(), serverTime+1)`); cada sync hace *pull → subir imágenes →
+  subir outbox*; borrados dejan lápidas de 90 días. Conflictos: gana el sello
+  más nuevo, a empate gana el borrado.
+- **Imágenes**: WebP máx. 2048px calidad .9 (JPEG en Safari), blob local +
+  `PUT /api/images/[key]` a R2 privado; se sirven por el proxy con caché
+  `CacheFirst` y, sin red, el SW reencola la subida (Background Sync).
+
+## Estructura
+
+```
+api/            funciones de Vercel (sync, login, proxy de imágenes)
+db/schema.sql   esquema idempotente (Neon/Postgres)
+src/lib/        store React + lww, sync, idb, image, api
+src/components/ tarjetas, formularios, SyncBadge, LoginSheet
+tests/          node --test
+```

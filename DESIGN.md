@@ -137,8 +137,8 @@ El único radio es circular, la chinche. Elevación por sombra, nunca por borde.
 rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 
 **Nota rayada** — papel con líneas y margen rojo; clip metálico dibujado en CSS.
-Su lista es editable con doble clic y el texto se guarda en `localStorage`
-(`fb.note`); sin edición personalizada, muestra los títulos de los objetivos
+Su lista es editable con doble clic y el texto se guarda como `{texto, updatedAt}`
+en `localStorage` (`fb.note`) y viaja en el sync; sin edición personalizada, muestra los títulos de los objetivos
 (siempre actualizados). El cuerpo se acota a 8 líneas con scroll propio y
 `overflow-wrap: anywhere`, de modo que ninguna palabra ni línea larga sale de la
 hoja.
@@ -182,6 +182,19 @@ fallback a `index.html` para que el muro abra sin red.
 
 **Tape-link** — navegación como etiqueta de cinta salvia en Caveat.
 
+**Sync badge** — la etiqueta de estado junto a la navegación en las dos rutas:
+misma cinta salvia, pero en `label` (0.78rem, tracking .14em, mayúsculas) y
+rotación de +1.5°. Textos según estado: `Sincronizado`, `Sincronizando`,
+`N por subir`, `Sin conexión`, `Reintentar` y, sin sesión, `Entrar` en negrita.
+Clic: reintentar la sincronización (o abrir la hoja de passcode). Sin iconos ni
+emoji; el color nunca es rojo (el `paper-margin` sigue siendo de una sola voz).
+
+**Hoja de entrada** — modal `sheet` ya existente con passcode (`type="password"`,
+autofocus): una línea de ayuda, el campo y `Cancelar`/`Entrar`. Se abre sola
+cuando el servidor rechaza la sesión (401) y no vuelve a molestar tras cerrarla
+hasta el siguiente rechazo; `Escape` y `×` la cierran. El error va en
+`field__error` (`Passcode incorrecto`, `Sin conexión: …`).
+
 **Filtro del pool** — `select` de papel (`pool__filter`) en la barra junto a
 Tipos/Nuevo objetivo: borde tinta, fondo polaroid, esquinas rectas; opciones
 "Todos los tipos" + cada tipo. Los chips de partes (`goal__chip`) siguen siendo
@@ -193,6 +206,26 @@ solo al tipo `Compuesto` (se crea al vuelo si todavía no existe).
 
 **Buttons** — `btn` papel con borde tinta, hover `sticky`; `btn--ink` relleno
 tinta; `btn--ghost` subrayado discreto.
+
+## Offline & sync
+
+Local-first: el estado vive en `localStorage`/IndexedDB y el servidor es un
+espejo con sello LWW por registro (`updatedAt`). Toda edición local se sella con
+`nextTs()` = `max(Date.now(), serverTime+1)` y entra a un outbox que sube en
+tandas; los borrados dejan lápidas (90 días) que también viajan. El orden de cada
+sync es pull → imágenes → outbox, así lo del servidor manda sobre lo local sin
+pisar ediciones en vuelo. Conflicto: gana el sello más nuevo; a igual sello, el
+borrado.
+
+Imágenes: WebP a máx. 2048px y calidad .9 (JPEG como plan B en Safari), blob en
+IndexedDB (`imagenKey`) subido a un bucket R2 privado por `PUT /api/images/[key]`
+y servido por el mismo proxy con caché `CacheFirst`; sin red, el service worker
+reencola la subida (Background Sync). El tablero abre sin red: el shell va en
+precache y los datos ya están locales; el badge dice cuánto falta por subir.
+
+Acceso: passcode propio (env `PASSCODE`) + cookie firmada por 30 días. Sin
+sesión el muro sigue siendo usable en local y la hoja de entrada aparece sola
+cuando el servidor rechaza.
 
 ## Do's and Don'ts
 
