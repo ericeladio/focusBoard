@@ -119,7 +119,10 @@ centrados. Rotaciones de -5deg a +5deg por elemento. En móvil apila en una
 columna con las mismas rotaciones. Separación generosa entre filas: cada elemento
 es un objeto, no una celda. El pool rompe la grilla a propósito: lista vertical
 de filas ancho completo (escaneable cuando hay muchos), que en móvil pasa a dos
-bloques por fila.
+bloques por fila. Bajo 48rem el muro deja la grilla y se vuelve mosaico de dos
+columnas (multicol): cada foto usa su proporción real (limitada a 0.62–1.6),
+las tarjetas se apilan con margen para que chinches y cintas no se pisen, y el
+post-it se encoge a 58% para que siga leyéndose como nota.
 
 ## Elevation & Depth
 
@@ -147,7 +150,10 @@ rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
 pinta 0 sola. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
 días sin subir aparece en rojo `paper-margin` "N días sin avance" (reset solo
-cuando el slider sube). Acciones fantasma debajo de una línea fina.
+cuando el slider sube). Acciones fantasma debajo de una línea fina. En móvil
+(≤48rem) solo se ven foto y nombre; el tipo, el seguimiento y las acciones se
+pliegan tras el botón "Seguimiento" (caret en CSS, `aria-expanded`), y la foto
+adopta su proporción natural para que el mosaico no tenga huecos.
 
 **Goal row** — fila de papel del pool: miniatura 4:5, tipo y nombre, seguimiento
 solo lectura (barra fina de tinta + `%` o días) y acciones fantasma (Editar,

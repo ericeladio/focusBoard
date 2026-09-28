@@ -32,7 +32,9 @@ muro y pool; resetea solo al subir el slider.
 
 FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-link al
 pool; polaroids de objetivos, nota rayada "Este año", post-it y botón-polaroid
-"Añadir" (deshabilitado a 7/7). FIRST VIEWPORT (`/pool`): título + chips de
+"Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
+columnas con cada foto a su proporción real y los controles plegados tras
+"Seguimiento". FIRST VIEWPORT (`/pool`): título + chips de
 tipo + barra Tipos/Nuevo objetivo; lista de filas (miniatura, tipo, nombre,
 seguimiento solo lectura, Editar/Poner/Borrar) y hint de doble clic.
 

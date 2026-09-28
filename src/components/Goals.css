@@ -37,6 +37,14 @@
   padding-top: 0.75rem;
 }
 
+.goal__more {
+  display: none;
+}
+
+.goal__detail {
+  display: contents;
+}
+
 .goal__type {
   font-size: 0.78rem;
   font-weight: 600;
@@ -686,5 +694,71 @@
 @media (prefers-reduced-motion: reduce) {
   .row {
     transition: none;
+  }
+}
+
+/* --- tarjeta del muro en celular: foto + nombre, el resto al tocar --- */
+
+@media (max-width: 48rem) {
+  .frame--goal .frame__photo {
+    aspect-ratio: auto;
+  }
+
+  .frame--goal .frame__photo img {
+    height: auto;
+    aspect-ratio: 4 / 5;
+  }
+
+  .frame--goal .goal__name {
+    font-size: 1.3rem;
+  }
+
+  .frame--goal .goal__type {
+    display: none;
+  }
+
+  .frame--goal.is-open .goal__type {
+    display: block;
+  }
+
+  .frame--goal .goal__detail {
+    display: none;
+  }
+
+  .frame--goal.is-open .goal__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .frame--goal .goal__more {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: none;
+    border: 0;
+    padding: 0.55rem 0 0.2rem;
+    min-height: 2.5rem;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+
+  .frame--goal .goal__more::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border: 4px solid transparent;
+    border-top-color: currentColor;
+    transition: transform 0.2s ease;
+  }
+
+  .frame--goal.is-open .goal__more::after {
+    transform: rotate(180deg);
   }
 }
