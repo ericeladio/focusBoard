@@ -9,6 +9,13 @@ export function yesterdayISO() {
   return toISO(date)
 }
 
+export function shiftISO(iso, days) {
+  const [year, month, day] = iso.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  date.setDate(date.getDate() + days)
+  return toISO(date)
+}
+
 export function pastISO(daysAgo) {
   const date = new Date()
   date.setDate(date.getDate() - daysAgo)

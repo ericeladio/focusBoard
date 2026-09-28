@@ -1,11 +1,14 @@
 import { useStore } from '../lib/storeContext.js'
-import { inactiveDays, streakOf } from '../lib/dates.js'
+import { inactiveDays, markedToday, streakOf } from '../lib/dates.js'
+import { padreDe } from '../lib/composite.js'
 
 function GoalRow({ goal, onEdit }) {
-  const { types, placeInWall, removeFromWall, removeGoal, wallFull } = useStore()
+  const { goals, types, placeInWall, removeFromWall, removeGoal, wallFull } = useStore()
 
   const type = types.find((item) => item.id === goal.tipoId)
   const streak = streakOf(goal.marcas)
+  const padre = padreDe(goal.id, goals)
+  const marcado = markedToday(goal.marcas)
 
   function confirmRemove() {
     if (window.confirm(`¿Borrar "${goal.nombre}"?`)) removeGoal(goal.id)
@@ -20,6 +23,7 @@ function GoalRow({ goal, onEdit }) {
           {type ? type.nombre : 'Sin tipo'}
         </span>
         <span className="row__name">{goal.nombre}</span>
+        {padre && <span className="row__parent">dentro de {padre.nombre}</span>}
       </div>
 
       <div className="row__track">
@@ -39,8 +43,16 @@ function GoalRow({ goal, onEdit }) {
             )}
           </>
         ) : (
-          <span className="goal__value">
-            {streak} {streak === 1 ? 'día' : 'días'}
+          <span
+            className={
+              goal.seguimiento === 'compuesta' && marcado
+                ? 'goal__value goal__value--done'
+                : 'goal__value'
+            }
+          >
+            {goal.seguimiento === 'compuesta' && marcado
+              ? `Listo hoy · ${streak} ${streak === 1 ? 'día' : 'días'}`
+              : `${streak} ${streak === 1 ? 'día' : 'días'}`}
           </span>
         )}
       </div>
@@ -49,7 +61,16 @@ function GoalRow({ goal, onEdit }) {
         <button type="button" className="btn btn--ghost" onClick={() => onEdit(goal)}>
           Editar
         </button>
-        {goal.enMuro ? (
+        {padre ? (
+          <button
+            type="button"
+            className="btn btn--ghost"
+            disabled
+            title={`Está dentro de ${padre.nombre}`}
+          >
+            Poner en el muro
+          </button>
+        ) : goal.enMuro ? (
           <button
             type="button"
             className="btn btn--ghost"

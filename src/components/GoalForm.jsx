@@ -6,11 +6,13 @@ import {
   MAX_FOCUS,
 } from '../lib/schemas.js'
 import { useStore } from '../lib/storeContext.js'
+import { markedToday, streakOf } from '../lib/dates.js'
+import { padreDe } from '../lib/composite.js'
 
-const EMPTY = { nombre: '', tipoId: '', seguimiento: 'percent' }
+const EMPTY = { nombre: '', tipoId: '', seguimiento: 'percent', componentes: [] }
 
 function GoalForm({ open, onClose, onManageTypes, editing = null }) {
-  const { types, addGoal, updateGoal, focusCount, wallFull } = useStore()
+  const { types, goals, addGoal, updateGoal, focusCount, wallFull } = useStore()
   const dialogRef = useRef(null)
   const [values, setValues] = useState(() =>
     editing
@@ -18,6 +20,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           nombre: editing.nombre,
           tipoId: editing.tipoId,
           seguimiento: editing.seguimiento,
+          componentes: editing.componentes ?? [],
         }
       : EMPTY,
   )
@@ -61,6 +64,36 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
   function update(key, value) {
     setValues((current) => ({ ...current, [key]: value }))
     setErrors((current) => ({ ...current, [key]: undefined }))
+  }
+
+  const candidatos = goals.filter(
+    (goal) => goal.id !== editing?.id && goal.seguimiento !== 'compuesta',
+  )
+
+  function usadoPor(candidato) {
+    const padre = padreDe(candidato.id, goals)
+    return padre && padre.id !== editing?.id ? padre : null
+  }
+
+  function estadoDe(candidato) {
+    if (candidato.seguimiento === 'percent') return `${candidato.valor}%`
+    return markedToday(candidato.marcas)
+      ? 'avance hoy'
+      : `${streakOf(candidato.marcas)} días`
+  }
+
+  function toggleParte(id) {
+    setValues((current) => {
+      const dentro = current.componentes.includes(id)
+      if (!dentro && current.componentes.length >= MAX_FOCUS) return current
+      return {
+        ...current,
+        componentes: dentro
+          ? current.componentes.filter((item) => item !== id)
+          : [...current.componentes, id],
+      }
+    })
+    setErrors((current) => ({ ...current, componentes: undefined }))
   }
 
   function pickImage(event) {
@@ -214,6 +247,48 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
             <p className="field__error">{errors.seguimiento}</p>
           )}
         </fieldset>
+
+        {values.seguimiento === 'compuesta' && (
+          <fieldset className="field">
+            <legend>Partes de la compuesta</legend>
+            {candidatos.length === 0 ? (
+              <p className="field__hint">
+                Crea primero objetivos simples (porcentaje o racha) para poder componer.
+              </p>
+            ) : (
+              <div className="pick">
+                {candidatos.map((candidato) => {
+                  const ajeno = usadoPor(candidato)
+                  const checked = values.componentes.includes(candidato.id)
+                  const bloqueado =
+                    Boolean(ajeno) ||
+                    (!checked && values.componentes.length >= MAX_FOCUS)
+                  return (
+                    <label
+                      key={candidato.id}
+                      className={bloqueado ? 'pick__row is-blocked' : 'pick__row'}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={bloqueado}
+                        onChange={() => toggleParte(candidato.id)}
+                      />
+                      <span className="pick__name">{candidato.nombre}</span>
+                      <span className="pick__meta">{estadoDe(candidato)}</span>
+                      {ajeno && <span className="pick__hint">dentro de {ajeno.nombre}</span>}
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+            {errors.componentes && (
+              <p className="field__error" id="goal-componentes-error">
+                {errors.componentes}
+              </p>
+            )}
+          </fieldset>
+        )}
 
         <div className="sheet__actions">
           <button type="button" className="btn" onClick={close}>

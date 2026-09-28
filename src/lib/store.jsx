@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MAX_FOCUS } from './schemas.js'
 import { chainFrom, pastISO, todayISO, yesterdayISO } from './dates.js'
+import { esHijoDe, reconcileComposites } from './composite.js'
 import { StoreContext } from './storeContext.js'
 
 const KEY_TYPES = 'fb.types'
@@ -39,6 +40,8 @@ const SEED_GOALS = [
 function normalizeGoal(goal, index = 0) {
   if (!goal || typeof goal !== 'object') return goal
   const rest = { ...goal }
+  if (!Array.isArray(rest.componentes)) rest.componentes = []
+  rest.componentes = rest.componentes.filter((id) => typeof id === 'string')
   if (typeof rest.createdAt !== 'number') rest.createdAt = index
   const legacyRacha = rest.racha
   const legacyMarca = rest.ultimoMarca
@@ -94,11 +97,26 @@ export function StoreProvider({ children }) {
     read(KEY_GOALS, SEED_GOALS).map((goal, index) => normalizeGoal(goal, index)),
   )
 
-  useEffect(() => write(KEY_TYPES, types), [types])
-  useEffect(() => write(KEY_GOALS, goals), [goals])
+  // Día en curso: se re-evalúa cada minuto para re-marcar (o desmarcar)
+  // las compuestas cuando cruza la medianoche con la app abierta.
+  const [hoy, setHoy] = useState(() => todayISO())
 
-  const focusCount = goals.filter((goal) => goal.enMuro).length
+  useEffect(() => {
+    const timer = setInterval(() => setHoy(todayISO()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // Vista reconciliada: el auto-marcado se deriva aquí, sin escribir estado
+  // desde el efecto; el estado crudo sigue siendo la fuente de las acciones.
+  const goalsView = useMemo(() => reconcileComposites(goals, hoy), [goals, hoy])
+
+  const focusCount = goalsView.filter(
+    (goal) => goal.enMuro && !esHijoDe(goal.id, goalsView),
+  ).length
   const wallFull = focusCount >= MAX_FOCUS
+
+  useEffect(() => write(KEY_TYPES, types), [types])
+  useEffect(() => write(KEY_GOALS, goalsView), [goalsView])
 
   const addType = useCallback(
     (nombre) => {
@@ -134,11 +152,15 @@ export function StoreProvider({ children }) {
           tipoId: values.tipoId,
           imagen,
           seguimiento: values.seguimiento,
+          componentes:
+            values.seguimiento === 'compuesta' ? values.componentes.slice(0, MAX_FOCUS) : [],
           valor: 0,
           marcas: [],
           ultimoMovimiento: todayISO(),
           createdAt: Date.now(),
-          enMuro: current.filter((goal) => goal.enMuro).length < MAX_FOCUS,
+          enMuro:
+            current.filter((goal) => goal.enMuro && !esHijoDe(goal.id, current)).length <
+            MAX_FOCUS,
         },
       ])
     },
@@ -150,12 +172,19 @@ export function StoreProvider({ children }) {
     setGoals((current) =>
       current.map((goal) => {
         if (goal.id !== id) return goal
+        const cambioModo = goal.seguimiento !== values.seguimiento
+        const componentes =
+          values.seguimiento === 'compuesta'
+            ? values.componentes.filter((item) => item !== id).slice(0, MAX_FOCUS)
+            : []
         return {
           ...goal,
           nombre: values.nombre,
           tipoId: values.tipoId,
           seguimiento: values.seguimiento,
+          componentes,
           ...(imagen ? { imagen } : {}),
+          ...(cambioModo ? { marcas: [], valor: 0, ultimoMovimiento: todayISO() } : {}),
         }
       }),
     )
@@ -163,7 +192,10 @@ export function StoreProvider({ children }) {
 
   const placeInWall = useCallback((id) => {
     setGoals((current) => {
-      if (current.filter((goal) => goal.enMuro).length >= MAX_FOCUS) return current
+      if (esHijoDe(id, current)) return current
+      if (current.filter((goal) => goal.enMuro && !esHijoDe(goal.id, current)).length >= MAX_FOCUS) {
+        return current
+      }
       return current.map((goal) => (goal.id === id ? { ...goal, enMuro: true } : goal))
     })
   }, [])
@@ -220,7 +252,7 @@ export function StoreProvider({ children }) {
 
   const value = {
     types,
-    goals,
+    goals: goalsView,
     focusCount,
     wallFull,
     addType,

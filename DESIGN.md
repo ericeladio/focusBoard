@@ -148,19 +148,26 @@ rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 `hand-small` y su seguimiento: slider con lectura en `handwriting` o el toggle
 `Hoy` / `Deshacer hoy` (`btn--ink`, estado `is-active`) + contador de racha.
 La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
-pinta 0 sola. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
+pinta 0 sola. Los objetivos **compuestos** no muestran slider ni `Hoy`: una
+línea de estado `Listo · N días` (tinta) o `Falta M de K · N días` (rojo
+`paper-margin`) sobre chips-cinta de sus partes — fondo `tape`, invertidos a
+tinta cuando esa parte avanza hoy. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
 días sin subir aparece en rojo `paper-margin` "N días sin avance" (reset solo
 cuando el slider sube). Acciones fantasma debajo de una línea fina. En móvil
 (≤48rem) solo se ven foto y nombre: el doble clic (o el segundo toque, con
 `touch-action: manipulation` en la tarjeta) abre la modal `sheet` con tipo,
 seguimiento y acciones — mismo contenido que la tarjeta en escritorio, vía
 `GoalControls`. La foto adopta su proporción natural para que el mosaico no
-tenga huecos.
+tenga huecos. Las partes de una compuesta no aparecen en el muro (se editan en
+el pool y dentro de la modal), y su chip-cinta es lo que se ve en celular.
 
 **Goal row** — fila de papel del pool: miniatura 4:5, tipo y nombre, seguimiento
-solo lectura (barra fina de tinta + `%` o días) y acciones fantasma (Editar,
-Poner/Quitar del muro, Borrar). Doble clic en la fila abre el form con los datos
-cargados. Lleva el mismo indicador rojo "N días sin avance" que la tarjeta.
+solo lectura (barra fina de tinta + `%`, días, o `Listo hoy · N días` en tinta
+para compuestas) y acciones fantasma (Editar, Poner/Quitar del muro, Borrar).
+Las partes llevan la etiqueta `dentro de: <compuesta>` bajo el nombre y su botón
+"Poner en el muro" queda deshabilitado con ese motivo. Doble clic en la fila abre
+el form con los datos cargados. Lleva el mismo indicador rojo "N días sin
+avance" que la tarjeta.
 Hover: sube 2px con la misma sombra, a media suavidad. Orden: los más
 recientes primero (`createdAt`).
 
@@ -177,8 +184,10 @@ fallback a `index.html` para que el muro abra sin red.
 **Tape-link** — navegación como etiqueta de cinta salvia en Caveat.
 
 **Chip** — filtro del pool como etiqueta de cinta: borde tinta, activa con fondo
-`tape`. **Sheet** — modal de papel con margen rojo, esquinas rectas y sombra alta;
-`opt` son las fichas de opción (seguimiento).
+`tape`. Los chips de partes (`goal__chip`) son la misma cinta más pequeña:
+`tape` pendiente, fondo tinta cuando avanza hoy. **Sheet** — modal de papel con
+margen rojo, esquinas rectas y sombra alta; `opt` son las fichas de opción
+(porcentaje, racha, compuesta) y `pick` la lista de partes con checkbox del form.
 
 **Buttons** — `btn` papel con borde tinta, hover `sticky`; `btn--ink` relleno
 tinta; `btn--ghost` subrayado discreto.
@@ -189,6 +198,8 @@ tinta; `btn--ghost` subrayado discreto.
 - Do: sombras con offset y blur suave; foto siempre en marco con proporción 4:5.
 - Do: tope de 7 objetivos en el muro; el pool no tiene cota y se filtra por tipo.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
+- Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro.
 - Don't: gradiente en texto, glassmorphism decorativo, tarjetas redondeadas.
 - Don't: más de 7 en foco; con el muro lleno, el objetivo nuevo va al pool.
+- Don't: anidar compuestas (un solo nivel) ni mostrar las partes como cartas independientes en el muro.
 - Don't: iconos Unicode/emoji; la chinche y el clip se dibujan en CSS.

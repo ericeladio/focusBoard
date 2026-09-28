@@ -23,7 +23,11 @@ nombres y pies; sistema para el resto. Esquinas rectas, sombra doble, sin glass.
 
 STORY: el visitante ve su muro (tope 7 en foco) y el pool en lista con filtro por
 tipo. Crea objetivos con nombre, tipo, imagen y seguimiento (porcentaje con
-slider o racha de días) validados con zod. La racha se deriva de la cadena de
+slider, racha de días u objetivos compuestos que agrupan otros) validados con
+zod. La compuesta se auto-marca en el muro cuando todas sus partes tienen avance
+hoy (percent: subido hoy o en 100%; racha: marcada hoy) y desmarca sola si alguna
+deja de avanzar; sus partes no ocupan cupo de los 7 pero siguen en el pool, con
+la etiqueta "dentro de: <compuesta>", y se editan dentro de su modal. La racha se deriva de la cadena de
 marcas: `Hoy` la extiende, `Deshacer hoy` la revierte, y si se rompe el hilo se
 pinta 0 sola. Doble clic en una fila del pool abre el form con los datos
 cargados; orden por `createdAt` descendente. Los % que llevan 3+ días sin

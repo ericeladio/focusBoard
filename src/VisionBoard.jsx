@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import './VisionBoard.css'
 import './components/Goals.css'
 import { useStore } from './lib/storeContext.js'
+import { esHijoDe } from './lib/composite.js'
 import { MAX_FOCUS } from './lib/schemas.js'
 import GoalCard from './components/GoalCard.jsx'
 import GoalForm from './components/GoalForm.jsx'
@@ -13,7 +14,7 @@ function VisionBoard() {
   const [addOpen, setAddOpen] = useState(false)
   const [typesOpen, setTypesOpen] = useState(false)
 
-  const enMuro = goals.filter((goal) => goal.enMuro)
+  const enMuro = goals.filter((goal) => goal.enMuro && !esHijoDe(goal.id, goals))
   const titulos = goals.map((goal) => goal.nombre)
 
   return (

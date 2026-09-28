@@ -19,9 +19,33 @@ const nombreField = z
 
 const tipoField = z.string().min(1, 'Elige un tipo')
 
-const seguimientoField = z.enum(['percent', 'streak'], {
+const seguimientoField = z.enum(['percent', 'streak', 'compuesta'], {
   message: 'Elige cómo darle seguimiento',
 })
+
+const componentesField = z
+  .array(z.string().min(1))
+  .max(MAX_FOCUS, `Máximo ${MAX_FOCUS} partes`)
+  .default([])
+
+function checkComponentes(data, ctx) {
+  if (data.seguimiento !== 'compuesta') return
+  if (data.componentes.length === 0) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['componentes'],
+      message: 'Elige al menos un objetivo para componer',
+    })
+    return
+  }
+  if (new Set(data.componentes).size !== data.componentes.length) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['componentes'],
+      message: 'No repitas el mismo objetivo',
+    })
+  }
+}
 
 const imagenFile = z
   .instanceof(File, { message: 'Añade una imagen' })
@@ -31,19 +55,25 @@ const imagenFile = z
     'Máximo 1.5 MB',
   )
 
-export const goalSchema = z.object({
-  nombre: nombreField,
-  tipoId: tipoField,
-  imagen: imagenFile,
-  seguimiento: seguimientoField,
-})
+export const goalSchema = z
+  .object({
+    nombre: nombreField,
+    tipoId: tipoField,
+    imagen: imagenFile,
+    seguimiento: seguimientoField,
+    componentes: componentesField,
+  })
+  .superRefine(checkComponentes)
 
-export const goalUpdateSchema = z.object({
-  nombre: nombreField,
-  tipoId: tipoField,
-  imagen: imagenFile.optional(),
-  seguimiento: seguimientoField,
-})
+export const goalUpdateSchema = z
+  .object({
+    nombre: nombreField,
+    tipoId: tipoField,
+    imagen: imagenFile.optional(),
+    seguimiento: seguimientoField,
+    componentes: componentesField,
+  })
+  .superRefine(checkComponentes)
 
 export function issuesToFieldErrors(error) {
   const errors = {}
