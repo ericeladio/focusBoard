@@ -82,6 +82,7 @@ async function push(userId, payload) {
   await ensureUser()
   const acked = []
   const failed = []
+  let maxTs = 0
 
   for (const [index, op] of parsed.ops.entries()) {
     const seq = Number.isFinite(Number(op?.seq)) ? Number(op.seq) : index
@@ -90,6 +91,8 @@ async function push(userId, payload) {
       failed.push({ seq, error: normalized.error })
       continue
     }
+    const tsMs = Date.parse(normalized.ts)
+    if (Number.isFinite(tsMs) && tsMs > maxTs) maxTs = tsMs
     try {
       await applyOp(userId, normalized)
       acked.push(seq)
@@ -99,7 +102,11 @@ async function push(userId, payload) {
     }
   }
 
-  return { status: 200, body: { acked, failed, serverTime: new Date().toISOString() } }
+  return {
+    status: 200,
+    body: { acked, failed, serverTime: new Date().toISOString() },
+    maxTs,
+  }
 }
 
 export default async function handler(req, res) {
@@ -141,6 +148,7 @@ export default async function handler(req, res) {
         status: result.status,
         acked: result.body?.acked?.length ?? 0,
         failed: result.body?.failed?.length ?? 0,
+        skewS: result.maxTs ? Math.round((result.maxTs - Date.now()) / 1000) : null,
       }),
     )
     return res.status(result.status).json(result.body)
