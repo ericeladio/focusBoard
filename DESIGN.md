@@ -151,9 +151,11 @@ La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
 pinta 0 sola. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
 días sin subir aparece en rojo `paper-margin` "N días sin avance" (reset solo
 cuando el slider sube). Acciones fantasma debajo de una línea fina. En móvil
-(≤48rem) solo se ven foto y nombre; el tipo, el seguimiento y las acciones se
-pliegan tras el botón "Seguimiento" (caret en CSS, `aria-expanded`), y la foto
-adopta su proporción natural para que el mosaico no tenga huecos.
+(≤48rem) solo se ven foto y nombre: el doble clic (o el segundo toque, con
+`touch-action: manipulation` en la tarjeta) abre la modal `sheet` con tipo,
+seguimiento y acciones — mismo contenido que la tarjeta en escritorio, vía
+`GoalControls`. La foto adopta su proporción natural para que el mosaico no
+tenga huecos.
 
 **Goal row** — fila de papel del pool: miniatura 4:5, tipo y nombre, seguimiento
 solo lectura (barra fina de tinta + `%` o días) y acciones fantasma (Editar,

@@ -24,6 +24,9 @@
   padding-bottom: 1rem;
   display: flex;
   flex-direction: column;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .frame--goal .frame__photo {
@@ -37,12 +40,8 @@
   padding-top: 0.75rem;
 }
 
-.goal__more {
-  display: none;
-}
-
-.goal__detail {
-  display: contents;
+.goal__type--sheet {
+  margin: -0.35rem 0 1.1rem;
 }
 
 .goal__type {
@@ -697,7 +696,8 @@
   }
 }
 
-/* --- tarjeta del muro en celular: foto + nombre, el resto al tocar --- */
+/* --- tarjeta del muro en celular: solo foto + nombre; las opciones
+       se abren con doble clic/toque en la modal --- */
 
 @media (max-width: 48rem) {
   .frame--goal .frame__photo {
@@ -713,52 +713,9 @@
     font-size: 1.3rem;
   }
 
-  .frame--goal .goal__type {
+  .frame--goal .goal__type,
+  .frame--goal .goal__track,
+  .frame--goal .goal__actions {
     display: none;
-  }
-
-  .frame--goal.is-open .goal__type {
-    display: block;
-  }
-
-  .frame--goal .goal__detail {
-    display: none;
-  }
-
-  .frame--goal.is-open .goal__detail {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .frame--goal .goal__more {
-    appearance: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    background: none;
-    border: 0;
-    padding: 0.55rem 0 0.2rem;
-    min-height: 2.5rem;
-    font: inherit;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    cursor: pointer;
-  }
-
-  .frame--goal .goal__more::after {
-    content: '';
-    width: 0;
-    height: 0;
-    border: 4px solid transparent;
-    border-top-color: currentColor;
-    transition: transform 0.2s ease;
-  }
-
-  .frame--goal.is-open .goal__more::after {
-    transform: rotate(180deg);
   }
 }
