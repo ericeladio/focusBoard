@@ -54,25 +54,19 @@ function Pool() {
 
       <div className="pool">
         <div className="pool__bar">
-          <div className="chips" role="group" aria-label="Filtrar por tipo">
-            <button
-              type="button"
-              className={filter === 'all' ? 'chip is-active' : 'chip'}
-              onClick={() => setFilter('all')}
-            >
-              Todos
-            </button>
+          <select
+            className="pool__filter"
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+            aria-label="Filtrar por tipo"
+          >
+            <option value="all">Todos los tipos</option>
             {types.map((type) => (
-              <button
-                key={type.id}
-                type="button"
-                className={filter === type.id ? 'chip is-active' : 'chip'}
-                onClick={() => setFilter(type.id)}
-              >
+              <option key={type.id} value={type.id}>
                 {type.nombre}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
 
           <div className="pool__actions">
             <button type="button" className="btn" onClick={() => setTypesOpen(true)}>

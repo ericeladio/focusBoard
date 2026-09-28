@@ -235,41 +235,18 @@
   margin-top: 1rem;
 }
 
-/* --- chips de filtro (etiquetas de cinta) --- */
+/* --- filtro del pool (select de papel) --- */
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.chip {
+.pool__filter {
   font: inherit;
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--ink);
-  padding: 0.4rem 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--ink-soft);
   border-radius: 0;
   background: var(--polaroid);
   cursor: pointer;
-  transition: background 0.18s ease;
-}
-
-.chip:hover {
-  background: var(--sticky);
-}
-
-.chip.is-active {
-  background: var(--tape);
-  border-color: var(--ink);
-  font-weight: 600;
-}
-
-.chip:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 /* --- formularios (hojas de papel) --- */
@@ -565,8 +542,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .tape-link,
-  .btn,
-  .chip {
+  .btn {
     transition: none;
   }
 }

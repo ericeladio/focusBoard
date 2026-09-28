@@ -27,7 +27,9 @@ slider, racha de días u objetivos compuestos que agrupan otros) validados con
 zod. La compuesta se auto-marca en el muro cuando todas sus partes tienen avance
 hoy (percent: subido hoy o en 100%; racha: marcada hoy) y desmarca sola si alguna
 deja de avanzar; sus partes no ocupan cupo de los 7 pero siguen en el pool, con
-la etiqueta "dentro de: <compuesta>", y se editan dentro de su modal. La racha se deriva de la cadena de
+la etiqueta "dentro de: <compuesta>", y se editan dentro de su modal. Los
+compuestos no piden tipo: van solos al tipo `Compuesto` (se crea al vuelo) y el
+form oculta el selector de tipo en esa modalidad. La racha se deriva de la cadena de
 marcas: `Hoy` la extiende, `Deshacer hoy` la revierte, y si se rompe el hilo se
 pinta 0 sola. La nota rayada "Este año" es la única nota decorativa: su lista
 es editable con doble clic y se persiste en localStorage (`fb.note`), acotada a
@@ -41,7 +43,7 @@ FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-link al
 pool; polaroids de objetivos, nota rayada "Este año" (editable) y botón-polaroid
 "Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
 columnas con cada foto a su proporción real; en celular la tarjeta es foto +
-nombre y el doble clic/segundo toque abre la modal con las opciones. FIRST VIEWPORT (`/pool`): título + chips de
+nombre y el doble clic/segundo toque abre la modal con las opciones. FIRST VIEWPORT (`/pool`): título + select de
 tipo + barra Tipos/Nuevo objetivo; lista de filas (miniatura, tipo, nombre,
 seguimiento solo lectura, Editar/Poner/Borrar) y hint de doble clic.
 

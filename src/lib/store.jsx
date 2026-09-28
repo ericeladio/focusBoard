@@ -6,6 +6,8 @@ import { StoreContext } from './storeContext.js'
 
 const KEY_TYPES = 'fb.types'
 const KEY_NOTE = 'fb.note'
+const ID_COMPUESTO = 'tipo-compuesto'
+const NOMBRE_COMPUESTO = 'Compuesto'
 const KEY_GOALS = 'fb.goals'
 
 const LOKI = '/seed-photo.png'
@@ -37,6 +39,20 @@ const SEED_GOALS = [
     enMuro: true,
   },
 ]
+
+function esCompuestoType(type) {
+  return type.id === ID_COMPUESTO || type.nombre.toLowerCase() === 'compuesto'
+}
+
+function compuestoId(types) {
+  return types.find(esCompuestoType)?.id ?? ID_COMPUESTO
+}
+
+function ensureCompuestoType(types) {
+  return types.some(esCompuestoType)
+    ? types
+    : [...types, { id: ID_COMPUESTO, nombre: NOMBRE_COMPUESTO }]
+}
 
 function normalizeGoal(goal, index = 0) {
   if (!goal || typeof goal !== 'object') return goal
@@ -104,17 +120,27 @@ function fileToDataURL(file) {
 }
 
 export function StoreProvider({ children }) {
-  const [types, setTypes] = useState(() => read(KEY_TYPES, SEED_TYPES))
+  const [types, setTypes] = useState(() => {
+    const loaded = read(KEY_TYPES, SEED_TYPES)
+    const crudo = read(KEY_GOALS, SEED_GOALS)
+    const tieneCompuesta = crudo.some((goal) => goal?.seguimiento === 'compuesta')
+    return tieneCompuesta ? ensureCompuestoType(loaded) : loaded
+  })
   const [goals, setGoals] = useState(() => {
     const loaded = read(KEY_GOALS, SEED_GOALS).map((goal, index) =>
       normalizeGoal(goal, index),
     )
     const ids = new Set(loaded.map((goal) => goal.id))
-    return loaded.map((goal) =>
-      goal.componentes.some((id) => !ids.has(id))
+    const tipoCompuesto = compuestoId(read(KEY_TYPES, SEED_TYPES))
+    return loaded.map((goal) => {
+      const limpio = goal.componentes.some((id) => !ids.has(id))
         ? { ...goal, componentes: goal.componentes.filter((id) => ids.has(id)) }
-        : goal,
-    )
+        : goal
+      if (limpio.seguimiento !== 'compuesta' || limpio.tipoId === tipoCompuesto) {
+        return limpio
+      }
+      return { ...limpio, tipoId: tipoCompuesto }
+    })
   })
 
   // Día en curso: se re-evalúa cada minuto para re-marcar (o desmarcar)
@@ -170,13 +196,16 @@ export function StoreProvider({ children }) {
 
   const addGoal = useCallback(
     async (values, file) => {
+      const esCompuesta = values.seguimiento === 'compuesta'
+      if (esCompuesta) setTypes((current) => ensureCompuestoType(current))
+      const tipoId = esCompuesta ? compuestoId(types) : values.tipoId
       const imagen = await fileToDataURL(file)
       setGoals((current) => [
         ...current,
         {
           id: crypto.randomUUID(),
           nombre: values.nombre,
-          tipoId: values.tipoId,
+          tipoId,
           imagen,
           seguimiento: values.seguimiento,
           componentes:
@@ -191,10 +220,13 @@ export function StoreProvider({ children }) {
         },
       ])
     },
-    [],
+    [types],
   )
 
   const updateGoal = useCallback(async (id, values, file) => {
+    const esCompuesta = values.seguimiento === 'compuesta'
+    if (esCompuesta) setTypes((current) => ensureCompuestoType(current))
+    const tipoId = esCompuesta ? compuestoId(types) : values.tipoId
     const imagen = file ? await fileToDataURL(file) : null
     setGoals((current) =>
       current.map((goal) => {
@@ -207,7 +239,7 @@ export function StoreProvider({ children }) {
         return {
           ...goal,
           nombre: values.nombre,
-          tipoId: values.tipoId,
+          tipoId,
           seguimiento: values.seguimiento,
           componentes,
           ...(imagen ? { imagen } : {}),
@@ -215,7 +247,7 @@ export function StoreProvider({ children }) {
         }
       }),
     )
-  }, [])
+  }, [types])
 
   const placeInWall = useCallback((id) => {
     setGoals((current) => {

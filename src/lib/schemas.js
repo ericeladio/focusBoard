@@ -17,7 +17,7 @@ const nombreField = z
   .min(3, 'Mínimo 3 caracteres')
   .max(60, 'Máximo 60 caracteres')
 
-const tipoField = z.string().min(1, 'Elige un tipo')
+const tipoField = z.string()
 
 const seguimientoField = z.enum(['percent', 'streak', 'compuesta'], {
   message: 'Elige cómo darle seguimiento',
@@ -27,6 +27,15 @@ const componentesField = z
   .array(z.string().min(1))
   .max(MAX_FOCUS, `Máximo ${MAX_FOCUS} partes`)
   .default([])
+
+function checkTipo(data, ctx) {
+  if (data.seguimiento === 'compuesta' || data.tipoId) return
+  ctx.addIssue({
+    code: 'custom',
+    path: ['tipoId'],
+    message: 'Elige un tipo',
+  })
+}
 
 function checkComponentes(data, ctx) {
   if (data.seguimiento !== 'compuesta') return
@@ -64,6 +73,7 @@ export const goalSchema = z
     componentes: componentesField,
   })
   .superRefine(checkComponentes)
+  .superRefine(checkTipo)
 
 export const goalUpdateSchema = z
   .object({
@@ -74,6 +84,7 @@ export const goalUpdateSchema = z
     componentes: componentesField,
   })
   .superRefine(checkComponentes)
+  .superRefine(checkTipo)
 
 export function issuesToFieldErrors(error) {
   const errors = {}

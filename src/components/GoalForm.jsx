@@ -84,6 +84,15 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
       : `${streakOf(candidato.marcas)} días`
   }
 
+  function setSeguimiento(next) {
+    update('seguimiento', next)
+    if (next === 'compuesta') return
+    const actual = types.find((type) => type.id === values.tipoId)
+    if (actual && actual.nombre.toLowerCase() === 'compuesto') {
+      setValues((current) => ({ ...current, tipoId: '' }))
+    }
+  }
+
   function toggleParte(id) {
     setValues((current) => {
       const dentro = current.componentes.includes(id)
@@ -164,31 +173,33 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           )}
         </div>
 
-        <div className="field">
-          <label className="field__label" htmlFor="goal-tipo">
-            Tipo de objetivo
-          </label>
-          <select
-            id="goal-tipo"
-            className="input"
-            value={values.tipoId}
-            onChange={(event) => update('tipoId', event.target.value)}
-            aria-invalid={Boolean(errors.tipoId)}
-          >
-            <option value="">
-              {types.length === 0 ? 'Sin tipos creados' : 'Elige un tipo'}
-            </option>
-            {types.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.nombre}
+        {values.seguimiento !== 'compuesta' && (
+          <div className="field">
+            <label className="field__label" htmlFor="goal-tipo">
+              Tipo de objetivo
+            </label>
+            <select
+              id="goal-tipo"
+              className="input"
+              value={values.tipoId}
+              onChange={(event) => update('tipoId', event.target.value)}
+              aria-invalid={Boolean(errors.tipoId)}
+            >
+              <option value="">
+                {types.length === 0 ? 'Sin tipos creados' : 'Elige un tipo'}
               </option>
-            ))}
-          </select>
-          <button type="button" className="linkish" onClick={onManageTypes}>
-            {types.length === 0 ? 'Crear el primer tipo' : 'Gestionar tipos'}
-          </button>
-          {errors.tipoId && <p className="field__error">{errors.tipoId}</p>}
-        </div>
+              {types.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.nombre}
+                </option>
+              ))}
+            </select>
+            <button type="button" className="linkish" onClick={onManageTypes}>
+              {types.length === 0 ? 'Crear el primer tipo' : 'Gestionar tipos'}
+            </button>
+            {errors.tipoId && <p className="field__error">{errors.tipoId}</p>}
+          </div>
+        )}
 
         <div className="field">
           <span className="field__label">Imagen</span>
@@ -226,7 +237,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                 name="seguimiento"
                 value="percent"
                 checked={values.seguimiento === 'percent'}
-                onChange={() => update('seguimiento', 'percent')}
+                onChange={() => setSeguimiento('percent')}
               />
               <span className="opt__title">Porcentaje</span>
               <span className="opt__hint">Mueves el avance de 0 a 100%</span>
@@ -239,7 +250,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                 name="seguimiento"
                 value="streak"
                 checked={values.seguimiento === 'streak'}
-                onChange={() => update('seguimiento', 'streak')}
+                onChange={() => setSeguimiento('streak')}
               />
               <span className="opt__title">Racha de días</span>
               <span className="opt__hint">Sumas un día cuando lo cumples</span>

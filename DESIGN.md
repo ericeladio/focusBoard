@@ -182,11 +182,14 @@ fallback a `index.html` para que el muro abra sin red.
 
 **Tape-link** — navegación como etiqueta de cinta salvia en Caveat.
 
-**Chip** — filtro del pool como etiqueta de cinta: borde tinta, activa con fondo
-`tape`. Los chips de partes (`goal__chip`) son la misma cinta más pequeña:
-`tape` pendiente, fondo tinta cuando avanza hoy. **Sheet** — modal de papel con
+**Filtro del pool** — `select` de papel (`pool__filter`) en la barra junto a
+Tipos/Nuevo objetivo: borde tinta, fondo polaroid, esquinas rectas; opciones
+"Todos los tipos" + cada tipo. Los chips de partes (`goal__chip`) siguen siendo
+etiquetas de cinta más pequeñas: `tape` pendiente, fondo tinta cuando avanza hoy. **Sheet** — modal de papel con
 margen rojo, esquinas rectas y sombra alta; `opt` son las fichas de opción
 (porcentaje, racha, compuesta) y `pick` la lista de partes con checkbox del form.
+Los compuestos no piden tipo: el form oculta ese campo y el objetivo se asigna
+solo al tipo `Compuesto` (se crea al vuelo si todavía no existe).
 
 **Buttons** — `btn` papel con borde tinta, hover `sticky`; `btn--ink` relleno
 tinta; `btn--ghost` subrayado discreto.
