@@ -81,10 +81,6 @@ components:
     backgroundColor: "{colors.paper-lined}"
     textColor: "{colors.ink}"
     padding: "1.4rem 1.4rem 1.4rem 2.4rem"
-  note-sticky:
-    backgroundColor: "{colors.sticky}"
-    textColor: "{colors.ink}"
-    padding: "1.4rem 1.3rem"
 ---
 
 ## Overview
@@ -100,7 +96,7 @@ y filtro por tipo.
 
 Pared `#e7e4d6` (crema-sage, luz de día indirecta), polaroid `#fbf9f3`, foto
 siempre oscura `#23211d`, tinta `#2f2a24`. Acentos materiales: cinta salvia
-translúcida, post-it `#ece0a6`, papel rayado rosa con línea roja de margen.
+translúcida y papel rayado rosa con línea roja de margen.
 Nunca gris puro para texto secundario: teñir desde la tinta (`#56503f`).
 El rojo de margen `#963434` es de una sola voz: borde del sheet, margen de la
 nota y alerta de "% sin avance". La variante al 55% `paper-margin-rule` existe
@@ -121,8 +117,7 @@ es un objeto, no una celda. El pool rompe la grilla a propósito: lista vertical
 de filas ancho completo (escaneable cuando hay muchos), que en móvil pasa a dos
 bloques por fila. Bajo 48rem el muro deja la grilla y se vuelve mosaico de dos
 columnas (multicol): cada foto usa su proporción real (limitada a 0.62–1.6),
-las tarjetas se apilan con margen para que chinches y cintas no se pisen, y el
-post-it se encoge a 58% para que siga leyéndose como nota.
+las tarjetas se apilan con margen para que chinches y cintas no se pisen.
 
 ## Elevation & Depth
 
@@ -142,7 +137,11 @@ El único radio es circular, la chinche. Elevación por sombra, nunca por borde.
 rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 
 **Nota rayada** — papel con líneas y margen rojo; clip metálico dibujado en CSS.
-**Post-it** — papel sólido, misma elevación y hover que el resto.
+Su lista es editable con doble clic y el texto se guarda en `localStorage`
+(`fb.note`); sin edición personalizada, muestra los títulos de los objetivos
+(siempre actualizados). El cuerpo se acota a 8 líneas con scroll propio y
+`overflow-wrap: anywhere`, de modo que ninguna palabra ni línea larga sale de la
+hoja.
 
 **Goal card** — polaroid con foto 4:5, etiqueta de tipo en `label`, nombre en
 `hand-small` y su seguimiento: slider con lectura en `handwriting` o el toggle

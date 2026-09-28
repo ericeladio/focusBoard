@@ -17,8 +17,8 @@ de papel escaneable, no otra cuadrícula. Rechaza: cards con iconos y dashboard
 de progreso.
 
 OWN-WORLD: pared sage-crema #e7e4d6 con textura tenue; polaroid #fbf9f3 con foto
-4:5; tinta #2f2a24 / #56503f; papel rayado #f7ebe6 con margen rojo; post-it
-#ece0a6; cinta salvia rgba(176,182,156,.78); Caveat self-host para títulos,
+4:5; tinta #2f2a24 / #56503f; papel rayado #f7ebe6 con margen rojo;
+cinta salvia rgba(176,182,156,.78); Caveat self-host para títulos,
 nombres y pies; sistema para el resto. Esquinas rectas, sombra doble, sin glass.
 
 STORY: el visitante ve su muro (tope 7 en foco) y el pool en lista con filtro por
@@ -29,13 +29,16 @@ hoy (percent: subido hoy o en 100%; racha: marcada hoy) y desmarca sola si algun
 deja de avanzar; sus partes no ocupan cupo de los 7 pero siguen en el pool, con
 la etiqueta "dentro de: <compuesta>", y se editan dentro de su modal. La racha se deriva de la cadena de
 marcas: `Hoy` la extiende, `Deshacer hoy` la revierte, y si se rompe el hilo se
-pinta 0 sola. Doble clic en una fila del pool abre el form con los datos
+pinta 0 sola. La nota rayada "Este año" es la única nota decorativa: su lista
+es editable con doble clic y se persiste en localStorage (`fb.note`), acotada a
+8 líneas con `overflow-wrap` para que el texto no desborde la hoja. Doble clic en
+una fila del pool abre el form con los datos
 cargados; orden por `createdAt` descendente. Los % que llevan 3+ días sin
 subir (con valor > 0) muestran "N días sin avance" en rojo `paper-margin`, en
 muro y pool; resetea solo al subir el slider.
 
 FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-link al
-pool; polaroids de objetivos, nota rayada "Este año", post-it y botón-polaroid
+pool; polaroids de objetivos, nota rayada "Este año" (editable) y botón-polaroid
 "Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
 columnas con cada foto a su proporción real; en celular la tarjeta es foto +
 nombre y el doble clic/segundo toque abre la modal con las opciones. FIRST VIEWPORT (`/pool`): título + chips de

@@ -10,12 +10,29 @@ import GoalForm from './components/GoalForm.jsx'
 import GoalTypeForm from './components/GoalTypeForm.jsx'
 
 function VisionBoard() {
-  const { goals, wallFull } = useStore()
+  const { goals, wallFull, note, setNote } = useStore()
   const [addOpen, setAddOpen] = useState(false)
   const [typesOpen, setTypesOpen] = useState(false)
+  const [noteEditing, setNoteEditing] = useState(false)
+  const [noteDraft, setNoteDraft] = useState('')
 
   const enMuro = goals.filter((goal) => goal.enMuro && !esHijoDe(goal.id, goals))
   const titulos = goals.map((goal) => goal.nombre)
+  const nota = note ?? titulos.join('\n')
+
+  function startNoteEdit() {
+    setNoteDraft(nota)
+    setNoteEditing(true)
+  }
+
+  function saveNote() {
+    setNote(noteDraft)
+    setNoteEditing(false)
+  }
+
+  function cancelNoteEdit() {
+    setNoteEditing(false)
+  }
 
   return (
     <main className="wall">
@@ -41,19 +58,38 @@ function VisionBoard() {
           <GoalCard key={goal.id} goal={goal} index={index} variant="wall" />
         ))}
 
-        <article className="note note--lined frame--clip" style={{ '--tilt': '-2.5deg' }}>
+        <article
+          className="note note--lined frame--clip"
+          style={{ '--tilt': '-2.5deg' }}
+          title="Doble clic para editar"
+        >
           <h2>Este año</h2>
-          <ul className="note__list">
-            {titulos.length === 0 ? (
-              <li>Aún no hay objetivos</li>
-            ) : (
-              titulos.map((nombre) => <li key={nombre}>{nombre}</li>)
-            )}
-          </ul>
-        </article>
-
-        <article className="note note--sticky" style={{ '--tilt': '5deg' }}>
-          <p>Menos scroll, más creación</p>
+          {noteEditing ? (
+            <textarea
+              className="note__edit"
+              value={noteDraft}
+              rows={Math.max(3, Math.min(8, noteDraft.split('\n').length))}
+              autoFocus
+              onChange={(event) => setNoteDraft(event.target.value)}
+              onBlur={saveNote}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') cancelNoteEdit()
+              }}
+            />
+          ) : (
+            <ul
+              className="note__list"
+              onDoubleClick={startNoteEdit}
+            >
+              {nota.length === 0 ? (
+                <li>Aún no hay objetivos</li>
+              ) : (
+                nota.split('\n').map((linea, index) => (
+                  <li key={`${index}-${linea}`}>{linea}</li>
+                ))
+              )}
+            </ul>
+          )}
         </article>
 
         <button

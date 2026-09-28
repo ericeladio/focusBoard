@@ -192,27 +192,30 @@
   color: #33302a;
 }
 
-.note__list {
+.note__list,
+.note__edit {
   margin: 0;
-  padding: 0;
-  list-style: none;
+  max-height: 15.2rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
   font-family: var(--hand);
   font-size: 1.3rem;
   line-height: 1.9rem;
   color: #33302a;
 }
 
-.note--sticky {
-  padding: 1.4rem 1.3rem;
-  background: #ece0a6;
-  font-family: var(--hand);
-  font-size: 1.4rem;
-  line-height: 1.35;
-  color: #2f2a24;
+.note__list {
+  padding: 0;
+  list-style: none;
 }
 
-.note--sticky p {
-  margin: 0;
+.note__edit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  resize: none;
 }
 
 /* clip metálico en la nota rayada */
@@ -252,7 +255,4 @@
     margin-bottom: clamp(1.6rem, 6vw, 2.2rem);
   }
 
-  .note--sticky {
-    max-width: 58%;
-  }
 }

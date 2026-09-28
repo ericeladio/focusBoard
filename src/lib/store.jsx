@@ -5,6 +5,7 @@ import { esHijoDe, reconcileComposites } from './composite.js'
 import { StoreContext } from './storeContext.js'
 
 const KEY_TYPES = 'fb.types'
+const KEY_NOTE = 'fb.note'
 const KEY_GOALS = 'fb.goals'
 
 const LOKI = '/seed-photo.png'
@@ -74,6 +75,17 @@ function read(key, fallback) {
   }
 }
 
+function readNote() {
+  try {
+    const raw = localStorage.getItem(KEY_NOTE)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return typeof parsed === 'string' && parsed.trim() ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 function write(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value))
@@ -107,6 +119,12 @@ export function StoreProvider({ children }) {
 
   // Día en curso: se re-evalúa cada minuto para re-marcar (o desmarcar)
   // las compuestas cuando cruza la medianoche con la app abierta.
+  const [note, setNoteState] = useState(() => readNote())
+
+  const setNote = useCallback((value) => {
+    setNoteState(typeof value === 'string' && value.trim() ? value : null)
+  }, [])
+
   const [hoy, setHoy] = useState(() => todayISO())
 
   useEffect(() => {
@@ -125,6 +143,7 @@ export function StoreProvider({ children }) {
 
   useEffect(() => write(KEY_TYPES, types), [types])
   useEffect(() => write(KEY_GOALS, goalsView), [goalsView])
+  useEffect(() => write(KEY_NOTE, note), [note])
 
   const addType = useCallback(
     (nombre) => {
@@ -269,6 +288,8 @@ export function StoreProvider({ children }) {
   const value = {
     types,
     goals: goalsView,
+    note,
+    setNote,
     focusCount,
     wallFull,
     addType,
