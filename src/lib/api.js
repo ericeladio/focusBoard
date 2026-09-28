@@ -59,8 +59,15 @@ export function pushSync(ops) {
   })
 }
 
+// La clave puede traer una carpeta (`img-goals/<uuid>`): se codifica por
+// segmento para que la barra siga separando el ruteo. Si se usara
+// encodeURIComponent de todo, la `/` pasaría a `%2F` y no llegaría a la función.
+function imagePath(key) {
+  return `/api/images/${String(key).split('/').map(encodeURIComponent).join('/')}`
+}
+
 export function putImage(key, blob) {
-  return request(`/api/images/${encodeURIComponent(key)}`, {
+  return request(imagePath(key), {
     method: 'PUT',
     headers: { 'Content-Type': blob.type || 'application/octet-stream' },
     body: blob,
@@ -68,9 +75,9 @@ export function putImage(key, blob) {
 }
 
 export function deleteImage(key) {
-  return request(`/api/images/${encodeURIComponent(key)}`, { method: 'DELETE' })
+  return request(imagePath(key), { method: 'DELETE' })
 }
 
 export function imageUrl(key) {
-  return `/api/images/${encodeURIComponent(key)}`
+  return imagePath(key)
 }

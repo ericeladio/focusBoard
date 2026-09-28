@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict'
 
-const { normalizeOp, normalizeOps, sanitizeGoal, sanitizeNote, toIso } = await import(
-  '../api/_lib/validate.js'
-)
+const { normalizeOp, normalizeOps, sanitizeGoal, sanitizeNote, toIso, isValidImageKey } =
+  await import('../api/_lib/validate.js')
 const { rowToGoal, goalParams, typeParams, noteParams } = await import('../api/_lib/shape.js')
 
 const TS = '2026-09-28T12:00:00.000Z'
@@ -79,6 +78,46 @@ const baseGoal = {
     'bad_componentes',
   )
   assert.equal(sanitizeGoal({ ...baseGoal, id: 'g_1', marcas: 'nope' }, TS).error, 'bad_marcas')
+}
+
+// claves de imagen: carpeta única y sin rutas raras
+{
+  const uuid = 'b9c3d6bf-474a-4844-9af8-a973f0c78cd1'
+  const buenas = [uuid, `img-goals/${uuid}`, 'fotos', 'img-goals/a1b2c3d4-e5f6-7890']
+  for (const key of buenas) {
+    assert.equal(isValidImageKey(key), true, `${key} es válida`)
+  }
+  const malas = [
+    null,
+    undefined,
+    '',
+    '.',
+    '..',
+    '../../etc/passwd',
+    'img-goals/../../etc',
+    'a/b/c',
+    'img goals/x',
+    'img-goals/',
+    'x '.repeat(5),
+    'x'.repeat(70),
+    'img-goals/' + 'x'.repeat(70),
+    'carpeta con espacio/' + uuid,
+  ]
+  for (const key of malas) {
+    assert.equal(isValidImageKey(key), false, `${JSON.stringify(key)} se rechaza`)
+  }
+
+  // y el sanitizador de metas usa el mismo criterio
+  assert.equal(
+    sanitizeGoal({ ...baseGoal, id: 'g_1', imagenKey: `img-goals/${uuid}` }, TS).ok,
+    true,
+    'una meta con clave en carpeta pasa el sanitizador',
+  )
+  assert.equal(
+    sanitizeGoal({ ...baseGoal, id: 'g_1', imagenKey: 'a/b/c' }, TS).error,
+    'bad_image_key',
+    'más de una barra se rechaza',
+  )
 }
 
 // valores numéricos acotados

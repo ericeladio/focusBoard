@@ -54,8 +54,12 @@ function adoptServerTime(iso) {
 
 export async function countPending() {
   try {
-    const [ops, uploads] = await Promise.all([idb.outboxCount(), idb.pendingUploads()])
-    return ops.length + uploads.length
+    const [ops, uploads, deletes] = await Promise.all([
+      idb.outboxCount(),
+      idb.pendingUploads(),
+      idb.readImageDeletes(),
+    ])
+    return ops.length + uploads.length + deletes.length
   } catch {
     return 0
   }
@@ -82,6 +86,30 @@ async function uploadPending() {
   for (const record of pending) {
     await api.putImage(record.key, record.blob)
     await idb.markUploaded(record.key)
+  }
+}
+
+// Objetos de R2 que quedaron sin uso (meta borrada o foto reemplazada).
+async function deletePendingImages() {
+  const pending = await idb.readImageDeletes()
+  for (const key of pending) {
+    try {
+      await api.deleteImage(key)
+    } catch (error) {
+      // Sin red o sin sesión: se corta la ronda y se reintenta.
+      if (
+        error instanceof api.AuthError ||
+        error instanceof api.OfflineError ||
+        !error.status ||
+        error.status >= 500
+      ) {
+        throw error
+      }
+      // 409 (sigue referenciada) o 404 (ya no existe): fuera de la cola.
+      await idb.removeImageDelete(key)
+      continue
+    }
+    await idb.removeImageDelete(key)
   }
 }
 
@@ -150,9 +178,12 @@ export async function syncNow() {
   try {
     // Primero bajamos: así lo que ya existe en el servidor manda sobre lo local
     // (registros antiguos sin sello no pueden pisar una copia más nueva).
+    // Las imágenes se borran al final, con las metas ya aplicadas: así un 409
+    // del servidor sí significa que la foto la sigue usando otra meta viva.
     await pull()
     await uploadPending()
     await flush()
+    await deletePendingImages()
     emit({
       online: typeof navigator === 'undefined' ? true : navigator.onLine,
       authorized: true,

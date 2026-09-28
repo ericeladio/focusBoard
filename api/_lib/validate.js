@@ -1,10 +1,25 @@
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/
-const KEY_RE = /^[A-Za-z0-9_-]{4,64}$/
+const IMAGE_FOLDER_RE = /^[A-Za-z0-9_-]{1,40}$/
+const IMAGE_NAME_RE = /^[A-Za-z0-9_-]{4,64}$/
 const SEGUIMIENTO = ['percent', 'streak', 'compuesta']
 const ACTIONS = ['put', 'del']
 const ENTITIES = ['goal', 'type', 'note']
 
 const MAX_OPS = 200
+
+// Clave de imagen: `nombre` o `carpeta/nombre` (una sola barra, el único
+// separador que rutea la API). Los puntos no están permitidos: nada de `..`
+// ni rutas relativas. Lo usan el sanitizador de metas y el proxy de imágenes
+// para que los dos no puedan divergir.
+export function isValidImageKey(key) {
+  if (typeof key !== 'string' || !key) return false
+  const parts = key.split('/')
+  if (parts.length === 1) return IMAGE_NAME_RE.test(key)
+  if (parts.length === 2) {
+    return IMAGE_FOLDER_RE.test(parts[0]) && IMAGE_NAME_RE.test(parts[1])
+  }
+  return false
+}
 
 export function toIso(value) {
   if (value == null || value === '') return null
@@ -62,7 +77,7 @@ export function sanitizeGoal(input, ts) {
 
   const imagenKey =
     input.imagenKey == null || input.imagenKey === '' ? null : String(input.imagenKey)
-  if (imagenKey && !KEY_RE.test(imagenKey)) return fail('bad_image_key')
+  if (imagenKey && !isValidImageKey(imagenKey)) return fail('bad_image_key')
 
   const ultimoMovimiento =
     input.ultimoMovimiento == null || input.ultimoMovimiento === ''

@@ -1,6 +1,8 @@
 export const MAX_EDGE = 2048
 export const WEBP_QUALITY = 0.9
 export const OUTPUT_MAX_BYTES = 2.5 * 1024 * 1024
+// Carpeta del bucket R2 donde viven las fotos (marcador `img-goals/`).
+export const IMAGE_PREFIX = 'img-goals/'
 
 // Cada paso intenta WebP; si no cabe, baja calidad o tamaño. Si el navegador
 // no sabe codificar WebP (Safari/iOS), se cae a JPEG y ahí termina.
@@ -24,8 +26,11 @@ export function scaledSize(width, height, maxEdge = MAX_EDGE) {
 }
 
 export function newImageKey() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
-  return `img-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+  const name =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `img-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+  return IMAGE_PREFIX + name
 }
 
 export async function dataUrlToBlob(dataUrl) {

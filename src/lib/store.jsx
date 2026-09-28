@@ -4,7 +4,7 @@ import { chainFrom, pastISO, todayISO, yesterdayISO } from './dates.js'
 import { esHijoDe, reconcileComposites } from './composite.js'
 import { StoreContext } from './storeContext.js'
 import { imageUrl } from './api.js'
-import { deleteBlob, getBlob, queueOps, saveBlob } from './idb.js'
+import { deleteBlob, getBlob, queueImageDelete, queueOps, saveBlob } from './idb.js'
 import { encodeImage, newImageKey } from './image.js'
 import { mergeCollection } from './lww.js'
 import { migrateLegacyImages } from './migrate.js'
@@ -338,7 +338,15 @@ export function StoreProvider({ children }) {
 
   // --- imágenes: blob en IndexedDB + URL de objeto para pintar ---
 
-  const dropImage = useCallback((key) => {
+  const dropImage = useCallback(async (key) => {
+    if (!key) return
+    // Si la foto nunca llegó al servidor no hay nada que borrar allá.
+    let uploaded = false
+    try {
+      uploaded = (await getBlob(key))?.uploaded === true
+    } catch {
+      uploaded = false
+    }
     setImageUrls((current) => {
       if (!(key in current)) return current
       const url = current[key]
@@ -347,7 +355,14 @@ export function StoreProvider({ children }) {
       delete next[key]
       return next
     })
-    deleteBlob(key).catch(() => {})
+    await deleteBlob(key).catch(() => {})
+    if (!uploaded) return
+    try {
+      await queueImageDelete(key)
+    } catch {
+      return
+    }
+    await refreshPending().catch(() => {})
   }, [])
 
   const storeImage = useCallback(async (file) => {

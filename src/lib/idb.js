@@ -203,3 +203,29 @@ export async function setMeta(name, value) {
 export function isMemoryOnly() {
   return memoryOnly
 }
+
+// --- cola de objetos de imágenes que hay que borrar en R2 ---
+// Se guarda en `meta` (no abre una tienda nueva: evita subir la versión de la BD).
+
+const KEY_IMAGE_DELETES = 'pendingImageDeletes'
+
+export async function queueImageDelete(key) {
+  if (!key) return 0
+  const list = await readImageDeletes()
+  if (list.includes(key)) return 0
+  await setMeta(KEY_IMAGE_DELETES, [...list, key])
+  return 1
+}
+
+export async function readImageDeletes() {
+  const list = await getMeta(KEY_IMAGE_DELETES, [])
+  return Array.isArray(list) ? list.filter((item) => typeof item === 'string') : []
+}
+
+export async function removeImageDelete(key) {
+  const list = await readImageDeletes()
+  const next = list.filter((item) => item !== key)
+  if (next.length === list.length) return false
+  await setMeta(KEY_IMAGE_DELETES, next)
+  return true
+}

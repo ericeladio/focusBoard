@@ -1,15 +1,18 @@
-import { readBody } from '../../_lib/body.js'
-import { db, ensureUser } from '../../_lib/db.js'
-import { MAX_IMAGE_BYTES } from '../../_lib/config.js'
-import { deleteObject, getObject, putObject } from '../../_lib/r2.js'
-import { requireSession } from '../../_lib/session.js'
+import { readBody } from '../_lib/body.js'
+import { db, ensureUser, rows } from '../_lib/db.js'
+import { MAX_IMAGE_BYTES } from '../_lib/config.js'
+import { deleteObject, getObject, putObject } from '../_lib/r2.js'
+import { requireSession } from '../_lib/session.js'
+import { isValidImageKey } from '../_lib/validate.js'
 
-const KEY_RE = /^[A-Za-z0-9_-]{4,64}$/
 const ALLOWED_TYPES = ['image/webp', 'image/jpeg', 'image/png']
 
+// Ruta catch-all: la clave puede traer una carpeta (`img-goals/<uuid>`), así que
+// el parámetro llega como array de segmentos.
 function keyOf(req) {
   const value = req.query?.key
-  return typeof value === 'string' && KEY_RE.test(value) ? value : null
+  const key = Array.isArray(value) ? value.join('/') : value
+  return isValidImageKey(key) ? key : null
 }
 
 async function getHandler(req, res, key) {
@@ -50,13 +53,19 @@ async function putHandler(req, res, userId, key) {
   return res.status(200).json({ key, bytes: body.length, contentType })
 }
 
-async function deleteHandler(req, res, userId, key) {
+async function deleteHandler(res, userId, key) {
   const sql = db()
-  const referenced = await sql.query(
-    `select count(*)::int as total from goals where user_id = $1 and imagen_key = $2`,
-    [userId, key],
+  // Solo cuentan las metas vivas: una borrada (deleted_at) ya no usa la foto.
+  // Si no, ninguna imagen se limpiaría jamás: la fila del objetivo sobrevive
+  // al borrado lógico con su imagen_key intacta.
+  const referenced = rows(
+    await sql.query(
+      `select count(*)::int as total from goals
+        where user_id = $1 and imagen_key = $2 and deleted_at is null`,
+      [userId, key],
+    ),
   )
-  const total = Number(referenced?.[0]?.total ?? 0)
+  const total = Number(referenced[0]?.total ?? 0)
   if (total > 0) return res.status(409).json({ error: 'image_in_use' })
 
   await deleteObject(key)
@@ -79,7 +88,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') return await getHandler(req, res, key)
     if (req.method === 'PUT') return await putHandler(req, res, userId, key)
-    return await deleteHandler(req, res, userId, key)
+    return await deleteHandler(res, userId, key)
   } catch (error) {
     if (error?.message === 'image_too_large') {
       return res.status(413).json({ error: 'image_too_large' })

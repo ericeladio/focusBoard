@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
 
-const { scaledSize, newImageKey, dataUrlToBlob, MAX_EDGE, WEBP_QUALITY } = await import(
-  '../src/lib/image.js'
-)
+const { scaledSize, newImageKey, dataUrlToBlob, MAX_EDGE, WEBP_QUALITY, IMAGE_PREFIX } =
+  await import('../src/lib/image.js')
+const { isValidImageKey } = await import('../api/_lib/validate.js')
+const { imageUrl } = await import('../src/lib/api.js')
 
 // scaledSize: nunca amplía y recorta el lado más largo a MAX_EDGE
 {
@@ -38,16 +39,27 @@ const { scaledSize, newImageKey, dataUrlToBlob, MAX_EDGE, WEBP_QUALITY } = await
   assert.equal(WEBP_QUALITY, 0.9)
 }
 
-// newImageKey: válido para el proxy (/api/images/[key]) y único
+// newImageKey: vive en la carpeta del bucket y pasa el validador del proxy
 {
-  const KEY_RE = /^[A-Za-z0-9_-]{4,64}$/
   const keys = new Set()
   for (let i = 0; i < 200; i += 1) {
     const key = newImageKey()
-    assert.match(key, KEY_RE, `clave ${key} pasa el validador del proxy`)
+    assert.ok(key.startsWith(IMAGE_PREFIX), `clave ${key} va dentro de ${IMAGE_PREFIX}`)
+    assert.equal(isValidImageKey(key), true, `clave ${key} pasa el validador del proxy`)
     keys.add(key)
   }
   assert.equal(keys.size, 200, 'las claves no se repiten')
+}
+
+// la URL se arma por segmento: la barra de la carpeta no se escapa a %2F
+{
+  assert.equal(imageUrl('img-goals/abc-123'), '/api/images/img-goals/abc-123')
+  assert.equal(imageUrl('abc-123'), '/api/images/abc-123')
+  assert.equal(
+    imageUrl('img goals/abc 123'),
+    '/api/images/img%20goals/abc%20123',
+    'espacios escapados, barra intacta',
+  )
 }
 
 // dataUrlToBlob: base64 → bytes correctos
