@@ -1,27 +1,42 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { goalSchema, issuesToFieldErrors, MAX_FOCUS } from '../lib/schemas.js'
+import {
+  goalSchema,
+  goalUpdateSchema,
+  issuesToFieldErrors,
+  MAX_FOCUS,
+} from '../lib/schemas.js'
 import { useStore } from '../lib/storeContext.js'
 
 const EMPTY = { nombre: '', tipoId: '', seguimiento: 'percent' }
 
-function GoalForm({ open, onClose, onManageTypes }) {
-  const { types, addGoal, focusCount, wallFull } = useStore()
+function GoalForm({ open, onClose, onManageTypes, editing = null }) {
+  const { types, addGoal, updateGoal, focusCount, wallFull } = useStore()
   const dialogRef = useRef(null)
-  const [values, setValues] = useState(EMPTY)
+  const [values, setValues] = useState(() =>
+    editing
+      ? {
+          nombre: editing.nombre,
+          tipoId: editing.tipoId,
+          seguimiento: editing.seguimiento,
+        }
+      : EMPTY,
+  )
   const [file, setFile] = useState(null)
   const [errors, setErrors] = useState({})
   const [banner, setBanner] = useState(null)
   const [saving, setSaving] = useState(false)
 
-  const preview = useMemo(
+  const fileUrl = useMemo(
     () => (file ? URL.createObjectURL(file) : null),
     [file],
   )
 
   useEffect(() => {
-    if (!preview) return
-    return () => URL.revokeObjectURL(preview)
-  }, [preview])
+    if (!fileUrl) return
+    return () => URL.revokeObjectURL(fileUrl)
+  }, [fileUrl])
+
+  const preview = fileUrl ?? editing?.imagen ?? null
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -56,7 +71,8 @@ function GoalForm({ open, onClose, onManageTypes }) {
 
   async function submit(event) {
     event.preventDefault()
-    const result = goalSchema.safeParse({ ...values, imagen: file })
+    const schema = editing ? goalUpdateSchema : goalSchema
+    const result = schema.safeParse({ ...values, imagen: file })
     if (!result.success) {
       setErrors(issuesToFieldErrors(result.error))
       return
@@ -64,7 +80,11 @@ function GoalForm({ open, onClose, onManageTypes }) {
     setErrors({})
     setSaving(true)
     try {
-      await addGoal(result.data, result.data.imagen)
+      if (editing) {
+        await updateGoal(editing.id, result.data, result.data.imagen)
+      } else {
+        await addGoal(result.data, result.data.imagen)
+      }
       close()
     } catch {
       setBanner('No se pudo guardar la imagen. Prueba con una más ligera.')
@@ -78,9 +98,11 @@ function GoalForm({ open, onClose, onManageTypes }) {
         <button type="button" className="sheet__close" onClick={close} aria-label="Cerrar">
           ×
         </button>
-        <h2 className="sheet__title">Nuevo objetivo</h2>
+        <h2 className="sheet__title">
+          {editing ? 'Editar objetivo' : 'Nuevo objetivo'}
+        </h2>
 
-        {wallFull && (
+        {wallFull && !editing && (
           <p className="sheet__banner">
             El muro está lleno ({focusCount}/{MAX_FOCUS}): quedará en el pool.
           </p>
@@ -150,6 +172,9 @@ function GoalForm({ open, onClose, onManageTypes }) {
               aria-invalid={Boolean(errors.imagen)}
             />
           </div>
+          {editing && !file && (
+            <p className="field__hint">Se conserva la imagen actual.</p>
+          )}
           {errors.imagen && <p className="field__error">{errors.imagen}</p>}
         </div>
 

@@ -1,5 +1,5 @@
 import { useStore } from '../lib/storeContext.js'
-import { todayISO } from '../lib/dates.js'
+import { markedToday, streakOf } from '../lib/dates.js'
 
 const TILTS = ['-4deg', '3deg', '-2deg', '4.5deg', '-3.5deg', '2deg', '-5deg']
 
@@ -8,6 +8,7 @@ function GoalCard({ goal, index = 0, variant = 'wall' }) {
     types,
     setPercent,
     markToday,
+    unmarkToday,
     placeInWall,
     removeFromWall,
     removeGoal,
@@ -17,7 +18,8 @@ function GoalCard({ goal, index = 0, variant = 'wall' }) {
   const type = types.find((item) => item.id === goal.tipoId)
   const tilt = TILTS[index % TILTS.length]
   const pinClass = index % 2 === 0 ? 'frame--pin' : 'frame--tape'
-  const markedToday = goal.ultimoMarca === todayISO()
+  const isMarked = markedToday(goal.marcas)
+  const streak = streakOf(goal.marcas)
 
   function confirmRemove() {
     if (window.confirm(`¿Borrar "${goal.nombre}"?`)) removeGoal(goal.id)
@@ -53,14 +55,13 @@ function GoalCard({ goal, index = 0, variant = 'wall' }) {
           <div className="goal__track">
             <button
               type="button"
-              className="btn btn--ink"
-              onClick={() => markToday(goal.id)}
-              disabled={markedToday}
+              className={isMarked ? 'btn btn--ink is-active' : 'btn btn--ink'}
+              onClick={() => (isMarked ? unmarkToday(goal.id) : markToday(goal.id))}
             >
-              {markedToday ? 'Marcado hoy' : 'Hoy'}
+              {isMarked ? 'Deshacer hoy' : 'Hoy'}
             </button>
             <span className="goal__value">
-              {goal.racha} {goal.racha === 1 ? 'día' : 'días'}
+              {streak} {streak === 1 ? 'día' : 'días'}
             </span>
           </div>
         )}

@@ -113,7 +113,9 @@ sistema. El cuerpo nunca baja de 0.95rem.
 Grilla auto-fit `minmax(13.5rem, 1fr)` sobre contenedor de `70rem`, ítems
 centrados. Rotaciones de -5deg a +5deg por elemento. En móvil apila en una
 columna con las mismas rotaciones. Separación generosa entre filas: cada elemento
-es un objeto, no una celda.
+es un objeto, no una celda. El pool rompe la grilla a propósito: lista vertical
+de filas ancho completo (escaneable cuando hay muchos), que en móvil pasa a dos
+bloques por fila.
 
 ## Elevation & Depth
 
@@ -136,8 +138,16 @@ rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 **Post-it** — papel sólido, misma elevación y hover que el resto.
 
 **Goal card** — polaroid con foto 4:5, etiqueta de tipo en `label`, nombre en
-`hand-small` y su seguimiento: slider con lectura en `handwriting` o botón
-`btn--ink` "Hoy" + contador de racha. Acciones fantasma debajo de una línea fina.
+`hand-small` y su seguimiento: slider con lectura en `handwriting` o el toggle
+`Hoy` / `Deshacer hoy` (`btn--ink`, estado `is-active`) + contador de racha.
+La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
+pinta 0 sola. Acciones fantasma debajo de una línea fina.
+
+**Goal row** — fila de papel del pool: miniatura 4:5, tipo y nombre, seguimiento
+solo lectura (barra fina de tinta + `%` o días) y acciones fantasma (Editar,
+Poner/Quitar del muro, Borrar). Doble clic en la fila abre el form con los datos
+cargados. Hover: sube 2px con la misma sombra, a media suavidad. Orden: los más
+recientes primero (`createdAt`).
 
 **Botón-polaroid** — el "Añadir" del muro: marco con foto punteada y `+` dibujado
 en CSS; deshabilitado con pie "Muro lleno" a 7/7.

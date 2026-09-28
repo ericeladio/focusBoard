@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { MAX_FOCUS } from './schemas.js'
-import { todayISO, yesterdayISO } from './dates.js'
+import { chainFrom, pastISO, todayISO, yesterdayISO } from './dates.js'
 import { StoreContext } from './storeContext.js'
 
 const KEY_TYPES = 'fb.types'
@@ -18,8 +18,8 @@ const SEED_GOALS = [
     imagen: LOKI,
     seguimiento: 'percent',
     valor: 35,
-    racha: 0,
-    ultimoMarca: null,
+    marcas: [],
+    createdAt: 1,
     enMuro: true,
   },
   {
@@ -29,11 +29,29 @@ const SEED_GOALS = [
     imagen: LOKI,
     seguimiento: 'streak',
     valor: 0,
-    racha: 4,
-    ultimoMarca: null,
+    marcas: [pastISO(4), pastISO(3), pastISO(2), pastISO(1)],
+    createdAt: 2,
     enMuro: true,
   },
 ]
+
+function normalizeGoal(goal, index = 0) {
+  if (!goal || typeof goal !== 'object') return goal
+  const rest = { ...goal }
+  if (typeof rest.createdAt !== 'number') rest.createdAt = index
+  const legacyRacha = rest.racha
+  const legacyMarca = rest.ultimoMarca
+  delete rest.racha
+  delete rest.ultimoMarca
+  if (Array.isArray(goal.marcas)) {
+    const last = goal.marcas[goal.marcas.length - 1]
+    const live = last === todayISO() || last === yesterdayISO()
+    return { ...rest, marcas: live ? goal.marcas : [] }
+  }
+  const marcas =
+    goal.seguimiento === 'streak' ? chainFrom(legacyRacha, legacyMarca) : []
+  return { ...rest, marcas }
+}
 
 function read(key, fallback) {
   try {
@@ -65,7 +83,9 @@ function fileToDataURL(file) {
 
 export function StoreProvider({ children }) {
   const [types, setTypes] = useState(() => read(KEY_TYPES, SEED_TYPES))
-  const [goals, setGoals] = useState(() => read(KEY_GOALS, SEED_GOALS))
+  const [goals, setGoals] = useState(() =>
+    read(KEY_GOALS, SEED_GOALS).map((goal, index) => normalizeGoal(goal, index)),
+  )
 
   useEffect(() => write(KEY_TYPES, types), [types])
   useEffect(() => write(KEY_GOALS, goals), [goals])
@@ -108,14 +128,30 @@ export function StoreProvider({ children }) {
           imagen,
           seguimiento: values.seguimiento,
           valor: 0,
-          racha: 0,
-          ultimoMarca: null,
+          marcas: [],
+          createdAt: Date.now(),
           enMuro: current.filter((goal) => goal.enMuro).length < MAX_FOCUS,
         },
       ])
     },
     [],
   )
+
+  const updateGoal = useCallback(async (id, values, file) => {
+    const imagen = file ? await fileToDataURL(file) : null
+    setGoals((current) =>
+      current.map((goal) => {
+        if (goal.id !== id) return goal
+        return {
+          ...goal,
+          nombre: values.nombre,
+          tipoId: values.tipoId,
+          seguimiento: values.seguimiento,
+          ...(imagen ? { imagen } : {}),
+        }
+      }),
+    )
+  }, [])
 
   const placeInWall = useCallback((id) => {
     setGoals((current) => {
@@ -149,10 +185,23 @@ export function StoreProvider({ children }) {
     setGoals((current) =>
       current.map((goal) => {
         if (goal.id !== id || goal.seguimiento !== 'streak') return goal
-        const today = todayISO()
-        if (goal.ultimoMarca === today) return goal
-        const racha = goal.ultimoMarca === yesterdayISO() ? goal.racha + 1 : 1
-        return { ...goal, racha, ultimoMarca: today }
+        const last = goal.marcas[goal.marcas.length - 1]
+        if (last === todayISO()) return goal
+        if (last === yesterdayISO()) {
+          return { ...goal, marcas: [...goal.marcas, todayISO()] }
+        }
+        return { ...goal, marcas: [todayISO()] }
+      }),
+    )
+  }, [])
+
+  const unmarkToday = useCallback((id) => {
+    setGoals((current) =>
+      current.map((goal) => {
+        if (goal.id !== id || goal.seguimiento !== 'streak') return goal
+        const last = goal.marcas[goal.marcas.length - 1]
+        if (last !== todayISO()) return goal
+        return { ...goal, marcas: goal.marcas.slice(0, -1) }
       }),
     )
   }, [])
@@ -165,11 +214,13 @@ export function StoreProvider({ children }) {
     addType,
     removeType,
     addGoal,
+    updateGoal,
     placeInWall,
     removeFromWall,
     removeGoal,
     setPercent,
     markToday,
+    unmarkToday,
   }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

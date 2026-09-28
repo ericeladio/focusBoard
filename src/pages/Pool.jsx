@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../lib/storeContext.js'
-import GoalCard from '../components/GoalCard.jsx'
+import GoalRow from '../components/GoalRow.jsx'
 import GoalForm from '../components/GoalForm.jsx'
 import GoalTypeForm from '../components/GoalTypeForm.jsx'
 import { MAX_FOCUS } from '../lib/schemas.js'
@@ -13,9 +13,27 @@ function Pool() {
   const [filter, setFilter] = useState('all')
   const [addOpen, setAddOpen] = useState(false)
   const [typesOpen, setTypesOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
 
-  const shown = goals.filter((goal) => filter === 'all' || goal.tipoId === filter)
+  const shown = goals
+    .filter((goal) => filter === 'all' || goal.tipoId === filter)
+    .sort((a, b) => b.createdAt - a.createdAt)
   const enMuro = goals.filter((goal) => goal.enMuro).length
+
+  function openNew() {
+    setEditing(null)
+    setAddOpen(true)
+  }
+
+  function openEdit(goal) {
+    setEditing(goal)
+    setAddOpen(true)
+  }
+
+  function closeForm() {
+    setAddOpen(false)
+    setEditing(null)
+  }
 
   return (
     <main className="wall">
@@ -60,11 +78,7 @@ function Pool() {
             <button type="button" className="btn" onClick={() => setTypesOpen(true)}>
               Tipos
             </button>
-            <button
-              type="button"
-              className="btn btn--ink"
-              onClick={() => setAddOpen(true)}
-            >
+            <button type="button" className="btn btn--ink" onClick={openNew}>
               Nuevo objetivo
             </button>
           </div>
@@ -77,17 +91,22 @@ function Pool() {
               : 'Nada con ese tipo todavía.'}
           </p>
         ) : (
-          <div className="wall__grid">
-            {shown.map((goal, index) => (
-              <GoalCard key={goal.id} goal={goal} index={index} variant="pool" />
-            ))}
-          </div>
+          <>
+            <ul className="pool__list">
+              {shown.map((goal) => (
+                <GoalRow key={goal.id} goal={goal} onEdit={openEdit} />
+              ))}
+            </ul>
+            <p className="pool__hint">Doble clic en una fila para editarla.</p>
+          </>
         )}
       </div>
 
       <GoalForm
+        key={editing?.id ?? 'new'}
         open={addOpen}
-        onClose={() => setAddOpen(false)}
+        editing={editing}
+        onClose={closeForm}
         onManageTypes={() => setTypesOpen(true)}
       />
       <GoalTypeForm open={typesOpen} onClose={() => setTypesOpen(false)} />

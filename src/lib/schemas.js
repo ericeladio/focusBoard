@@ -11,23 +11,38 @@ export const goalTypeSchema = z.object({
     .max(24, 'Máximo 24 caracteres'),
 })
 
+const nombreField = z
+  .string()
+  .trim()
+  .min(3, 'Mínimo 3 caracteres')
+  .max(60, 'Máximo 60 caracteres')
+
+const tipoField = z.string().min(1, 'Elige un tipo')
+
+const seguimientoField = z.enum(['percent', 'streak'], {
+  message: 'Elige cómo darle seguimiento',
+})
+
+const imagenFile = z
+  .instanceof(File, { message: 'Añade una imagen' })
+  .refine((file) => file.type.startsWith('image/'), 'Debe ser un archivo de imagen')
+  .refine(
+    (file) => file.size <= MAX_IMAGE_BYTES,
+    'Máximo 1.5 MB',
+  )
+
 export const goalSchema = z.object({
-  nombre: z
-    .string()
-    .trim()
-    .min(3, 'Mínimo 3 caracteres')
-    .max(60, 'Máximo 60 caracteres'),
-  tipoId: z.string().min(1, 'Elige un tipo'),
-  imagen: z
-    .instanceof(File, { message: 'Añade una imagen' })
-    .refine((file) => file.type.startsWith('image/'), 'Debe ser un archivo de imagen')
-    .refine(
-      (file) => file.size <= MAX_IMAGE_BYTES,
-      'Máximo 1.5 MB',
-    ),
-  seguimiento: z.enum(['percent', 'streak'], {
-    message: 'Elige cómo darle seguimiento',
-  }),
+  nombre: nombreField,
+  tipoId: tipoField,
+  imagen: imagenFile,
+  seguimiento: seguimientoField,
+})
+
+export const goalUpdateSchema = z.object({
+  nombre: nombreField,
+  tipoId: tipoField,
+  imagen: imagenFile.optional(),
+  seguimiento: seguimientoField,
 })
 
 export function issuesToFieldErrors(error) {
