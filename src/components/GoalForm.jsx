@@ -66,6 +66,8 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
     setErrors((current) => ({ ...current, [key]: undefined }))
   }
 
+  const padreActual = editing ? padreDe(editing.id, goals) : null
+
   const candidatos = goals.filter(
     (goal) => goal.id !== editing?.id && goal.seguimiento !== 'compuesta',
   )
@@ -244,7 +246,11 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
             </label>
             <label
               className={
-                values.seguimiento === 'compuesta' ? 'opt is-active' : 'opt'
+                values.seguimiento === 'compuesta'
+                  ? 'opt is-active'
+                  : padreActual
+                    ? 'opt is-blocked'
+                    : 'opt'
               }
             >
               <input
@@ -252,10 +258,15 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                 name="seguimiento"
                 value="compuesta"
                 checked={values.seguimiento === 'compuesta'}
+                disabled={Boolean(padreActual)}
                 onChange={() => update('seguimiento', 'compuesta')}
               />
               <span className="opt__title">Compuesta</span>
-              <span className="opt__hint">Se marca sola si todas sus partes avanzan hoy</span>
+              <span className="opt__hint">
+                {padreActual
+                  ? `Ya es parte de ${padreActual.nombre}`
+                  : 'Se marca sola si todas sus partes avanzan hoy'}
+              </span>
             </label>
           </div>
           {errors.seguimiento && (

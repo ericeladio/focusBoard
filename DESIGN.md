@@ -149,8 +149,8 @@ rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 `Hoy` / `Deshacer hoy` (`btn--ink`, estado `is-active`) + contador de racha.
 La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
 pinta 0 sola. Los objetivos **compuestos** no muestran slider ni `Hoy`: una
-línea de estado `Listo · N días` (tinta) o `Falta M de K · N días` (rojo
-`paper-margin`) sobre chips-cinta de sus partes — fondo `tape`, invertidos a
+línea de estado `Listo · N días` (tinta), `Falta M de K · N días` (rojo
+`paper-margin`) o `Sin partes` sobre chips-cinta de sus partes — fondo `tape`, invertidos a
 tinta cuando esa parte avanza hoy. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
 días sin subir aparece en rojo `paper-margin` "N días sin avance" (reset solo
 cuando el slider sube). Acciones fantasma debajo de una línea fina. En móvil
@@ -198,7 +198,7 @@ tinta; `btn--ghost` subrayado discreto.
 - Do: sombras con offset y blur suave; foto siempre en marco con proporción 4:5.
 - Do: tope de 7 objetivos en el muro; el pool no tiene cota y se filtra por tipo.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
-- Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro.
+- Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos).
 - Don't: gradiente en texto, glassmorphism decorativo, tarjetas redondeadas.
 - Don't: más de 7 en foco; con el muro lleno, el objetivo nuevo va al pool.
 - Don't: anidar compuestas (un solo nivel) ni mostrar las partes como cartas independientes en el muro.

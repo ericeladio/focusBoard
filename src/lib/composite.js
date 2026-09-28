@@ -28,14 +28,14 @@ export function estadoCompuesta(meta, goals, hoy = todayISO()) {
   const partes = (meta.componentes ?? []).map((id) =>
     goals.find((goal) => goal.id === id),
   )
-  const total = partes.length
   const existentes = partes.filter(Boolean)
+  const total = existentes.length
   const cumplidas = existentes.filter((goal) => esAvanceHoy(goal, hoy)).length
   return {
     partes,
     total,
     cumplidas,
-    completa: total > 0 && existentes.length === total && cumplidas === total,
+    completa: total > 0 && cumplidas === total,
   }
 }
 

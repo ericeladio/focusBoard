@@ -93,9 +93,17 @@ function fileToDataURL(file) {
 
 export function StoreProvider({ children }) {
   const [types, setTypes] = useState(() => read(KEY_TYPES, SEED_TYPES))
-  const [goals, setGoals] = useState(() =>
-    read(KEY_GOALS, SEED_GOALS).map((goal, index) => normalizeGoal(goal, index)),
-  )
+  const [goals, setGoals] = useState(() => {
+    const loaded = read(KEY_GOALS, SEED_GOALS).map((goal, index) =>
+      normalizeGoal(goal, index),
+    )
+    const ids = new Set(loaded.map((goal) => goal.id))
+    return loaded.map((goal) =>
+      goal.componentes.some((id) => !ids.has(id))
+        ? { ...goal, componentes: goal.componentes.filter((id) => ids.has(id)) }
+        : goal,
+    )
+  })
 
   // Día en curso: se re-evalúa cada minuto para re-marcar (o desmarcar)
   // las compuestas cuando cruza la medianoche con la app abierta.
@@ -207,7 +215,15 @@ export function StoreProvider({ children }) {
   }, [])
 
   const removeGoal = useCallback((id) => {
-    setGoals((current) => current.filter((goal) => goal.id !== id))
+    setGoals((current) =>
+      current
+        .filter((goal) => goal.id !== id)
+        .map((goal) =>
+          goal.componentes.includes(id)
+            ? { ...goal, componentes: goal.componentes.filter((item) => item !== id) }
+            : goal,
+        ),
+    )
   }, [])
 
   const setPercent = useCallback((id, valor) => {

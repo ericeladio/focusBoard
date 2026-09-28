@@ -20,7 +20,9 @@ function GoalStatus({ goal }) {
         >
           {marcado
             ? `Listo · ${streak} ${unit}`
-            : `Falta ${total - cumplidas} de ${total} · ${streak} ${unit}`}
+            : total === 0
+              ? 'Sin partes'
+              : `Falta ${total - cumplidas} de ${total} · ${streak} ${unit}`}
         </span>
       </div>
 

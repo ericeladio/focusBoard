@@ -446,6 +446,11 @@
   background: var(--sticky);
 }
 
+.opt.is-blocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .opt__title {
   font-weight: 600;
   font-size: 0.95rem;
