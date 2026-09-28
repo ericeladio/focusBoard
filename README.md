@@ -68,8 +68,11 @@ en el proceso. Funciona igual que producción, sin Vercel CLI.
   Conflictos: gana el sello más nuevo, a empate gana el borrado.
 - **Imágenes**: WebP máx. 2048px calidad .9 (JPEG en Safari), blob local +
   `PUT /api/images/<clave>` a R2 privado dentro de la carpeta `img-goals/` (la
-  clave es `img-goals/<uuid>`: una sola barra, sin puntos ni espacios). Se sirven
-  por el proxy con caché `CacheFirst` y, sin red, el SW reencola la subida
+  clave es `img-goals/<uuid>`: una sola barra, sin puntos ni espacios). En la URL
+  esa barra se sustituye por `~` (`/api/images/img-goals~<uuid>`): Vercel solo
+  enruta **un** segmento bajo `/api/images/` y con dos la función ni se invoca.
+  El códec vive en `shared/imageKey.js`, compartido por cliente y servidor. Se
+  sirven por el proxy con caché `CacheFirst` y, sin red, el SW reencola la subida
   (Background Sync). Al reemplazar o borrar una foto se envía `DELETE` al volver
   la red; si otra meta la sigue usando, el servidor responde 409 y se conserva.
 

@@ -93,9 +93,9 @@ test('fetchSync con since construye la query codificada', async () => {
   assert.equal(requested, '/api/sync?since=2026-09-28T00%3A00%3A00.000Z')
 })
 
-test('las claves con carpeta se codifican por segmento, no la barra', () => {
-  assert.equal(api.imageUrl('img-goals/abc-123'), '/api/images/img-goals/abc-123')
-  assert.equal(api.imageUrl('img-goals/con espacio'), '/api/images/img-goals/con%20espacio')
+test('la clave viaja en un solo segmento: la carpeta se separa con ~', () => {
+  assert.equal(api.imageUrl('img-goals/abc-123'), '/api/images/img-goals~abc-123')
+  assert.equal(api.imageUrl('img-goals/con espacio'), '/api/images/img-goals~con%20espacio')
   assert.equal(api.imageUrl('suelta'), '/api/images/suelta')
 })
 

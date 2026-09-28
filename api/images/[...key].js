@@ -3,16 +3,55 @@ import { db, ensureUser, rows } from '../_lib/db.js'
 import { MAX_IMAGE_BYTES } from '../_lib/config.js'
 import { deleteObject, getObject, putObject } from '../_lib/r2.js'
 import { requireSession } from '../_lib/session.js'
+import { imageKeyFromSegment } from '../../shared/imageKey.js'
 import { isValidImageKey } from '../_lib/validate.js'
 
 const ALLOWED_TYPES = ['image/webp', 'image/jpeg', 'image/png']
+const IMAGES_PREFIX = '/api/images/'
 
-// Ruta catch-all: la clave puede traer una carpeta (`img-goals/<uuid>`), así que
-// el parámetro llega como array de segmentos.
+// La clave se lee de la ruta: en Vercel `req.query.key` llega vacío para esta
+// función, así que confiar en él dejaba todas las imágenes en 400 `bad_key`.
+// La ruta sí está en `req.url` (aquí como en el puente local); la query se
+// queda como respaldo para las llamadas directas de los tests, que no llevan url.
+function keyFromUrl(url) {
+  if (!url) return null
+  let pathname
+  try {
+    pathname = new URL(String(url), 'http://local').pathname
+  } catch {
+    return null
+  }
+  const at = pathname.indexOf(IMAGES_PREFIX)
+  if (at === -1) return null
+  const rest = pathname.slice(at + IMAGES_PREFIX.length)
+  if (!rest) return null
+  try {
+    return rest
+      .split('/')
+      .filter(Boolean)
+      .map((segment) => decodeURIComponent(segment))
+      .join('/')
+  } catch {
+    return null
+  }
+}
+
+function keyFromQuery(value) {
+  if (Array.isArray(value)) return value.map(String).join('/') || null
+  if (typeof value === 'string') return value || null
+  if (value && typeof value === 'object') {
+    return Object.values(value).map(String).join('/') || null
+  }
+  return null
+}
+
 function keyOf(req) {
-  const value = req.query?.key
-  const key = Array.isArray(value) ? value.join('/') : value
-  return isValidImageKey(key) ? key : null
+  for (const raw of [keyFromUrl(req?.url), keyFromQuery(req?.query?.key)]) {
+    if (!raw) continue
+    const key = imageKeyFromSegment(raw)
+    if (isValidImageKey(key)) return key
+  }
+  return null
 }
 
 async function getHandler(req, res, key) {

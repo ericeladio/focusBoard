@@ -162,41 +162,56 @@ assert.equal(res.body.note?.texto, NOTA_SMOKE, 'la nota volvió')
 paso(6, 'pull → meta/tipo/nota correctos y LWW respetado ✓')
 
 // --- imágenes ---
+// Las peticiones se montan como en producción: la clave viaja en la ruta, en un
+// solo segmento (`img-goals~<id>`). `req.query.key` no llega en Vercel, así que
+// solo lo usamos en el caso de respaldo.
+const { imageKeyToSegment } = await import(P('shared/imageKey.js'))
+const urlOf = (key) => `/api/images/${encodeURIComponent(imageKeyToSegment(key))}`
+const urlRaw = (key) => `/api/images/${encodeURIComponent(key)}`
+
 const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
   'base64',
 )
-const queryKey = IMG_KEY.split('/')
 res = await call(images, {
   method: 'PUT',
   headers: { cookie, 'content-type': 'image/png' },
   body: png,
-  query: { key: queryKey },
+  url: urlOf(IMG_KEY),
 })
 assert.equal(res.code, 200, 'PUT → 200')
 assert.equal(res.body.bytes, png.length, 'bytes guardados')
-paso(7, `PUT /api/images/${IMG_KEY} → 200 (${png.length} bytes) ✓`)
+paso(7, `PUT ${urlOf(IMG_KEY)} → 200 (${png.length} bytes) ✓`)
 
-res = await call(images, { method: 'GET', headers: { cookie }, query: { key: queryKey } })
+res = await call(images, { method: 'GET', headers: { cookie }, url: urlOf(IMG_KEY) })
 assert.equal(res.code, 200, 'GET → 200')
 assert.equal(res.headers['Content-Type'], 'image/png', 'content-type correcto')
 assert.match(res.headers['Cache-Control'], /immutable/, 'cache inmutable')
 assert.equal(Buffer.compare(res.ended, png), 0, 'bytes idénticos')
-paso(8, 'GET → 200, bytes idénticos, Cache-Control immutable ✓')
+paso(8, 'GET por ruta (un segmento) → 200, bytes idénticos ✓')
+
+// Respaldo: sin `url`, la clave solo en la query (así se llamaba antes).
+res = await call(images, {
+  method: 'GET',
+  headers: { cookie },
+  query: { key: IMG_KEY.split('/') },
+})
+assert.equal(res.code, 200, 'GET por query → 200')
+paso(9, 'respaldo por req.query.key (sin url) → 200 ✓')
 
 for (const [malo, motivo] of [
-  [['a', 'b', 'c'], 'dos barras'],
+  ['a/b/c', 'dos barras'],
   ['img goals/x', 'espacio'],
-  [['..', 'secretos'], 'traversal'],
+  ['../secretos', 'traversal'],
 ]) {
-  res = await call(images, { method: 'GET', headers: { cookie }, query: { key: malo } })
+  res = await call(images, { method: 'GET', headers: { cookie }, url: urlRaw(malo) })
   assert.equal(res.code, 400, `${motivo} → 400`)
 }
-paso(9, 'claves inválidas (a/b/c, espacio, ..) → 400 ✓')
+paso(10, 'claves inválidas (a/b/c, espacio, ..) → 400 ✓')
 
-res = await call(images, { method: 'DELETE', headers: { cookie }, query: { key: queryKey } })
+res = await call(images, { method: 'DELETE', headers: { cookie }, url: urlOf(IMG_KEY) })
 assert.equal(res.code, 409, 'imagen en uso → 409')
-paso(10, 'DELETE con la meta usándola → 409 image_in_use ✓')
+paso(11, 'DELETE con la meta usándola → 409 image_in_use ✓')
 
 res = await call(sync, {
   method: 'POST',
@@ -204,17 +219,17 @@ res = await call(sync, {
   body: { ops: [{ seq: 0, entity: 'goal', op: 'del', id: 'smoke-meta', ts: new Date().toISOString() }] },
 })
 assert.equal(res.code, 200, 'del de la meta → 200')
-res = await call(images, { method: 'DELETE', headers: { cookie }, query: { key: queryKey } })
+res = await call(images, { method: 'DELETE', headers: { cookie }, url: urlOf(IMG_KEY) })
 assert.equal(res.code, 200, 'DELETE → 200')
-res = await call(images, { method: 'GET', headers: { cookie }, query: { key: queryKey } })
+res = await call(images, { method: 'GET', headers: { cookie }, url: urlOf(IMG_KEY) })
 assert.equal(res.code, 404, 'objeto borrado → 404')
-paso(11, 'borré la meta → el objeto sale de R2 ✓')
+paso(12, 'borré la meta → el objeto sale de R2 ✓')
 
 // --- logout y limpieza ---
 res = await call(logout, { method: 'POST' })
 assert.equal(res.code, 200)
 assert.match(res.headers['Set-Cookie'], /^fb_session=;/, 'cookie borrada')
-paso(12, 'logout → cookie expirada ✓')
+paso(13, 'logout → cookie expirada ✓')
 
 const sql = db()
 // La BD puede tener datos reales: solo borramos lo que creó este smoke.

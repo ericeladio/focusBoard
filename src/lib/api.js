@@ -1,3 +1,5 @@
+import { imageKeyToSegment } from '../../shared/imageKey.js'
+
 export class AuthError extends Error {
   constructor() {
     super('sin_sesion')
@@ -76,11 +78,11 @@ export function pushSync(ops) {
   })
 }
 
-// La clave puede traer una carpeta (`img-goals/<uuid>`): se codifica por
-// segmento para que la barra siga separando el ruteo. Si se usara
-// encodeURIComponent de todo, la `/` pasaría a `%2F` y no llegaría a la función.
+// La clave viaja en UN solo segmento (`img-goals~<uuid>`): Vercel no enruta
+// dos barras bajo /api/images/ (devuelve 404 y la función ni se invoca). El
+// `~` la sustituye en la URL y la restaura el servidor; la clave real no cambia.
 function imagePath(key) {
-  return `/api/images/${String(key).split('/').map(encodeURIComponent).join('/')}`
+  return `/api/images/${encodeURIComponent(imageKeyToSegment(key))}`
 }
 
 export function putImage(key, blob) {

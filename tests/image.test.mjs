@@ -51,15 +51,35 @@ const { imageUrl } = await import('../src/lib/api.js')
   assert.equal(keys.size, 200, 'las claves no se repiten')
 }
 
-// la URL se arma por segmento: la barra de la carpeta no se escapa a %2F
+// la URL se arma en un solo segmento: Vercel no enruta dos barras en /api/images/
 {
-  assert.equal(imageUrl('img-goals/abc-123'), '/api/images/img-goals/abc-123')
+  assert.equal(imageUrl('img-goals/abc-123'), '/api/images/img-goals~abc-123')
   assert.equal(imageUrl('abc-123'), '/api/images/abc-123')
   assert.equal(
     imageUrl('img goals/abc 123'),
-    '/api/images/img%20goals/abc%20123',
-    'espacios escapados, barra intacta',
+    '/api/images/img%20goals~abc%20123',
+    'espacios escapados, carpeta en un segmento',
   )
+}
+
+// el códec ida y vuelta devuelve la clave original y nunca se sale de un segmento
+{
+  const { imageKeyToSegment, imageKeyFromSegment } = await import('../shared/imageKey.js')
+  const uuid = '21c8a39a-3eb5-4281-8cc4-7852d91d9648'
+  for (const key of [`img-goals/${uuid}`, uuid, 'fotos/a1b2c3d4-e5f6-7890']) {
+    const segment = imageKeyToSegment(key)
+    assert.equal(segment.includes('/'), false, `${key} viaja sin barra`)
+    assert.equal(imageKeyFromSegment(segment), key, `${key} vuelve igual`)
+    assert.ok(isValidImageKey(key), `${key} sigue siendo válida`)
+    assert.equal(
+      imageUrl(key),
+      `/api/images/${encodeURIComponent(segment)}`,
+      'la URL usa el mismo códec que el servidor',
+    )
+  }
+  assert.equal(imageKeyToSegment(uuid), uuid, 'las claves planas no se tocan')
+  assert.equal(imageKeyFromSegment('sin-sep'), 'sin-sep', 'sin ~ no hay nada que sustituir')
+  assert.equal(imageKeyFromSegment('a~b~c'), 'a/b~c', 'solo la primera barra')
 }
 
 // dataUrlToBlob: base64 → bytes correctos

@@ -220,8 +220,11 @@ sello más nuevo; a igual sello, el borrado.
 Imágenes: WebP a máx. 2048px y calidad .9 (JPEG como plan B en Safari), blob en
 IndexedDB (`imagenKey`) subido a un bucket R2 privado por `PUT /api/images/<clave>`
 dentro de la carpeta `img-goals/` (clave `img-goals/<uuid>`, una sola barra, sin
-puntos ni espacios) y servido por el mismo proxy con caché `CacheFirst`; sin red,
-el service worker reencola la subida (Background Sync). Al borrar una foto (o
+puntos ni espacios) y servido por el mismo proxy con caché `CacheFirst`; en la URL
+la barra se codifica como `~` porque Vercel solo enruta un segmento bajo
+`/api/images/` (con dos, la petición cae en un 404 que el cliente lee como HTML
+y termina en el badge "Sin servidor"); sin red, el service worker reencola la
+subida (Background Sync). Al borrar una foto (o
 reemplazarla) el objeto se pide con `DELETE` al volver la red y el servidor lo
 borra solo si ninguna meta viva lo referencia. El tablero abre sin red: el shell va en
 precache y los datos ya están locales; el badge dice cuánto falta por subir.

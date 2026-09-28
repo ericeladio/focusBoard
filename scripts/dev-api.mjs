@@ -40,25 +40,17 @@ function loadEnvFile(root) {
   return true
 }
 
-// La ruta viene como `/api/images/img-goals/<uuid>`; los segmentos se
-// decodifican por separado para no convertir la `/` en `%2F`.
-function keySegments(rest) {
-  return rest.split('/').map((segment) => {
-    try {
-      return decodeURIComponent(segment)
-    } catch {
-      return segment
-    }
-  })
-}
-
 function resolveRoute(pathname) {
   if (EXACT.has(pathname)) return { handler: EXACT.get(pathname), query: {} }
   if (pathname.startsWith(IMAGES_PREFIX)) {
-    return {
-      handler: IMAGES_HANDLER,
-      query: { key: keySegments(pathname.slice(IMAGES_PREFIX.length)) },
-    }
+    // Vercel enruta un **un** segmento bajo /api/images/: con dos barras la
+    // plataforma devuelve 404 y la función ni se invoca, y `req.query.key`
+    // llega vacío. Reproducimos esas dos condiciones aquí; antes el puente
+    // fabricaba ese query a mano y el fallo (todo el rato en producción) no
+    // aparecía ni en `npm run dev` ni en el smoke.
+    const rest = pathname.slice(IMAGES_PREFIX.length)
+    if (!rest || rest.includes('/')) return { handler: null, query: {} }
+    return { handler: IMAGES_HANDLER, query: {} }
   }
   if (pathname.startsWith('/api/')) return { handler: null, query: {} }
   return null
