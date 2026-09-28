@@ -1,0 +1,49 @@
+{
+  "narrative": {
+    "northStar": "El muro de la intención: un tablero físico crema con polaroids sujetos con cinta, chinches y clip — el artefacto manda, la interfaz desaparece.",
+    "rules": [
+      "Siete elementos en el muro; el número es la intención.",
+      "Rotaciones entre -5deg y +5deg; enderezar solo en hover.",
+      "Elevación por sombra con offset y blur, nunca por borde.",
+      "Tipografía manuscrita (Caveat self-host) solo para letras escritas a mano."
+    ],
+    "dos": [
+      "Sombra doble suave para elevar objetos de papel.",
+      "Tinta teñida desde el color del papel para texto secundario.",
+      "Hover que levanta y endereza el elemento."
+    ],
+    "donts": [
+      "Gradiente en texto y glassmorphism decorativo.",
+      "Tarjetas redondeadas: el papel no tiene radio.",
+      "Añadir octavos elementos al muro."
+    ]
+  },
+  "shadows": {
+    "rest": "0 14px 30px -12px rgba(74,68,50,.45), 0 3px 8px rgba(74,68,50,.14)",
+    "hover": "0 30px 50px -18px rgba(74,68,50,.5), 0 6px 14px rgba(74,68,50,.16)",
+    "note-rest": "0 14px 30px -12px rgba(74,68,50,.4), 0 3px 8px rgba(74,68,50,.12)"
+  },
+  "motion": {
+    "hover": {
+      "duration": "320ms",
+      "easing": "cubic-bezier(0.22, 1, 0.36, 1)",
+      "effect": "rotate(0deg) translateY(-8px) scale(1.03)"
+    }
+  },
+  "breakpoints": {
+    "single-column": "26rem",
+    "container-max": "70rem",
+    "grid-min": "13.5rem"
+  },
+  "components": {
+    "polaroid": {
+      "css": ".frame { position: relative; padding: .7rem .7rem 2.5rem; background: #fbf9f3; box-shadow: var(--shadow-rest); transform: rotate(var(--tilt)); } .frame__photo { aspect-ratio: 4/5; background: #23211d; overflow: hidden; }"
+    },
+    "pin": {
+      "css": ".frame--pin::before { content: ''; position: absolute; top: -9px; left: 50%; width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 32% 30%, #fdfdff, #b9bec9 48%, #6f7684); box-shadow: 0 4px 6px rgba(0,0,0,.32); transform: translateX(-50%); }"
+    },
+    "tape": {
+      "css": ".frame--tape::before { content: ''; position: absolute; top: -13px; left: 50%; width: 104px; height: 30px; background: rgba(176,182,156,.78); box-shadow: 0 2px 4px rgba(0,0,0,.12); transform: translateX(-50%) rotate(-4deg); }"
+    }
+  }
+}

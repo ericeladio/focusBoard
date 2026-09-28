@@ -1,5 +1,7 @@
+import VisionBoard from './VisionBoard.jsx'
+
 function App() {
-  return <h1>Hola</h1>
+  return <VisionBoard />
 }
 
 export default App
