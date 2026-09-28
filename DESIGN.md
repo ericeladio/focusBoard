@@ -159,6 +159,13 @@ recientes primero (`createdAt`).
 **Botón-polaroid** — el "Añadir" del muro: marco con foto punteada y `+` dibujado
 en CSS; deshabilitado con pie "Muro lleno" a 7/7.
 
+**Iconos PWA** — la misma polaroid (pared sage, cinta salvia, foto 4:5 oscura,
+pie de dos trazos, inclinación -4°) generada en píxeles por
+`scripts/gen-icons.mjs` (`npm run icons`): PNG 192/512, maskable con la pieza
+dentro de la zona segura, apple-touch 180 y `favicon.svg` equivalente a mano.
+Manifest y theme/background color salen de tokens (`wall`); SW con precache y
+fallback a `index.html` para que el muro abra sin red.
+
 **Tape-link** — navegación como etiqueta de cinta salvia en Caveat.
 
 **Chip** — filtro del pool como etiqueta de cinta: borde tinta, activa con fondo

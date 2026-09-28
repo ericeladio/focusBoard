@@ -6,7 +6,7 @@ import { StoreContext } from './storeContext.js'
 const KEY_TYPES = 'fb.types'
 const KEY_GOALS = 'fb.goals'
 
-const LOKI = '/Matantei%20Loki%20Ragnarok.jpg'
+const LOKI = '/seed-photo.png'
 
 const SEED_TYPES = [{ id: 'seed-personal', nombre: 'Personal' }]
 
