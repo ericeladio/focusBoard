@@ -231,8 +231,60 @@
 .wall__nav {
   display: flex;
   justify-content: center;
+  align-items: baseline;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+/* --- estado de sincronización (cinta de estado) --- */
+
+.syncbadge {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: var(--tape);
+  border: 0;
+  border-radius: 0;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transform: rotate(1.5deg);
+  box-shadow: 0 3px 8px rgba(74, 68, 50, 0.18);
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.syncbadge:hover:not(:disabled) {
+  color: var(--ink);
+  background: rgba(176, 182, 156, 0.95);
+  transform: rotate(0deg) translateY(-2px);
+}
+
+.syncbadge.is-locked {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.syncbadge.is-pending {
+  color: var(--ink);
+}
+
+.syncbadge.is-busy {
+  cursor: default;
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .syncbadge {
+    transition: none;
+  }
+  .syncbadge:hover:not(:disabled) {
+    transform: none;
+  }
 }
 
 /* --- filtro del pool (select de papel) --- */

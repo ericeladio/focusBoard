@@ -4,6 +4,7 @@ import { useStore } from '../lib/storeContext.js'
 import GoalRow from '../components/GoalRow.jsx'
 import GoalForm from '../components/GoalForm.jsx'
 import GoalTypeForm from '../components/GoalTypeForm.jsx'
+import SyncBadge from '../components/SyncBadge.jsx'
 import { MAX_FOCUS } from '../lib/schemas.js'
 import '../VisionBoard.css'
 import '../components/Goals.css'
@@ -49,6 +50,7 @@ function Pool() {
           <Link to="/" className="tape-link">
             Volver al muro
           </Link>
+          <SyncBadge />
         </nav>
       </header>
 

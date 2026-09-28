@@ -1,7 +1,8 @@
 import { z } from 'zod'
 
 export const MAX_FOCUS = 7
-export const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024
+// Límite del archivo que el usuario elige (se convierte/comprime después).
+export const MAX_INPUT_BYTES = 10 * 1024 * 1024
 
 export const goalTypeSchema = z.object({
   nombre: z
@@ -60,8 +61,8 @@ const imagenFile = z
   .instanceof(File, { message: 'Añade una imagen' })
   .refine((file) => file.type.startsWith('image/'), 'Debe ser un archivo de imagen')
   .refine(
-    (file) => file.size <= MAX_IMAGE_BYTES,
-    'Máximo 1.5 MB',
+    (file) => file.size <= MAX_INPUT_BYTES,
+    'Máximo 10 MB',
   )
 
 export const goalSchema = z

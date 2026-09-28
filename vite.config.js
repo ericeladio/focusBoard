@@ -34,6 +34,29 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: 'index.html',
         runtimeCaching: [
+          // Fotos del muro servidas por el proxy de R2 (claves sin extensión).
+          {
+            urlPattern: /\/api\/images\//,
+            method: 'GET',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'goal-images',
+              expiration: { maxEntries: 200, maxAgeSeconds: 90 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          // Subidas de foto: si no hay red, la cola del SW las reenvía al volver.
+          {
+            urlPattern: /\/api\/images\//,
+            method: 'PUT',
+            handler: 'NetworkOnly',
+            options: {
+              backgroundSync: {
+                name: 'fb-image-uploads',
+                options: { maxRetentionTime: 24 * 60 },
+              },
+            },
+          },
           {
             urlPattern: /\.(?:png|jpe?g|svg|gif|webp)$/,
             handler: 'CacheFirst',

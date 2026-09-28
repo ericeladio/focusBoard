@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { StoreProvider } from './lib/store.jsx'
+import LoginSheet from './components/LoginSheet.jsx'
 import VisionBoard from './VisionBoard.jsx'
 import Pool from './pages/Pool.jsx'
 
@@ -13,6 +14,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      <LoginSheet />
     </StoreProvider>
   )
 }

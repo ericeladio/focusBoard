@@ -8,6 +8,7 @@ import { MAX_FOCUS } from './lib/schemas.js'
 import GoalCard from './components/GoalCard.jsx'
 import GoalForm from './components/GoalForm.jsx'
 import GoalTypeForm from './components/GoalTypeForm.jsx'
+import SyncBadge from './components/SyncBadge.jsx'
 
 function VisionBoard() {
   const { goals, wallFull, note, setNote } = useStore()
@@ -50,6 +51,7 @@ function VisionBoard() {
           <Link to="/pool" className="tape-link">
             Pool de objetivos
           </Link>
+          <SyncBadge />
         </nav>
       </header>
 
