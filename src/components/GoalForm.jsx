@@ -242,6 +242,21 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
               <span className="opt__title">Racha de días</span>
               <span className="opt__hint">Sumas un día cuando lo cumples</span>
             </label>
+            <label
+              className={
+                values.seguimiento === 'compuesta' ? 'opt is-active' : 'opt'
+              }
+            >
+              <input
+                type="radio"
+                name="seguimiento"
+                value="compuesta"
+                checked={values.seguimiento === 'compuesta'}
+                onChange={() => update('seguimiento', 'compuesta')}
+              />
+              <span className="opt__title">Compuesta</span>
+              <span className="opt__hint">Se marca sola si todas sus partes avanzan hoy</span>
+            </label>
           </div>
           {errors.seguimiento && (
             <p className="field__error">{errors.seguimiento}</p>

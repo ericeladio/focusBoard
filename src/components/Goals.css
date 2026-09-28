@@ -415,11 +415,11 @@
   color: var(--ink-soft);
 }
 
-/* último campo: las dos formas de seguimiento */
+/* último campo: las tres formas de seguimiento */
 
 .option-cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
   gap: 0.6rem;
 }
 
