@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MAX_FOCUS } from './schemas.js'
 import { chainFrom, pastISO, todayISO, yesterdayISO } from './dates.js'
-import { esHijoDe, reconcileComposites } from './composite.js'
+import {
+  compuestoId,
+  ensureCompuestoType,
+  esHijoDe,
+  reconcileComposites,
+} from './composite.js'
 import { StoreContext } from './storeContext.js'
 import { imageUrl } from './api.js'
 import { deleteBlob, getBlob, queueImageDelete, queueOps, saveBlob } from './idb.js'
@@ -22,8 +27,6 @@ import {
 
 const KEY_TYPES = 'fb.types'
 const KEY_NOTE = 'fb.note'
-const ID_COMPUESTO = 'tipo-compuesto'
-const NOMBRE_COMPUESTO = 'Compuesto'
 const KEY_GOALS = 'fb.goals'
 const KEY_TOMBSTONES = 'fb.tombstones'
 // Las lápidas viven lo justo para tapar borrados pendientes (el outbox los
@@ -66,20 +69,6 @@ const SEED_GOALS = [
 // Se decide una sola vez al cargar: si ya se sincronizó antes no volvemos a
 // sembrar el tablero (un reinstalado debe recuperar lo del servidor).
 const SYNCED_AT_START = hasSynced()
-
-function esCompuestoType(type) {
-  return type.id === ID_COMPUESTO || type.nombre.toLowerCase() === 'compuesto'
-}
-
-function compuestoId(types) {
-  return types.find(esCompuestoType)?.id ?? ID_COMPUESTO
-}
-
-function ensureCompuestoType(types) {
-  return types.some(esCompuestoType)
-    ? types
-    : [...types, { id: ID_COMPUESTO, nombre: NOMBRE_COMPUESTO }]
-}
 
 function normalizeGoal(goal, index = 0) {
   if (!goal || typeof goal !== 'object') return goal

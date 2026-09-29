@@ -1,5 +1,45 @@
 import { shiftISO, todayISO } from './dates.js'
-import { totalPaginasDe } from './lectura.js'
+import { esNombreLectura, totalPaginasDe } from './lectura.js'
+
+// El tipo Compuesto es el que define los objetivos compuestos: id y nombre
+// viven aquí para que el store y el formulario hablen de lo mismo.
+export const ID_COMPUESTO = 'tipo-compuesto'
+export const NOMBRE_COMPUESTO = 'Compuesto'
+
+export function esCompuestoType(type) {
+  return type.id === ID_COMPUESTO || type.nombre.toLowerCase() === 'compuesto'
+}
+
+export function compuestoId(types) {
+  return types.find(esCompuestoType)?.id ?? ID_COMPUESTO
+}
+
+export function ensureCompuestoType(types) {
+  return types.some(esCompuestoType)
+    ? types
+    : [...types, { id: ID_COMPUESTO, nombre: NOMBRE_COMPUESTO }]
+}
+
+// ¿El objetivo es del tipo Compuesto? (si el tipo ni siquiera está en la
+// lista, manda el id: es el que usa el store al guardar una compuesta)
+export function esTipoCompuesto(tipoId, types) {
+  const tipo = types.find((type) => type.id === tipoId)
+  return tipo ? esCompuestoType(tipo) : tipoId === ID_COMPUESTO
+}
+
+// El tipo manda el modo de seguimiento: `Compuesto` → compuesta y `lectura`
+// → páginas. Lo demás vuelve a porcentaje si lo que había no puede ser
+// (una compuesta con otro tipo, o páginas con un tipo normal); sin tipo
+// todavía, manda lo elegido en el formulario.
+export function modoPorTipo(seguimiento, tipoId, types) {
+  if (esTipoCompuesto(tipoId, types)) return 'compuesta'
+  const tipo = types.find((type) => type.id === tipoId)
+  if (esNombreLectura(tipo?.nombre)) return 'paginas'
+  if (!tipoId) return seguimiento
+  return seguimiento === 'compuesta' || seguimiento === 'paginas'
+    ? 'percent'
+    : seguimiento
+}
 
 export function esHijoDe(id, goals) {
   return goals.some(

@@ -5,6 +5,11 @@ import {
   reconcileComposites,
   esHijoDe,
   padreDe,
+  esTipoCompuesto,
+  modoPorTipo,
+  compuestoId,
+  ensureCompuestoType,
+  esCompuestoType,
 } from '../src/lib/composite.js'
 
 const HOY = '2026-09-28'
@@ -128,5 +133,50 @@ assert.equal(
   assert.equal(padreDe('p1', goals).id, 'c1')
   assert.equal(padreDe('c1', goals), undefined)
 }
+
+// --- el tipo manda el modo de seguimiento ---
+const TIPOS = [
+  { id: 'tipo-compuesto', nombre: 'Compuesto' },
+  { id: 't-lectura', nombre: 'Lectura' },
+  { id: 't-personal', nombre: 'Personal' },
+]
+
+assert.equal(esTipoCompuesto('tipo-compuesto', TIPOS), true, 'Compuesto por id')
+assert.equal(esTipoCompuesto('t-personal', TIPOS), false, 'otro tipo no es compuesto')
+assert.equal(esTipoCompuesto('nadie-lo-usa', TIPOS), false, 'tipo ausente → no compuesto')
+assert.equal(esTipoCompuesto('', TIPOS), false)
+
+assert.equal(modoPorTipo('percent', 'tipo-compuesto', TIPOS), 'compuesta', 'Compuesto → compuesta')
+assert.equal(modoPorTipo('percent', 't-personal', TIPOS), 'percent')
+assert.equal(modoPorTipo('streak', 't-personal', TIPOS), 'streak')
+assert.equal(
+  modoPorTipo('compuesta', 't-personal', TIPOS),
+  'percent',
+  'una compuesta con otro tipo vuelve a porcentaje',
+)
+assert.equal(
+  modoPorTipo('paginas', 't-personal', TIPOS),
+  'percent',
+  'páginas con un tipo normal vuelve a porcentaje',
+)
+assert.equal(modoPorTipo('percent', 't-lectura', TIPOS), 'paginas', 'tipo lectura → páginas')
+assert.equal(
+  modoPorTipo('compuesta', '', TIPOS),
+  'compuesta',
+  'sin tipo todavía manda lo elegido en el formulario',
+)
+assert.equal(modoPorTipo('percent', '', TIPOS), 'percent')
+
+// --- el tipo Compuesto está en la lista o se crea igual ---
+assert.equal(compuestoId(TIPOS), 'tipo-compuesto', 'encuentra el tipo existente')
+assert.equal(compuestoId([]), 'tipo-compuesto', 'si falta, devuelve el id conocido')
+assert.equal(ensureCompuestoType(TIPOS), TIPOS, 'ya existe → mismo array')
+assert.deepEqual(ensureCompuestoType([{ id: 'x', nombre: 'Personal' }])[1], {
+  id: 'tipo-compuesto',
+  nombre: 'Compuesto',
+})
+assert.equal(esCompuestoType({ id: 'x', nombre: 'Compuesto' }), true)
+assert.equal(esCompuestoType({ id: 'x', nombre: 'compuesto' }), true, 'sin importar mayúsculas')
+assert.equal(esCompuestoType({ id: 'x', nombre: 'Personal' }), false)
 
 console.log('composite.test: OK')

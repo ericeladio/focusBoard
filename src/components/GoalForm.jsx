@@ -7,8 +7,8 @@ import {
 } from '../lib/schemas.js'
 import { useStore } from '../lib/storeContext.js'
 import { markedToday, streakOf } from '../lib/dates.js'
-import { padreDe } from '../lib/composite.js'
-import { PAGINAS_POR_DEFECTO, esNombreLectura, etiquetaDe } from '../lib/lectura.js'
+import { esTipoCompuesto, modoPorTipo, padreDe } from '../lib/composite.js'
+import { PAGINAS_POR_DEFECTO, etiquetaDe } from '../lib/lectura.js'
 
 const EMPTY = {
   nombre: '',
@@ -16,15 +16,6 @@ const EMPTY = {
   seguimiento: 'percent',
   totalPaginas: PAGINAS_POR_DEFECTO,
   componentes: [],
-}
-
-// El tipo `lectura` decide el modo: si es de lectura se sigue por páginas y
-// no se ofrecen las otras opciones; si sale de ahí, vuelve a porcentaje.
-function forzarModo(seguimiento, tipoId, types) {
-  if (seguimiento === 'compuesta') return seguimiento
-  const tipo = types.find((type) => type.id === tipoId)
-  if (esNombreLectura(tipo?.nombre)) return 'paginas'
-  return seguimiento === 'paginas' ? 'percent' : seguimiento
 }
 
 function GoalForm({ open, onClose, onManageTypes, editing = null }) {
@@ -35,7 +26,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
       ? {
           nombre: editing.nombre,
           tipoId: editing.tipoId,
-          seguimiento: forzarModo(editing.seguimiento, editing.tipoId, types),
+          seguimiento: modoPorTipo(editing.seguimiento, editing.tipoId, types),
           totalPaginas: editing.totalPaginas ?? PAGINAS_POR_DEFECTO,
           componentes: editing.componentes ?? [],
         }
@@ -102,22 +93,13 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
       : `${streakOf(candidato.marcas)} días`
   }
 
-  function setSeguimiento(next) {
-    update('seguimiento', next)
-    if (next === 'compuesta') return
-    const actual = types.find((type) => type.id === values.tipoId)
-    if (actual && actual.nombre.toLowerCase() === 'compuesto') {
-      setValues((current) => ({ ...current, tipoId: '' }))
-    }
-  }
-
   // El tipo manda el modo: al cambiar de tipo se recalcula en el momento,
   // no en un efecto (evita renders en cascada y el modo queda consistente).
   function cambiarTipo(nextTipoId) {
     setValues((current) => ({
       ...current,
       tipoId: nextTipoId,
-      seguimiento: forzarModo(current.seguimiento, nextTipoId, types),
+      seguimiento: modoPorTipo(current.seguimiento, nextTipoId, types),
     }))
     setErrors((current) => ({ ...current, tipoId: undefined }))
   }
@@ -202,33 +184,31 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           )}
         </div>
 
-        {values.seguimiento !== 'compuesta' && (
-          <div className="field">
-            <label className="field__label" htmlFor="goal-tipo">
-              Tipo de objetivo
-            </label>
-            <select
-              id="goal-tipo"
-              className="input"
-              value={values.tipoId}
-              onChange={(event) => cambiarTipo(event.target.value)}
-              aria-invalid={Boolean(errors.tipoId)}
-            >
-              <option value="">
-                {types.length === 0 ? 'Sin tipos creados' : 'Elige un tipo'}
+        <div className="field">
+          <label className="field__label" htmlFor="goal-tipo">
+            Tipo de objetivo
+          </label>
+          <select
+            id="goal-tipo"
+            className="input"
+            value={values.tipoId}
+            onChange={(event) => cambiarTipo(event.target.value)}
+            aria-invalid={Boolean(errors.tipoId)}
+          >
+            <option value="">
+              {types.length === 0 ? 'Sin tipos creados' : 'Elige un tipo'}
+            </option>
+            {types.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.nombre}
               </option>
-              {types.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.nombre}
-                </option>
-              ))}
-            </select>
-            <button type="button" className="linkish" onClick={onManageTypes}>
-              {types.length === 0 ? 'Crear el primer tipo' : 'Gestionar tipos'}
-            </button>
-            {errors.tipoId && <p className="field__error">{errors.tipoId}</p>}
-          </div>
-        )}
+            ))}
+          </select>
+          <button type="button" className="linkish" onClick={onManageTypes}>
+            {types.length === 0 ? 'Crear el primer tipo' : 'Gestionar tipos'}
+          </button>
+          {errors.tipoId && <p className="field__error">{errors.tipoId}</p>}
+        </div>
 
         <div className="field">
           <span className="field__label">Imagen</span>
@@ -253,7 +233,9 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           {errors.imagen && <p className="field__error">{errors.imagen}</p>}
         </div>
 
-        {values.seguimiento !== 'paginas' && (
+        {/* El tipo `Compuesto` no despliega seguimiento: ya es compuesta por
+            definición y aquí solo se eligen sus partes. */}
+        {!esTipoCompuesto(values.tipoId, types) && values.seguimiento !== 'paginas' && (
         <fieldset className="field">
           <legend>Seguimiento</legend>
           <div className="option-cards">
@@ -267,7 +249,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                 name="seguimiento"
                 value="percent"
                 checked={values.seguimiento === 'percent'}
-                onChange={() => setSeguimiento('percent')}
+                onChange={() => update('seguimiento', 'percent')}
               />
               <span className="opt__title">Porcentaje</span>
               <span className="opt__hint">Mueves el avance de 0 a 100%</span>
@@ -280,7 +262,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                 name="seguimiento"
                 value="streak"
                 checked={values.seguimiento === 'streak'}
-                onChange={() => setSeguimiento('streak')}
+                onChange={() => update('seguimiento', 'streak')}
               />
               <span className="opt__title">Racha de días</span>
               <span className="opt__hint">Sumas un día cuando lo cumples</span>
