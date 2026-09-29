@@ -55,8 +55,10 @@ pool) lo archiva con fecha de hoy, lo saca del muro y del pool y lo pasa a
 `/cumplidos`. En porcentaje/páginas aparece solo al 100%, en rachas SIEMPRE
 y en compuestas cuando está lista hoy. La racha acepta meta de días
 (`metaDias` 1..3650) o `Indefinido`: con meta se lee "4 de 30 días" y, al
-llegar, el botón se enciende — pero nunca archiva solo. Una parte archivada
-cuenta como avance y no desmonta su compuesta. `Reabrir` (desde
+llegar, el botón se enciende — pero nunca archiva sola. Terminar una parte
+la saca de su compuesta sola (y si era la última, la compuesta se termina
+también); una parte todavía enganchada a mano cuenta como avance y no
+desmonta nada. `Reabrir` (desde
 `/cumplidos`) solo limpia la fecha: el objetivo vuelve al pool.
 
 DUEÑO "solo aquí": lo creado antes de entrar con passcode (o sin cuenta) se

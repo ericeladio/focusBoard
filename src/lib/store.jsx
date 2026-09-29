@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MAX_FOCUS } from './schemas.js'
 import { chainFrom, pastISO, todayISO, yesterdayISO } from './dates.js'
 import {
+  alTerminar,
   compuestoId,
   ensureCompuestoType,
   esHijoDe,
@@ -734,16 +735,12 @@ export function StoreProvider({ children }) {
   )
 
   // Terminar: archiva el objetivo (fecha de hoy) y lo saca del muro. Vive
-  // entonces en /cumplidos; no se borra ni pierde su avance.
+  // entonces en /cumplidos; no se borra ni pierde su avance. Si era una parte
+  // de una compuesta, se sale de ella sola (y si era la última, la compuesta
+  // se termina también): la lista solo guarda lo que queda por hacer.
   const finalizarGoal = useCallback(
     (id) => {
-      setGoals((current) =>
-        current.map((goal) =>
-          goal.id !== id || goal.finalizadoEn
-            ? goal
-            : { ...goal, finalizadoEn: todayISO(), enMuro: false },
-        ),
-      )
+      setGoals((current) => alTerminar(current, id))
     },
     [setGoals],
   )

@@ -12,6 +12,7 @@ import {
   esCompuestoType,
   partesVisibles,
   parteHecha,
+  alTerminar,
   PARTES_VISIBLES,
 } from '../src/lib/composite.js'
 
@@ -253,6 +254,75 @@ assert.equal(esCompuestoType({ id: 'x', nombre: 'Personal' }), false)
   assert.equal(parteHecha(pag(1181, 1181, ANTES)), true, 'al tope de páginas')
   assert.equal(parteHecha(pag(468, 1181, ANTES)), false, 'a medias en páginas')
   assert.equal(parteHecha(str([HOY])), false, 'una racha nunca se da por hecha')
+}
+
+// --- alTerminar: la parte terminada se sale sola de su compuesta ---
+{
+  const suelto = { ...pct(40, HOY), id: 'suelto', enMuro: true }
+  const solo = alTerminar([suelto], 'suelto', HOY)
+  assert.equal(solo[0].finalizadoEn, HOY, 'un objetivo simple se archiva hoy')
+  assert.equal(solo[0].enMuro, false, '…y baja del muro')
+
+  const lista = [{ ...pct(100, HOY), id: 'ya', finalizadoEn: HOY }]
+  assert.equal(alTerminar(lista, 'ya', HOY), lista, 'ya terminado → mismo array')
+  assert.equal(alTerminar(lista, 'nadie', HOY), lista, 'id que no existe → mismo array')
+}
+{
+  const padre = { ...comp(['a', 'b', 'c']), finalizadoEn: null }
+  const a = { ...pct(100, HOY), id: 'a', enMuro: false }
+  const b = { ...pct(0, HOY), id: 'b', enMuro: false }
+  const c = { ...pct(0, HOY), id: 'c', enMuro: false }
+  const next = alTerminar([a, b, c, padre], 'a', HOY)
+
+  assert.equal(next[0].finalizadoEn, HOY, 'la parte terminada queda archivada')
+  assert.equal(next[0].enMuro, false, '…y fuera del muro')
+  assert.deepEqual(next[3].componentes, ['b', 'c'], 'se sale de la compuesta')
+  assert.equal(next[3].finalizadoEn, null, 'a la compuesta le quedan partes')
+  assert.equal(
+    estadoCompuesta(next[3], next, HOY).total,
+    2,
+    'el recuento baja solo (no vuelve a contar la archivada)',
+  )
+}
+{
+  // La última parte viva que queda: sin nada que rastrear, la compuesta se
+  // termina también (una compuesta vacía no se puede terminar a mano).
+  const padre = { ...comp(['a']), finalizadoEn: null, enMuro: true }
+  const a = { ...pct(100, HOY), id: 'a', enMuro: false }
+  const next = alTerminar([a, padre], 'a', HOY)
+
+  assert.deepEqual(next[1].componentes, [], 'sin partes')
+  assert.equal(next[1].finalizadoEn, HOY, 'la compuesta se termina sola')
+  assert.equal(next[1].enMuro, false, '…y baja del muro')
+}
+{
+  // Datos viejos: una parte archivada pero todavía enganchada cuenta como
+  // parte, así la compuesta sigue pudiéndose terminar a mano.
+  const padre = { ...comp(['vieja', 'b']), finalizadoEn: null }
+  const vieja = { ...pct(100, HOY), id: 'vieja', finalizadoEn: HOY }
+  const b = { ...pct(0, HOY), id: 'b' }
+  const next = alTerminar([vieja, b, padre], 'b', HOY)
+
+  assert.deepEqual(next[2].componentes, ['vieja'], 'la vieja sigue enganchada')
+  assert.equal(next[2].finalizadoEn, null, 'la compuesta queda para terminar a mano')
+}
+{
+  // El padre ya estaba archivado: la parte se sale, pero su fecha no se toca.
+  const padre = { ...comp(['a']), finalizadoEn: HOY, enMuro: false }
+  const a = { ...pct(0, HOY), id: 'a' }
+  const next = alTerminar([a, padre], 'a', HOY)
+
+  assert.equal(next[1].finalizadoEn, HOY, 'la fecha del padre no cambia')
+  assert.deepEqual(next[1].componentes, [], 'pero la parte sale igual')
+}
+{
+  // Un id fantasma (parte borrada) no cuenta como parte viva que quede.
+  const padre = { ...comp(['borrado', 'b']), finalizadoEn: null }
+  const b = { ...pct(0, HOY), id: 'b' }
+  const next = alTerminar([b, padre], 'b', HOY)
+
+  assert.deepEqual(next[1].componentes, [], 'el fantasma fuera')
+  assert.equal(next[1].finalizadoEn, HOY, 'la última parte real se lleva a la compuesta')
 }
 
 console.log('composite.test: OK')

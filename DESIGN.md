@@ -156,7 +156,11 @@ indefinida: se lee `4 de 30 días` (o `4 días` sin meta) y, al llegar, el
 contador añade "Meta de días cumplida" en tinta. El botón **Terminado**
 archiva el objetivo (fecha `finalizadoEn`: sale del muro y del pool y pasa a
 `/cumplidos`): en rachas está siempre visible, en porcentaje/páginas solo al
-llegar al 100% y en compuestas cuando está lista hoy. Con meta de días el
+llegar al 100% y en compuestas cuando está lista hoy. Si era **parte de una
+compuesta, se sale de ella sola** (la lista solo guarda lo que falta por
+hacer) y, si era la última que quedaba, la compuesta se termina también: sin
+partes no hay nada que rastrear y una compuesta vacía no se puede terminar a
+mano. Con meta de días el
 botón se enciende (`btn--ink`) al llegar, pero nunca archiva solo: el gesto
 siempre es del usuario. Los objetivos **compuestos** no muestran slider ni `Hoy`: una
 línea de estado `Listo · N días` (tinta), `Falta M de K · N días` (rojo
@@ -178,8 +182,9 @@ seguimiento y acciones — mismo contenido que la tarjeta en escritorio, vía
 el objetivo cargado (un clic, sin pasar por el pool). La foto adopta su
 proporción natural para que el mosaico no
 tenga huecos. Las partes de una compuesta no aparecen en el muro (se editan en
-el pool y dentro de la modal, donde la lista enseña esas mismas 3), y su
-chip-cinta es lo que se ve en celular.
+el pool y dentro de la modal, donde la lista enseña esas mismas 3) y, cuando
+una se termina, desaparece de ahí sola; su chip-cinta es lo que se ve en
+celular.
 
 **Goal row** — fila de papel del pool: miniatura 4:5, tipo y nombre, seguimiento
 solo lectura (barra fina de tinta + `%`, días con su meta, o `Listo hoy · N días`
@@ -344,6 +349,7 @@ se activa solo en `serve` y escribe en los datos reales, igual que producción.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
 - Do: la barra de avance se confirma con `Guardar` (borrador + `Deshacer`): un roce accidental no escribe el porcentaje.
 - Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos). En pantalla solo caben 3: la tarjeta y la modal enseñan las 3 primeras pendientes y, al completar una, la ventana pasa a las que faltan.
+- Do: terminar una parte la saca de su compuesta sola; si era la última que quedaba, la compuesta se termina también.
 - Do: `Terminado` siempre disponible en rachas; la meta de días solo resalta el botón, nunca archiva sola.
 - Don't: gradiente en texto, glassmorphism decorativo, tarjetas redondeadas.
 - Don't: más de 7 en foco; con el muro lleno, el objetivo nuevo va al pool.

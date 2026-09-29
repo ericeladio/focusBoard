@@ -62,7 +62,8 @@ export function padreDe(id, goals) {
 //   streak   → lo marcaste hoy
 //   compuesta → no aplica (un solo nivel, no se anidan)
 export function esAvanceHoy(goal, hoy = todayISO()) {
-  // Terminado = cumplido: una parte archivada nunca desmonta su compuesta.
+  // Terminado = cumplido: una parte que todavía está enganchada (datos de
+  // antes, o de otro dispositivo) cuenta como avance y no desmonta nada.
   if (goal.finalizadoEn) return true
   if (goal.seguimiento === 'percent') {
     return goal.valor >= 100 || goal.ultimoMovimiento === hoy
@@ -116,6 +117,43 @@ export function partesVisibles(partes, limite = PARTES_VISIBLES) {
   const faltan = conDatos.filter((parte) => !parteHecha(parte))
   const hechas = conDatos.filter(parteHecha)
   return [...faltan, ...hechas].slice(0, limite)
+}
+
+// Terminar una parte: se archiva ella (fecha de hoy, fuera del muro) y se
+// sale sola de su compuesta —la lista solo guarda lo que queda por hacer—.
+// Si era la última parte que le quedaba, la compuesta se termina también:
+// sin partes que rastrear ya no hay nada que seguir, y una compuesta vacía
+// no se puede terminar a mano (`puedeFinalizar` pide la marca del día).
+// Devuelve el mismo array si no había nada que tocar.
+export function alTerminar(goals, id, hoy = todayISO()) {
+  const meta = goals.find((goal) => goal.id === id)
+  if (!meta || meta.finalizadoEn) return goals
+
+  const ids = new Set(goals.map((goal) => goal.id))
+  const padre = goals.find(
+    (goal) => Array.isArray(goal.componentes) && goal.componentes.includes(id),
+  )
+  // Partes enganchadas que siguen ahí tras sacar esta (los ids borrados no
+  // cuentan: se desenganchan al cargar, pero por si acaso).
+  const quedan =
+    padre &&
+    padre.componentes.some((item) => item !== id && ids.has(item))
+
+  return goals.map((goal) => {
+    if (goal.id === id) return { ...goal, finalizadoEn: hoy, enMuro: false }
+    if (padre && goal.id === padre.id) {
+      // La que se termina sale, y de paso los ids de partes ya borradas
+      // (lo mismo que hace la carga al detectarlos).
+      const componentes = goal.componentes.filter(
+        (item) => item !== id && ids.has(item),
+      )
+      if (!quedan && !goal.finalizadoEn) {
+        return { ...goal, componentes, finalizadoEn: hoy, enMuro: false }
+      }
+      return { ...goal, componentes }
+    }
+    return goal
+  })
 }
 
 // Auto-marcado: la compuesta se marca si todas sus partes avanzan hoy,
