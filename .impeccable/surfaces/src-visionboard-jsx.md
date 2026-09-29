@@ -36,7 +36,10 @@ siguen faltando (el recuento "Falta M de K" sigue hablando de todas). En
 Seguimiento no hay ficha "Compuesta": solo porcentaje y racha, y el tipo
 `Compuesto` viaja siempre en el desplegable (se crea al vuelo si no existía);
 elegido él, Seguimiento desaparece y solo se ven sus partes (se sale cambiando
-de tipo). La racha se deriva de la cadena de
+de tipo); con más de 10 candidatos el picker pagina con el mismo `Pager` que
+el pool y trae un buscador por nombre (sin acentos ni mayúsculas, y al
+escribir vuelve a la primera página), con las partes elegidas siempre a la
+vista como chips con `×` para quitarlas. La racha se deriva de la cadena de
 marcas: `Hoy` la extiende, `Deshacer hoy` la revierte, y si se rompe el hilo se
 pinta 0 sola. La nota rayada "TODO" es la única nota decorativa: su lista
 es editable con doble clic y se persiste en localStorage (`fb.note`), acotada a

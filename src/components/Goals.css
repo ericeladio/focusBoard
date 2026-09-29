@@ -974,6 +974,46 @@
   color: var(--paper-margin);
 }
 
+/* Cuando la lista es larga, el picker pagina y trae buscador por nombre:
+   la caja ocupa todo el ancho y las partes elegidas se quedan a la vista
+   como chips (para no perderlas si están en otra página o filtradas). */
+.pick__zone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.pick__search {
+  width: 100%;
+}
+
+.pick__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pick__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--hand);
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--polaroid);
+  border: 1px dashed var(--ink-soft);
+  padding: 0.15rem 0.55rem;
+  cursor: pointer;
+}
+
+.pick__chip:hover {
+  border-color: var(--ink);
+  background: var(--paper-margin);
+}
+
 .row__parent {
   font-size: 0.78rem;
   color: var(--ink-soft);

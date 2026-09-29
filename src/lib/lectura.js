@@ -4,16 +4,9 @@
 // por páginas en lugar de por porcentaje. El dato en bruto sigue siendo
 // `goal.valor` (páginas leídas) y el total vive en `goal.totalPaginas`.
 
-export const PAGINAS_POR_DEFECTO = 200
+import { normaliza } from './texto.js'
 
-function normaliza(texto) {
-  if (typeof texto !== 'string') return ''
-  return texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase()
-}
+export const PAGINAS_POR_DEFECTO = 200
 
 export function esNombreLectura(nombre) {
   return normaliza(nombre) === 'lectura'

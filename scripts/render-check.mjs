@@ -326,6 +326,44 @@ try {
     ['Compuesta'],
   )
 
+  // Con más de 10 candidatos el picker no se despliega entero: entra el
+  // buscador por nombre y el pager del pool, y las partes elegidas quedan
+  // como chips (aunque estén en otra página de la lista).
+  const candidatosExtra = Array.from({ length: 8 }, (_, i) => ({
+    id: `f${i}`,
+    nombre: `Form ${i}`,
+    tipoId: 'seed-personal',
+    imagen: '/seed-photo.png',
+    seguimiento: 'percent',
+    valor: 10,
+    marcas: [],
+    ultimoMovimiento: day(0),
+    createdAt: 900 + i,
+    enMuro: false,
+    finalizadoEn: null,
+    metaDias: null,
+  }))
+  const compuesta = goals.map((goal) =>
+    goal.id === 'g4' ? { ...goal, tipoId: 'tipo-compuesto' } : goal,
+  )
+  kv.set('fb.goals', JSON.stringify([...compuesta, ...candidatosExtra]))
+  check(
+    'form(compuesta con buscador)',
+    renderForm(compuesta.find((goal) => goal.id === 'g4')),
+    [
+      'Partes de la compuesta',
+      'Buscar por nombre',
+      'Mostrando',
+      'Siguiente ›',
+      'aria-current="page"',
+      // las 5 partes elegidas siguen a la vista como chips
+      'aria-label="Quitar Parte uno"',
+    ],
+    // 15 candidatos: la primera página se queda en 10 y "Form 7" vive en la 2
+    ['Form 7'],
+  )
+  kv.set('fb.goals', JSON.stringify(goals))
+
   console.log(fallos ? `\n${fallos} fallo(s)` : '\nrender-check OK')
 } finally {
   await rm(out, { recursive: true, force: true })

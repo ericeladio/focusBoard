@@ -261,7 +261,14 @@ Tipos/Nuevo objetivo: borde tinta, fondo polaroid, esquinas rectas; opciones
 "Todos los tipos" + cada tipo. Los chips de partes (`goal__chip`) siguen siendo
 etiquetas de cinta más pequeñas: `tape` pendiente, fondo tinta cuando avanza hoy. **Sheet** — modal de papel con
 margen rojo, esquinas rectas y sombra alta; `opt` son las fichas de opción
-(porcentaje, racha) y `pick` la lista de partes con checkbox del form.
+(porcentaje, racha) y `pick` la lista de partes con checkbox del form. Con más
+de 10 candidatos `pick` no se despliega entero: entra el buscador por nombre
+(`pick__search`, compara sin acentos ni mayúsculas y vuelve a la primera
+página al escribir) y el mismo `Pager` que el pool (10 en 10, con el rango
+`Mostrando …`); las partes elegidas se quedan a la vista como chips
+(`pick__chip`, con `×` a la derecha para quitarlas) para no perderlas si
+están en otra página o filtradas. Con 10 candidatos o menos todo sigue
+saliendo como antes, sin buscador ni pager.
 Para racha, `opt` también elige la meta de días: `Llegar a N días` (input
 numérico 1..3650) o `Indefinido`, separados del resto por una línea punteada.
 La compuesta no es una ficha de seguimiento: se activa eligiendo el tipo

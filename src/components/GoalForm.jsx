@@ -9,6 +9,9 @@ import { useStore } from '../lib/storeContext.js'
 import { markedToday, streakOf } from '../lib/dates.js'
 import { esTipoCompuesto, ensureCompuestoType, modoPorTipo, padreDe } from '../lib/composite.js'
 import { PAGINAS_POR_DEFECTO, etiquetaDe } from '../lib/lectura.js'
+import { POR_PAGINA } from '../lib/pager.js'
+import { filtraPorNombre } from '../lib/texto.js'
+import Pager from './Pager.jsx'
 
 const EMPTY = {
   nombre: '',
@@ -40,6 +43,8 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
   const [errors, setErrors] = useState({})
   const [banner, setBanner] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [pagina, setPagina] = useState(1)
 
   const fileUrl = useMemo(
     () => (file ? URL.createObjectURL(file) : null),
@@ -66,6 +71,8 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
     setErrors({})
     setBanner(null)
     setSaving(false)
+    setBusqueda('')
+    setPagina(1)
     onClose()
   }
 
@@ -86,6 +93,19 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
   const candidatos = goals.filter(
     (goal) => goal.id !== editing?.id && goal.seguimiento !== 'compuesta',
   )
+
+  // Con más de 10 candidatos la lista no se despliega entera: entra el
+  // buscador y el pager (mismo `Pager` que pool y cumplidos). La búsqueda
+  // filtra por nombre y vuelve siempre a la primera página.
+  const filtrados = filtraPorNombre(candidatos, busqueda)
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA))
+  const paginaActual = Math.min(Math.max(pagina, 1), totalPaginas)
+  const desde = (paginaActual - 1) * POR_PAGINA
+  const visibles = filtrados.slice(desde, desde + POR_PAGINA)
+  const conBuscador = candidatos.length > POR_PAGINA
+  const elegidas = values.componentes
+    .map((id) => goals.find((goal) => goal.id === id))
+    .filter(Boolean)
 
   function usadoPor(candidato) {
     const padre = padreDe(candidato.id, goals)
@@ -390,30 +410,73 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                 Crea primero objetivos simples (porcentaje o racha) para poder componer.
               </p>
             ) : (
-              <div className="pick">
-                {candidatos.map((candidato) => {
-                  const ajeno = usadoPor(candidato)
-                  const checked = values.componentes.includes(candidato.id)
-                  const bloqueado =
-                    Boolean(ajeno) ||
-                    (!checked && values.componentes.length >= MAX_FOCUS)
-                  return (
-                    <label
-                      key={candidato.id}
-                      className={bloqueado ? 'pick__row is-blocked' : 'pick__row'}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={bloqueado}
-                        onChange={() => toggleParte(candidato.id)}
-                      />
-                      <span className="pick__name">{candidato.nombre}</span>
-                      <span className="pick__meta">{estadoDe(candidato)}</span>
-                      {ajeno && <span className="pick__hint">dentro de {ajeno.nombre}</span>}
-                    </label>
-                  )
-                })}
+              <div className="pick__zone">
+                {conBuscador && (
+                  <input
+                    className="input pick__search"
+                    type="search"
+                    placeholder="Buscar por nombre…"
+                    aria-label="Buscar parte por nombre"
+                    value={busqueda}
+                    onChange={(event) => {
+                      setBusqueda(event.target.value)
+                      setPagina(1)
+                    }}
+                  />
+                )}
+                {conBuscador && elegidas.length > 0 && (
+                  <ul className="pick__chips">
+                    {elegidas.map((parte) => (
+                      <li key={parte.id}>
+                        <button
+                          type="button"
+                          className="pick__chip"
+                          aria-label={`Quitar ${parte.nombre}`}
+                          onClick={() => toggleParte(parte.id)}
+                        >
+                          {parte.nombre} <span aria-hidden="true">×</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="pick">
+                  {visibles.map((candidato) => {
+                    const ajeno = usadoPor(candidato)
+                    const checked = values.componentes.includes(candidato.id)
+                    const bloqueado =
+                      Boolean(ajeno) ||
+                      (!checked && values.componentes.length >= MAX_FOCUS)
+                    return (
+                      <label
+                        key={candidato.id}
+                        className={bloqueado ? 'pick__row is-blocked' : 'pick__row'}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={bloqueado}
+                          onChange={() => toggleParte(candidato.id)}
+                        />
+                        <span className="pick__name">{candidato.nombre}</span>
+                        <span className="pick__meta">{estadoDe(candidato)}</span>
+                        {ajeno && <span className="pick__hint">dentro de {ajeno.nombre}</span>}
+                      </label>
+                    )
+                  })}
+                </div>
+                {busqueda.trim() !== '' && visibles.length === 0 && (
+                  <p className="field__hint">Ningún objetivo con «{busqueda}».</p>
+                )}
+                <Pager
+                  desde={desde}
+                  mostrados={visibles.length}
+                  total={filtrados.length}
+                  totalPaginas={totalPaginas}
+                  pagina={paginaActual}
+                  onIrA={setPagina}
+                  etiqueta="Partes de la compuesta"
+                />
               </div>
             )}
             {errors.componentes && (
