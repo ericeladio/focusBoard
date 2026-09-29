@@ -226,6 +226,18 @@ try {
   kv.set('fb.goals', JSON.stringify(goals))
   check('/  (sin local)', render('/'), [], ['solo aquí'])
 
+  // Sin foto (nunca subida) o con la de la base caída → la genérica, nunca
+  // un hueco roto ni el alt del navegador.
+  kv.set(
+    'fb.goals',
+    JSON.stringify([
+      ...goals,
+      { ...goals[0], id: 'n1', nombre: 'Sin foto XYZ', imagen: undefined, enMuro: true },
+    ]),
+  )
+  check('/  (sin foto)', render('/'), ['/foto-generica.svg'], [])
+  kv.set('fb.goals', JSON.stringify(goals))
+
   // Compuesta con 5 partes: solo caben 3, y al estar la primera hecha (100%)
   // la ventana avanza a las que faltan. Nota propia para que los nombres de
   // las partes solo aparezcan en la tarjeta y en el modal.

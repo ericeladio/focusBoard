@@ -75,7 +75,8 @@ cuenta como pendiente en el badge. Borrarlo no deja lápida.
 FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-links
 al pool y a cumplidos + sync badge de cinta (estado del sync; "Entrar" abre la hoja de passcode);
 polaroids de objetivos (con chip `solo aquí` + `Subir a la cuenta` cuando el
-objetivo es solo local), nota rayada "TODO" (editable; su botón `Subir la nota`
+objetivo es solo local; sin foto propia o si la de la base no carga, la
+miniatura sale con la genérica `/foto-generica.svg`, nunca rota), nota rayada "TODO" (editable; su botón `Subir la nota`
 solo si es local) y botón-polaroid
 "Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
 columnas con cada foto a su proporción real; en celular la tarjeta es foto +

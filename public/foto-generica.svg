@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500">
+  <!-- Foto genérica: la misma luz del hueco de foto del muro (radial
+       30% 20% #2b2823 → #1d1b18) con el icono de "sin foto" dibujado.
+       Se usa cuando el objetivo no tiene foto o la de la base no carga. -->
+  <defs>
+    <radialGradient id="luz" cx="30%" cy="20%" r="115%">
+      <stop offset="0" stop-color="#2b2823"/>
+      <stop offset="1" stop-color="#1d1b18"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#luz)"/>
+  <g
+    fill="none"
+    stroke="#56503f"
+    stroke-width="14"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <rect x="90" y="155" width="220" height="190"/>
+    <circle cx="145" cy="212" r="20"/>
+    <path d="M105 325 L170 252 L210 294 L242 264 L295 325 Z" fill="#56503f" fill-opacity=".4"/>
+  </g>
+</svg>

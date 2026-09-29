@@ -11,6 +11,7 @@ import { esTipoCompuesto, ensureCompuestoType, modoPorTipo, padreDe } from '../l
 import { PAGINAS_POR_DEFECTO, etiquetaDe } from '../lib/lectura.js'
 import { POR_PAGINA } from '../lib/pager.js'
 import { filtraPorNombre } from '../lib/texto.js'
+import Foto from './Foto.jsx'
 import Pager from './Pager.jsx'
 
 const EMPTY = {
@@ -245,7 +246,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           <span className="field__label">Imagen</span>
           <div className="file-row">
             {preview ? (
-              <img className="file-preview" src={preview} alt="" />
+              <Foto className="file-preview" src={preview} alt="" />
             ) : (
               <span className="file-preview file-preview--empty" aria-hidden="true">
                 Foto

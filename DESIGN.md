@@ -319,6 +319,13 @@ subida (Background Sync). Al borrar una foto (o
 reemplazarla) el objeto se pide con `DELETE` al volver la red y el servidor lo
 borra solo si ninguna meta viva lo referencia. El tablero abre sin red: el shell va en
 precache y los datos ya están locales; el badge dice cuánto falta por subir.
+Ningún hueco queda sin foto: el componente `Foto` muestra
+`public/foto-generica.svg` cuando el objetivo no tiene imagen (aún sin subir,
+o mientras la clave de la base sigue resolviéndose) y cae a ella con `onError`
+cuando la URL real no carga (404 o red caída) — sin bucle si la genérica
+tampoco carga, y su `onLoad` no mide nada, así que el hueco se queda en su
+4:5. Por ahí pasan la polaroid del muro, las miniaturas del pool y de
+cumplidos y la previsualización del form.
 
 El badge de estado (cinta rotada arriba a la derecha) es el único indicador y
 tiene texto propio para cada caso: `Sincronizando` (mientras hay una ronda),

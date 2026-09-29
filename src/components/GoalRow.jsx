@@ -1,5 +1,6 @@
 import { useStore } from '../lib/storeContext.js'
 import { inactiveDays, markedToday, streakOf } from '../lib/dates.js'
+import Foto from './Foto.jsx'
 import GoalDone from './GoalDone.jsx'
 import LocalChip from './LocalChip.jsx'
 import SubirCuenta from './SubirCuenta.jsx'
@@ -20,7 +21,7 @@ function GoalRow({ goal, onEdit }) {
 
   return (
     <li className="row" onDoubleClick={() => onEdit(goal)}>
-      <img className="row__thumb" src={goal.imagen} alt="" />
+      <Foto className="row__thumb" src={goal.imagen} alt="" />
 
       <div className="row__info">
         <span className="goal__type row__type">

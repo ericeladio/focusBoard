@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../lib/storeContext.js'
+import Foto from './Foto.jsx'
 import GoalControls from './GoalControls.jsx'
 import GoalOptions from './GoalOptions.jsx'
 import LocalChip from './LocalChip.jsx'
@@ -91,7 +92,7 @@ function GoalCard({
         onTouchEnd={handleTouchEnd}
       >
         <div className="frame__photo">
-          <img
+          <Foto
             ref={imgRef}
             src={goal.imagen}
             alt={goal.nombre}

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../lib/storeContext.js'
 import { todayISO } from '../lib/dates.js'
+import Foto from '../components/Foto.jsx'
 import SyncBadge from '../components/SyncBadge.jsx'
 import LocalChip from '../components/LocalChip.jsx'
 import SubirCuenta from '../components/SubirCuenta.jsx'
@@ -108,7 +109,7 @@ function Cumplidos() {
                   <ul className="done__lista">
                     {grupo.goals.map((goal) => (
                       <li className="row" key={goal.id}>
-                        <img className="row__thumb" src={goal.imagen} alt="" />
+                        <Foto className="row__thumb" src={goal.imagen} alt="" />
                         <div className="row__info">
                           <span className="goal__type row__type">
                             {types.find((item) => item.id === goal.tipoId)
