@@ -526,6 +526,48 @@ res = await loginCon(process.env.PASSCODE)
 assert.equal(res.code, 200, 'y el acierto lo vuelve a limpiar')
 paso(20, 'un acierto reinicia los contadores ✓')
 
+// --- cuenta de prueba (pass de negocios) ---
+// Si hay PASSCODE_DEMO en .env.local probamos también la pass de prueba:
+// entra a su cuenta (nunca a la principal) y sus ejemplos no se mezclan.
+// Falla si no está sembrada → `npm run demo -- <passcode>`.
+const DEMO_PASS = process.env.PASSCODE_DEMO
+if (DEMO_PASS) {
+  await limpiarIntentos()
+  res = await loginCon(DEMO_PASS)
+  assert.equal(res.code, 200, 'pass de prueba → 200')
+  assert.equal(res.body.perfil, 'negocios', 'responde perfil de negocios')
+  assert.notEqual(cookieOf(res), cookie, 'sesión distinta de la principal')
+  const demo = { headers: { cookie: cookieOf(res) } }
+
+  res = await call(sync, { method: 'GET', ...demo })
+  assert.equal(res.code, 200, 'pull de la cuenta de prueba → 200')
+  assert.ok(res.body.goals.length > 0, 'trae sus ejemplos')
+  assert.ok(
+    res.body.goals.some((goal) => goal.id === 'demo-lanzamiento'),
+    'sus objetivos de negocio',
+  )
+  assert.ok(res.body.note?.texto, 'su nota')
+  assert.ok(
+    res.body.types.some((tipo) => tipo.nombre === 'Compuesto'),
+    'su tipo Compuesto propio (el de serie es de la principal)',
+  )
+  assert.equal(
+    res.body.goals.some((goal) => goal.id.startsWith('seed-')),
+    false,
+    'sin los ejemplos del visitante',
+  )
+
+  res = await call(sync, { method: 'GET', ...auth })
+  assert.equal(
+    res.body.goals.some((goal) => goal.id.startsWith('demo-')),
+    false,
+    'la principal no ve los de la de prueba',
+  )
+  paso(21, 'pass de prueba → 200 + perfil negocios, sus ejemplos sin mezclarse ✓')
+} else {
+  console.log('  (sin PASSCODE_DEMO en .env.local: se omite la cuenta de prueba)')
+}
+
 const sql = db()
 // La BD puede tener datos reales: solo borramos lo que creó este smoke.
 await sql.query(`delete from goals where user_id = 'local' and id like 'smoke-%'`)

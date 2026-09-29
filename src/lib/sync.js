@@ -315,11 +315,14 @@ export async function syncNow(options = {}) {
 }
 
 export async function login(passcode) {
-  await api.login(passcode)
+  const data = await api.login(passcode)
   emit({ authorized: true, error: null })
   // Entrar es un arranque de sesión: bajamos todo para no heredar huecos.
   fullPull = true
   await syncNow()
+  // `perfil: 'negocios'` = la cuenta de prueba, que ya trae sus ejemplos
+  // desde el servidor (los del visitante se borran en el store).
+  return data?.perfil ?? null
 }
 
 export async function logout() {

@@ -31,5 +31,20 @@ export function passcodeMatches(candidate) {
 }
 
 export function passcodeHash() {
-  return digest(process.env.PASSCODE ?? '').toString('hex')
+  return hashPasscode(process.env.PASSCODE ?? '')
+}
+
+export function hashPasscode(value) {
+  return digest(value).toString('hex')
+}
+
+// Cuenta a la que da un passcode: la principal (la del env `PASSCODE`) o
+// cualquier otra fila de `users` — cada cuenta guarda su hash en Neon y aquí
+// solo se comprueba contra él. `porHash` es la consulta (hash → id | null);
+// en los tests es una función falsa, así que nada de esto toca la BD.
+export async function usuarioDePasscode(candidate, porHash) {
+  if (typeof candidate !== 'string') return null
+  if (candidate.length < 4 || candidate.length > 64) return null
+  if (passcodeMatches(candidate)) return USER_ID
+  return (await porHash(hashPasscode(candidate))) ?? null
 }

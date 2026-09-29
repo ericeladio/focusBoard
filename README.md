@@ -19,6 +19,7 @@ opcional a Postgres (Neon) + R2 (Cloudflare) a través de la API de Vercel.
 | `node scripts/migrate-login-limite.mjs` | crea (si falta) la tabla `login_attempts` y enseña qué está bloqueado |
 | `node scripts/unlock-login.mjs` | borra los contadores de intentos (desbloquea el login; `ip`/`disp`/`ua` para afinar) |
 | `node scripts/smoke.mjs` | prueba login, sync, imágenes y el bloqueo de intentos contra BD y R2 |
+| `npm run demo -- <pass>` | siembra la **cuenta de prueba** (ejemplos de negocios) en Neon; con `--reset` la limpia y la vuelve a sembrar |
 | `node scripts/migrate-paginas.mjs` | crea `goals.total_paginas`; con `--apply` convierte las metas de lectura |
 | `node scripts/migrate-cumplidos.mjs` | crea `goals.meta_dias` y `goals.finalizado_en` |
 | `npm run icons`     | regenera los iconos PWA                         |
@@ -36,6 +37,7 @@ van los mismos nombres en **Project → Settings → Environment Variables**.
 | `R2_SECRET_ACCESS_KEY` | idem                                                 |
 | `R2_BUCKET`         | bucket de fotos (`focusboard`)                        |
 | `PASSCODE`          | PIN de entrada (mínimo 4 caracteres)                  |
+| `PASSCODE_DEMO`     | (opcional) pass de la cuenta de prueba, solo para los scripts `smoke`/`verify-deploy` |
 | `SESSION_SECRET`    | firma de la cookie de sesión (32+ bytes hex)          |
 | `LOGIN_LOCK_SALT`   | (opcional) sal para hashear los contadores de intentos; si falta se usa `SESSION_SECRET` |
 
@@ -56,6 +58,32 @@ en el proceso. Funciona igual que producción, sin Vercel CLI.
 - Si `/api/*` no está disponible (por ejemplo `vite` solo, sin el plugin), el
   cliente ya no falla en silencio: el badge del sync dice **Sin servidor** y en
   el `title` explica el motivo; los cambios siguen guardados en IndexedDB.
+
+## Cuenta de prueba
+
+Una segunda pass (la de negocios) abre una **cuenta aparte**, nunca la tuya:
+los datos van con su `user_id` y no se mezclan. La pass no vive en la config
+de Vercel: en Neon solo está su **hash**, en la tabla `users`, igual que la
+principal, y la siembra el script (idempotente —con `--reset` la limpia y la
+vuelve a empezar—; para cambiarla, vuelve a correrlo con la nueva):
+
+```sh
+npm run demo -- 1717          # o PASSCODE_DEMO=1717 npm run demo
+```
+
+El primer run le mete sus **ejemplos de negocios** (`scripts/demo-examples.mjs`):
+facturación, clientes, racha de llamadas, lectura por páginas, un lanzamiento
+compuesto con sus tres partes, algo en el pool, un cumplido y la nota TODO.
+Al ser datos de la cuenta, sincronizan en cualquier dispositivo y sin el chip
+`solo aquí`; sin foto propia, así que salen con la genérica.
+
+Al entrar con esa pass en un navegador que traía los ejemplos del visitante,
+esos ejemplos se borran solos (solo los ids de `src/lib/seeds.js`, nunca datos
+tuyos) y, si no habías tocado la nota, pasa a mostrar la de la cuenta.
+
+Comprobaciones: `PASSCODE_DEMO=1717 node scripts/smoke.mjs` contra Neon y R2
+reales, y `node scripts/verify-deploy.mjs` en el despliegue (si la API todavía
+no está desplegada, avisa en vez de fallar).
 
 ## Deploy en Vercel
 

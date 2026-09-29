@@ -15,6 +15,14 @@ export async function ensureUser() {
   )
 }
 
+// Qué cuenta tiene este passcode: el hash de cada una vive en `users`, así
+// que una pass de prueba (o una segunda persona) no necesita nada en env.
+export async function usuarioPorPasscode(hash) {
+  if (typeof hash !== 'string' || !hash) return null
+  const lista = rows(await db().query('select id from users where passcode_hash = $1 limit 1', [hash]))
+  return lista[0]?.id ?? null
+}
+
 export function rows(result) {
   return Array.isArray(result) ? result : (result?.rows ?? [])
 }

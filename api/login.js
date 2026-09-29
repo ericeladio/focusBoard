@@ -5,8 +5,9 @@ import {
   ensureUser,
   incrementarIntentos,
   leerIntentos,
+  usuarioPorPasscode,
 } from './_lib/db.js'
-import { passcodeMatches } from './_lib/config.js'
+import { USER_ID, usuarioDePasscode } from './_lib/config.js'
 import {
   clavesDe,
   estadoDe,
@@ -64,7 +65,11 @@ export default async function handler(req, res) {
 
     const { passcode } = jsonBody(req)
 
-    if (!passcodeMatches(passcode)) {
+    // Principal (env `PASSCODE`) o cualquier otra cuenta: su hash vive en
+    // `users`, así que una pass de prueba no toca la configuración de Vercel.
+    const userId = await usuarioDePasscode(passcode, usuarioPorPasscode)
+
+    if (!userId) {
       // La pausa también sirve para que un fallo no sea instantáneo.
       await delay(300)
       let restantes = null
@@ -103,9 +108,15 @@ export default async function handler(req, res) {
         aviso('reset', error)
       }
     }
-    await ensureUser()
-    setSessionCookie(res, signSession())
-    return res.status(200).json({ ok: true })
+    // La cuenta principal se crea aquí si faltaba (su hash viene del env); la
+    // de prueba ya está en Neon, la siembra `scripts/seed-demo.mjs`.
+    if (userId === USER_ID) await ensureUser()
+    setSessionCookie(res, signSession(userId))
+    // `perfil` le dice al cliente que esta cuenta trae sus propios ejemplos
+    // desde el servidor (y que los del visitante sobran ya).
+    return res
+      .status(200)
+      .json({ ok: true, ...(userId === USER_ID ? {} : { perfil: 'negocios' }) })
   } catch (error) {
     console.error('login failed:', error)
     return res.status(500).json({ error: 'server_error' })

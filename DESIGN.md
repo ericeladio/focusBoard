@@ -304,6 +304,15 @@ arrastre, seguimientos, compuestas con buscador, pool, cumplidos y nota +
 passcode). En cuanto alguien sincroniza con una cuenta se va la sección; los
 ejemplos siguen, marcados `solo aquí`, hasta que los borres o los subas.
 
+La **cuenta de prueba** (una segunda pass, la de negocios) es la excepción:
+trae sus propios ejemplos sembrados en el servidor (`scripts/seed-demo.mjs`,
+misma parrilla pero de negocio: facturación, clientes, llamadas en racha,
+lectura, lanzamiento compuesto, algo en el pool, un cumplido y la nota TODO),
+con su propio tipo `Compuesto` (los `id` de `types` son clave global, el de
+serie es de la principal) y sin foto, así que sale con la genérica. Al entrar
+con esa pass se borran los ejemplos del visitante y, con ellos, la sección
+`tour`: ya no es un visitante.
+
 **Buttons** — `btn` papel con borde tinta, hover `sticky`; `btn--ink` relleno
 tinta; `btn--ghost` subrayado discreto.
 

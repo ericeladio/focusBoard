@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { SEED_GOALS, SEED_TYPES } from '../src/lib/seeds.js'
+import { SEED_GOALS, SEED_TYPES, esEjemplo } from '../src/lib/seeds.js'
 import { ID_COMPUESTO, esHijoDe } from '../src/lib/composite.js'
 import { esNombreLectura } from '../src/lib/lectura.js'
 import { MAX_FOCUS } from '../src/lib/schemas.js'
@@ -52,3 +52,11 @@ assert.ok(
 const cumplido = SEED_GOALS.find((goal) => goal.finalizadoEn)
 assert.ok(cumplido, 'un ejemplo archivado para /cumplidos')
 assert.equal(cumplido.enMuro, false, 'lo archivado no ocupa el muro')
+
+// Solo los ids de los ejemplos se borran al entrar a la cuenta de prueba:
+// un nombre parecido o un id de negocio no se lleva nada por el camino.
+for (const goal of SEED_GOALS) assert.equal(esEjemplo(goal.id), true, `${goal.id} es ejemplo`)
+for (const tipo of SEED_TYPES) assert.equal(esEjemplo(tipo.id), true, `${tipo.id} es ejemplo`)
+assert.equal(esEjemplo('demo-facturacion'), false, 'un objetivo de la cuenta de prueba no')
+assert.equal(esEjemplo('g_1'), false, 'un objetivo real no')
+assert.equal(esEjemplo('seed-que-no-existe'), false, 'un id inventado con el prefijo no')

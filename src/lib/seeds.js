@@ -130,3 +130,15 @@ export const SEED_GOALS = [
     finalizadoEn: pastISO(12),
   },
 ]
+
+// ¿Es uno de los objetivos o tipos de ejemplo del visitante? Solo esos se
+// borran al entrar a la cuenta de prueba, que trae los suyos desde el
+// servidor; una lista por id, para que un nombre parecido no se lleve nada.
+const EJEMPLOS = new Set([
+  ...SEED_GOALS.map((goal) => goal.id),
+  ...SEED_TYPES.map((type) => type.id),
+])
+
+export function esEjemplo(id) {
+  return EJEMPLOS.has(id)
+}

@@ -15,7 +15,7 @@ import { encodeImage, newImageKey } from './image.js'
 import { mergeCollection } from './lww.js'
 import { migrateLegacyImages } from './migrate.js'
 import { PAGINAS_POR_DEFECTO, esLectura } from './lectura.js'
-import { SEED_GOALS, SEED_TYPES } from './seeds.js'
+import { SEED_GOALS, SEED_TYPES, esEjemplo } from './seeds.js'
 import {
   clavesOutbox,
   esLocal,
@@ -549,9 +549,18 @@ export function StoreProvider({ children }) {
     [applyRemote, localRecords],
   )
 
-  const login = useCallback(async (passcode) => {
-    await requestLogin(passcode)
-  }, [])
+  const login = useCallback(
+    async (passcode) => {
+      const perfil = await requestLogin(passcode)
+      if (perfil !== 'negocios') return
+      // La cuenta de prueba ya bajó sus ejemplos desde el servidor: los del
+      // visitante (solo locales, ids de `lib/seeds.js`) sobrarían pegados a
+      // los suyos. No dejan lápidas: nunca han estado en el servidor.
+      setGoals((current) => current.filter((goal) => !esEjemplo(goal.id)))
+      setTypes((current) => current.filter((type) => !esEjemplo(type.id)))
+    },
+    [setGoals, setTypes],
+  )
 
   const logout = useCallback(async () => {
     await requestLogout()

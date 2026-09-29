@@ -18,14 +18,20 @@ if (!existsSync(path.join(ROOT, '.env.local'))) {
   process.exit(1)
 }
 let passcode
+let demoPass = null
 for (const line of readFileSync(path.join(ROOT, '.env.local'), 'utf8').split('\n')) {
   if (line.trim().startsWith('#')) continue
-  const m = line.match(/^\s*PASSCODE\s*=\s*(.*)\s*$/)
+  const m = line.match(/^\s*(PASSCODE|PASSCODE_DEMO)\s*=\s*(.*)\s*$/)
   if (!m) continue
-  passcode = m[1]
-  if ((passcode.startsWith('"') && passcode.endsWith('"')) || (passcode.startsWith("'") && passcode.endsWith("'"))) {
-    passcode = passcode.slice(1, -1)
+  let valor = m[2]
+  if (
+    (valor.startsWith('"') && valor.endsWith('"')) ||
+    (valor.startsWith("'") && valor.endsWith("'"))
+  ) {
+    valor = valor.slice(1, -1)
   }
+  if (m[1] === 'PASSCODE') passcode = valor
+  else demoPass = valor
 }
 if (!passcode) {
   console.error('Falta PASSCODE en .env.local.')
@@ -174,6 +180,49 @@ let metas = []
         `${esJson(res) ? 'JSON' : 'HTML'} (los clientes sin recargar siguen usándolo)`,
     )
   }
+}
+
+// 6. Cuenta de prueba (pass de negocios): si está en .env.local, entra a su
+//    cuenta y baja sus ejemplos. Solo avisa si falla: el chequeo es nuevo y
+//    el despliegue puede que todavía no lo tenga.
+if (demoPass) {
+  const res = await fetch(`${BASE}/api/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ passcode: demoPass }),
+  })
+  let body = null
+  try {
+    body = await res.json()
+  } catch {
+    body = null
+  }
+  const okLogin = res.status === 200 && body?.perfil === 'negocios'
+  paso(
+    okLogin,
+    `login de la cuenta de prueba → ${res.status} (perfil ${body?.perfil ?? '—'})`,
+    false,
+  )
+  if (okLogin) {
+    const setCookie = res.headers.get('set-cookie') ?? ''
+    const pull = await fetch(`${BASE}/api/sync`, {
+      headers: { cookie: setCookie.split(';')[0] ?? '' },
+    })
+    let demoBody = null
+    try {
+      demoBody = await pull.json()
+    } catch {
+      demoBody = null
+    }
+    const objetivos = demoBody?.goals ?? []
+    paso(
+      pull.status === 200 && objetivos.some((g) => g.id === 'demo-lanzamiento'),
+      `pull de la cuenta de prueba → ${pull.status} (metas=${objetivos.length})`,
+      false,
+    )
+  }
+} else {
+  console.log('  --  sin PASSCODE_DEMO en .env.local: no se comprueba la cuenta de prueba')
 }
 
 console.log(fallos ? `\nVERIFY: ${fallos} fallo(s).` : '\nVERIFY: todo responde como en producción.')
