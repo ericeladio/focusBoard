@@ -104,8 +104,9 @@ export async function allBlobs() {
 }
 
 export async function pendingUploads() {
-  const records = await allBlobs()
-  return records.filter((record) => record.uploaded === false)
+  const [records, rejected] = await Promise.all([allBlobs(), readRejectedImages()])
+  const banned = new Set(rejected)
+  return records.filter((record) => record.uploaded === false && !banned.has(record.key))
 }
 
 export async function markUploaded(key) {
@@ -116,9 +117,12 @@ export async function markUploaded(key) {
 
 export async function deleteBlob(key) {
   const store = await openStore(STORES.blobs, 'readwrite')
-  if (!store) return memory.blobs.delete(key)
-  await promisify(store.os.delete(key))
-  await store.done
+  if (!store) memory.blobs.delete(key)
+  else {
+    await promisify(store.os.delete(key))
+    await store.done
+  }
+  await forgetRejectedImage(key)
   return true
 }
 
@@ -227,5 +231,34 @@ export async function removeImageDelete(key) {
   const next = list.filter((item) => item !== key)
   if (next.length === list.length) return false
   await setMeta(KEY_IMAGE_DELETES, next)
+  return true
+}
+
+// --- fotos que el servidor rechazó de forma definitiva ---
+// Si una foto no se puede subir (peso, formato, ruta), su meta no puede
+// quedarse eternamente bloqueada en el outbox: se aparta la foto y se
+// avisa, en vez de romper la sincronización de todo lo demás.
+
+const KEY_REJECTED_IMAGES = 'rejectedImages'
+
+export async function readRejectedImages() {
+  const list = await getMeta(KEY_REJECTED_IMAGES, [])
+  return Array.isArray(list) ? list.filter((item) => typeof item === 'string') : []
+}
+
+export async function rejectImage(key) {
+  if (!key) return false
+  const list = await readRejectedImages()
+  if (list.includes(key)) return false
+  await setMeta(KEY_REJECTED_IMAGES, [...list, key])
+  return true
+}
+
+export async function forgetRejectedImage(key) {
+  if (!key) return false
+  const list = await readRejectedImages()
+  const next = list.filter((item) => item !== key)
+  if (next.length === list.length) return false
+  await setMeta(KEY_REJECTED_IMAGES, next)
   return true
 }

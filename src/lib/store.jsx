@@ -25,7 +25,11 @@ const ID_COMPUESTO = 'tipo-compuesto'
 const NOMBRE_COMPUESTO = 'Compuesto'
 const KEY_GOALS = 'fb.goals'
 const KEY_TOMBSTONES = 'fb.tombstones'
-const TOMBSTONE_TTL = 90 * 24 * 60 * 60 * 1000
+// Las lápidas viven lo justo para tapar borrados pendientes (el outbox los
+// sube en la primera ronda con red): más allá solo sirven para esconder
+// registros que el servidor todavía tiene vivos. 30 días es un equilibrio
+// con el caso "equipo sin conexión un mes".
+const TOMBSTONE_TTL = 30 * 24 * 60 * 60 * 1000
 let migrationStarted = false
 
 const LOKI = '/seed-photo.png'
@@ -562,6 +566,9 @@ export function StoreProvider({ children }) {
       setNoteRaw(noteOut)
       snapshot.current = { types: typesOut, goals: goalsOut, note: noteOut }
       if (ops.length) await queueOps(ops)
+      // Vivos en local tras el merge: con esto `pull()` puede comparar contra
+      // los totales del servidor y detectar registros que no llegaron.
+      return { goals: goalsOut.length, types: typesOut.length }
     },
     [],
   )

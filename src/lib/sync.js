@@ -9,12 +9,18 @@ const MAX_BATCHES = 10
 // Releemos un poco antes del último punto de corte: si el reloj de otro
 // dispositivo va atraso, su sello puede ser menor que nuestro `serverTime`.
 const PULL_OVERLAP_MS = 5 * 60 * 1000
+// Cuánto se le permite adelantar la hora local al reloj del servidor.
+const TS_LEAD_MS = 60 * 1000
+// 400/404/413/415: el servidor no va a aceptar esa foto nunca más (peso,
+// formato, clave). Se aparta para no bloquear la meta que la lleva.
+const IMAGE_REJECTED_STATUS = new Set([400, 404, 413, 415])
 
 let status = {
   online: typeof navigator === 'undefined' ? true : navigator.onLine,
   authorized: true,
   syncing: false,
   pending: 0,
+  imageFailed: 0,
   lastSync: null,
   error: null,
 }
@@ -24,6 +30,10 @@ let serverTimeMs = 0
 let onRemote = null
 let running = false
 let timer = null
+// La primera ronda de la sesión baja todo: es la única forma de reparar
+// registros que nunca más se van a mover en el servidor.
+let fullPull = true
+let repairedThisSession = false
 const cleanups = []
 
 function emit(patch) {
@@ -41,13 +51,18 @@ export function getSyncStatus() {
   return status
 }
 
+// El sello sale del reloj del servidor, no del local: un equipo con la hora
+// desajustada no puede crear un registro "más viejo" que el que ya existe
+// (eso deja copias que nadie vuelve a poder actualizar). `floor` no deja
+// retroceder y `maxAhead` evita que un reloj adelantado se cuele por delante.
 export function nextTs() {
-  const base = Math.max(Date.now(), serverTimeMs + 1)
+  const anchor = serverTimeMs > 0 ? serverTimeMs : Date.now()
+  const base = Math.min(Math.max(Date.now(), anchor + 1), anchor + TS_LEAD_MS)
   serverTimeMs = base
   return new Date(base).toISOString()
 }
 
-function adoptServerTime(iso) {
+export function adoptServerTime(iso) {
   const parsed = Date.parse(iso ?? '')
   if (!Number.isNaN(parsed)) serverTimeMs = parsed
 }
@@ -66,7 +81,11 @@ export async function countPending() {
 }
 
 export async function refreshPending() {
-  emit({ pending: await countPending() })
+  const [pending, rejected] = await Promise.all([
+    countPending(),
+    idb.readRejectedImages().catch(() => []),
+  ])
+  emit({ pending, imageFailed: rejected.length })
 }
 
 async function handleError(error) {
@@ -90,8 +109,16 @@ async function handleError(error) {
 async function uploadPending() {
   const pending = await idb.pendingUploads()
   for (const record of pending) {
-    await api.putImage(record.key, record.blob)
-    await idb.markUploaded(record.key)
+    try {
+      await api.putImage(record.key, record.blob)
+      await idb.markUploaded(record.key)
+    } catch (error) {
+      if (!IMAGE_REJECTED_STATUS.has(error?.status)) throw error
+      // Sin esto, una foto imposible cortaba la ronda en seco y la meta
+      // quedaba sin subir para siempre.
+      await idb.rejectImage(record.key)
+      console.warn('sync.foto_rechazada', JSON.stringify({ key: record.key, status: error?.status }))
+    }
   }
 }
 
@@ -144,29 +171,44 @@ async function flush() {
 
     adoptServerTime(result.serverTime)
     const acked = new Set(result.acked ?? [])
-    const keys = sent.filter((_, index) => acked.has(index)).map((op) => op.key)
-    if (keys.length) await idb.removeOps(keys)
+    const rejected = (result.rejected ?? []).filter((item) => item?.reason === 'stale')
+    const staleSeqs = new Set(rejected.map((item) => Number(item.seq)))
+    const done = sent
+      .filter((_, index) => acked.has(index) || staleSeqs.has(index))
+      .map((op) => op.key)
+    if (done.length) await idb.removeOps(done)
+    if (staleSeqs.size) {
+      // El servidor ya guarda algo más nuevo que lo que mandamos: nuestra
+      // copia local está por detrás y no nos dimos cuenta. Baja todo.
+      console.warn('sync.stale', JSON.stringify([...staleSeqs]))
+      requestFullPull()
+      return
+    }
     if (!acked.size || acked.size < sent.length) return
   }
 }
 
-async function pull() {
-  const since = await idb.getMeta('lastPullAt')
+async function pull({ full = false } = {}) {
   let sinceQuery
-  if (typeof since === 'string' && !Number.isNaN(Date.parse(since))) {
-    sinceQuery = new Date(Date.parse(since) - PULL_OVERLAP_MS).toISOString()
+  if (!full) {
+    const since = await idb.getMeta('lastPullAt')
+    if (typeof since === 'string' && !Number.isNaN(Date.parse(since))) {
+      sinceQuery = new Date(Date.parse(since) - PULL_OVERLAP_MS).toISOString()
+    }
   }
   const payload = await api.fetchSync(sinceQuery)
   adoptServerTime(payload.serverTime)
   emit({ online: true, authorized: true })
 
-  if (onRemote) {
-    await onRemote({
-      types: payload.types ?? [],
-      goals: payload.goals ?? [],
-      note: payload.note ?? null,
-    })
-  }
+  const local = onRemote
+    ? await onRemote({
+        types: payload.types ?? [],
+        goals: payload.goals ?? [],
+        note: payload.note ?? null,
+        goalsTotal: payload.goalsTotal,
+        typesTotal: payload.typesTotal,
+      })
+    : null
 
   await idb.setMeta('lastPullAt', payload.serverTime)
   await idb.setMeta('serverTime', payload.serverTime)
@@ -175,9 +217,48 @@ async function pull() {
   } catch {
     // sin localStorage seguimos igual
   }
+
+  // Autorreparación: el servidor dice que hay más metas vivas de las que
+  // tenemos. La ventana corta no las puede traer (solo devuelve lo que se
+  // movió después del corte), así que pedimos todo. Sin este pase el hueco
+  // dura lo que tarde el registro en volver a moverse: para siempre.
+  if (!full && !repairedThisSession && faltanRegistros(local, payload)) {
+    console.warn(
+      'sync.repair',
+      JSON.stringify({ local, gt: payload.goalsTotal, tt: payload.typesTotal }),
+    )
+    await pull({ full: true })
+    // Se marca al terminar: si el pase completo falla, la próxima ronda lo
+    // vuelve a intentar en lugar de dar la brecha por buena.
+    repairedThisSession = true
+  }
 }
 
-export async function syncNow() {
+// `onRemote` devuelve cuántos registros vivos quedaron en local; si hay menos
+// de lo que el servidor declara, algo local se está tragando metas.
+export function faltanRegistros(local, payload) {
+  if (!local) return false
+  if (Number.isFinite(payload.goalsTotal) && local.goals < payload.goalsTotal) return true
+  if (Number.isFinite(payload.typesTotal) && local.types < payload.typesTotal) return true
+  return false
+}
+
+export function requestFullPull() {
+  fullPull = true
+}
+
+// Un pase completo que no salió no se pierde: se repone para la próxima ronda.
+async function pullGuarded(full) {
+  try {
+    await pull({ full })
+  } catch (error) {
+    if (full) fullPull = true
+    throw error
+  }
+}
+
+export async function syncNow(options = {}) {
+  if (options.full === true) fullPull = true
   if (running || !status.authorized) return
   running = true
   emit({ syncing: true })
@@ -186,9 +267,20 @@ export async function syncNow() {
     // (registros antiguos sin sello no pueden pisar una copia más nueva).
     // Las imágenes se borran al final, con las metas ya aplicadas: así un 409
     // del servidor sí significa que la foto la sigue usando otra meta viva.
-    await pull()
+    //
+    // El pase completo se consume antes de esperar a la red: así un toque del
+    // badge que llegue mientras bajamos no se pierde y se atiende en esta misma
+    // ronda. Si el pase falla, `pullGuarded` lo repone para la siguiente.
+    const full = fullPull
+    fullPull = false
+    await pullGuarded(full)
     await uploadPending()
     await flush()
+    // Una escritura que perdió por sello pidió bajar todo otra vez.
+    if (fullPull) {
+      fullPull = false
+      await pullGuarded(true)
+    }
     await deletePendingImages()
     emit({
       online: typeof navigator === 'undefined' ? true : navigator.onLine,
@@ -208,6 +300,8 @@ export async function syncNow() {
 export async function login(passcode) {
   await api.login(passcode)
   emit({ authorized: true, error: null })
+  // Entrar es un arranque de sesión: bajamos todo para no heredar huecos.
+  fullPull = true
   await syncNow()
 }
 
