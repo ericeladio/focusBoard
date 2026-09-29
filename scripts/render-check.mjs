@@ -178,10 +178,26 @@ try {
       // el arrastre del muro se agarra por `data-goal`
       'data-goal="g1"',
     ],
-    ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta'],
+    ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta', 'Todo lo que puedes hacer'],
   )
   // Con hueco el botón se enseña; lleno desaparece (sin estado "Muro lleno").
   check('/  (con hueco)', render('/'), ['Añadir objetivo'], ['Muro lleno'])
+
+  // Sin cuenta (nunca ha sincronizado) aparecen los ejemplos de `lib/seeds.js`
+  // y la sección que enseña todas las funcionalidades.
+  kv.delete('fb.synced')
+  check(
+    '/  (sin cuenta)',
+    render('/'),
+    [
+      'Todo lo que puedes hacer',
+      'bórralos cuando',
+      'reordenan arrastrándolas',
+      'paginación de 10 en 10',
+      'passcode',
+    ],
+  )
+  kv.set('fb.synced', '1')
 
   // Ojo: el muro está a 3 con la compuesta, así que aquí entran 4 extras.
   const extras = Array.from({ length: 4 }, (_, i) => ({

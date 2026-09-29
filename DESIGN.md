@@ -290,6 +290,20 @@ store lo crea al guardar). Con ese tipo elegido, Seguimiento no se despliega
 y solo se piden las partes; al cambiar a otro tipo, el seguimiento vuelve a
 porcentaje o racha y las partes se sueltan.
 
+**Ejemplos y tour** — un navegador que todavía no ha sincronizado con una
+cuenta (`!hasSynced()`) no arranca vacío: `lib/seeds.js` carga dos tipos
+(Personal y Lectura) y ocho objetivos que cubren las tres formas de seguir —
+porcentaje con la alerta de "4 días sin avance", racha con meta ("4 de 30
+días") y lectura por páginas —, una compuesta con sus tres partes (una
+hecha, una con avance hoy, una pendiente; sin cupo en el muro) y un cumplido
+archivado para que `/cumplidos` también enseñe algo. Con los mismos
+visitantes, bajo el muro aparece la sección `tour` (hoja de papel, `tour*` en
+`VisionBoard.css`): la intro avisa de que los ejemplos son tuyos y puedes
+borrarlos, y seis fichas resumen todas las funcionalidades (muro con
+arrastre, seguimientos, compuestas con buscador, pool, cumplidos y nota +
+passcode). En cuanto alguien sincroniza con una cuenta se va la sección; los
+ejemplos siguen, marcados `solo aquí`, hasta que los borres o los subas.
+
 **Buttons** — `btn` papel con borde tinta, hover `sticky`; `btn--ink` relleno
 tinta; `btn--ghost` subrayado discreto.
 

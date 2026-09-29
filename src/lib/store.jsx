@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MAX_FOCUS } from './schemas.js'
-import { chainFrom, pastISO, todayISO, yesterdayISO } from './dates.js'
+import { chainFrom, todayISO, yesterdayISO } from './dates.js'
 import {
   alTerminar,
   compuestoId,
@@ -15,6 +15,7 @@ import { encodeImage, newImageKey } from './image.js'
 import { mergeCollection } from './lww.js'
 import { migrateLegacyImages } from './migrate.js'
 import { PAGINAS_POR_DEFECTO, esLectura } from './lectura.js'
+import { SEED_GOALS, SEED_TYPES } from './seeds.js'
 import {
   clavesOutbox,
   esLocal,
@@ -45,37 +46,6 @@ const KEY_TOMBSTONES = 'fb.tombstones'
 // con el caso "equipo sin conexión un mes".
 const TOMBSTONE_TTL = 30 * 24 * 60 * 60 * 1000
 let migrationStarted = false
-
-const LOKI = '/seed-photo.png'
-
-const SEED_TYPES = [{ id: 'seed-personal', nombre: 'Personal' }]
-
-const SEED_GOALS = [
-  {
-    id: 'seed-no5',
-    nombre: 'No. 5',
-    tipoId: 'seed-personal',
-    imagen: LOKI,
-    seguimiento: 'percent',
-    valor: 35,
-    marcas: [],
-    ultimoMovimiento: pastISO(4),
-    createdAt: 1,
-    enMuro: true,
-  },
-  {
-    id: 'seed-racha',
-    nombre: 'Racha de enfoque',
-    tipoId: 'seed-personal',
-    imagen: LOKI,
-    seguimiento: 'streak',
-    valor: 0,
-    metaDias: 30,
-    marcas: [pastISO(4), pastISO(3), pastISO(2), pastISO(1)],
-    createdAt: 2,
-    enMuro: true,
-  },
-]
 
 // Se decide una sola vez al cargar: si ya se sincronizó antes no volvemos a
 // sembrar el tablero (un reinstalado debe recuperar lo del servidor).

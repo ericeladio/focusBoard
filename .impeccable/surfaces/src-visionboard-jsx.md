@@ -84,7 +84,14 @@ nombre y el doble clic/segundo toque abre la modal con las opciones. Las
 cartas se pueden reordenar arrastrándolas (ratón: arrastrar; táctil: mantener
 pulsado 350 ms): la carta levantada se señala y la que hay debajo se marca con
 punteado, y al soltar cambian de sitio — solo visual, no se guarda en datos ni
-en storage: al recargar vuelve el orden por defecto. FIRST VIEWPORT (`/pool`): título + select de
+en storage: al recargar vuelve el orden por defecto. Si este navegador nunca
+ha sincronizado (`!hasSynced()`, los mismos que reciben los ejemplos de
+`lib/seeds.js`: Personal y Lectura, porcentaje con alerta de días sin avance,
+racha "4 de 30 días", lectura por páginas, compuesta con tres partes y un
+cumplido archivado), debajo del muro aparece la sección `tour` "Todo lo que
+puedes hacer": intro con el aviso de que los ejemplos son tuyos y seis fichas
+con todas las funcionalidades; se va en cuanto sincroniza con una cuenta (los
+ejemplos quedan como `solo aquí`). FIRST VIEWPORT (`/pool`): título + select de
 tipo + barra Tipos/Nuevo objetivo + los mismos tape-links y sync badge en la
 nav; lista de filas (miniatura, tipo, nombre, seguimiento solo lectura,
 Editar/Terminado/Poner/Borrar, con `solo aquí` + `Subir a la cuenta` cuando
