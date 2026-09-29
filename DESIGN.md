@@ -137,6 +137,19 @@ El único radio es circular, la chinche. Elevación por sombra, nunca por borde.
 `frame--pin` (chinche CSS con degradado metálico) y `frame--tape` (tinta washi
 rotada). Hover: endereza a 0deg, sube 8px, escala 1.03, eleva la sombra.
 
+**Arrastre del muro** — las polaroids se reordenan arrastrándolas: con ratón
+basta con mover (cursor `grab` → `grabbing`) y en táctil hay que mantener
+pulsado 350 ms, de modo que el scroll y el doble toque siguen mandando (mover
+el dedo antes de ese tiempo es scroll y cancela). La carta levantada sale del
+flujo (`position`/`left`/`top`/`width` en inline, según la geometría del
+momento), se señala con `is-dragging` (endeza a 2deg, escala 1.04, sombra
+alta y `pointer-events: none` para poder medir lo que hay debajo) y la carta
+sobre la que se apunta se marca con un punteado `is-drag-over` que no mueve
+caja. Al soltar, las dos cambian de sitio (el orden sale de `lib/orden.js`:
+`ordenaIds` + `mueveA`). Es **solo visual**: el orden vive en el estado del
+muro y no toca datos ni `localStorage`, así que al recargar —o al volver de
+otra pantalla— vuelve el orden por defecto, los más recientes primero.
+
 **Nota rayada** — papel con líneas y margen rojo; clip metálico dibujado en CSS.
 Su lista es editable con doble clic y el texto se guarda como `{texto, updatedAt}`
 en `localStorage` (`fb.note`) y viaja en el sync; sin edición personalizada, muestra los títulos de los objetivos

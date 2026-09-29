@@ -13,13 +13,21 @@ function ratioOf(img) {
   return String(Math.min(1.6, Math.max(0.62, w / h)))
 }
 
-function GoalCard({ goal, index = 0, variant = 'wall', onEdit }) {
+function GoalCard({
+  goal,
+  index = 0,
+  variant = 'wall',
+  onEdit,
+  arrastrando = false,
+  sobre = false,
+}) {
   const { types } = useStore()
 
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [ratio, setRatio] = useState(null)
   const imgRef = useRef(null)
   const lastTapRef = useRef(0)
+  const inicioTactoRef = useRef(null)
 
   const type = types.find((item) => item.id === goal.tipoId)
   const tilt = TILTS[index % TILTS.length]
@@ -46,6 +54,18 @@ function GoalCard({ goal, index = 0, variant = 'wall', onEdit }) {
 
   function handleTouchEnd(event) {
     if (isControl(event.target)) return
+    const inicio = inicioTactoRef.current
+    const fin = event.changedTouches?.[0]
+    const movio =
+      inicio && fin
+        ? Math.hypot(fin.clientX - inicio.x, fin.clientY - inicio.y) > 12
+        : false
+    if (movio) {
+      // Scroll o arrastre, no un toque: ni cuenta como primer toque ni abre
+      // la modal (así arrastrar no deja la tarjeta "media tocada").
+      lastTapRef.current = 0
+      return
+    }
     const now = Date.now()
     if (now - lastTapRef.current < 350) {
       lastTapRef.current = 0
@@ -58,9 +78,16 @@ function GoalCard({ goal, index = 0, variant = 'wall', onEdit }) {
   return (
     <>
       <figure
-        className={`frame frame--goal ${pinClass}`}
+        className={`frame frame--goal ${pinClass}${
+          arrastrando ? ' is-dragging' : ''
+        }${sobre ? ' is-drag-over' : ''}`}
         style={{ '--tilt': tilt }}
+        data-goal={goal.id}
         onDoubleClick={handleDoubleClick}
+        onTouchStart={(event) => {
+          const t = event.touches?.[0]
+          inicioTactoRef.current = t ? { x: t.clientX, y: t.clientY } : null
+        }}
         onTouchEnd={handleTouchEnd}
       >
         <div className="frame__photo">
@@ -68,6 +95,7 @@ function GoalCard({ goal, index = 0, variant = 'wall', onEdit }) {
             ref={imgRef}
             src={goal.imagen}
             alt={goal.nombre}
+            draggable={false}
             style={ratio ? { aspectRatio: ratio } : undefined}
             onLoad={(event) => applyRatio(event.currentTarget)}
           />

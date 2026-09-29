@@ -175,6 +175,8 @@ try {
       '4 de 30 días',
       // el modal de opciones (doble clic) lleva Editar en un clic
       'Editar',
+      // el arrastre del muro se agarra por `data-goal`
+      'data-goal="g1"',
     ],
     ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta'],
   )

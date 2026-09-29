@@ -79,7 +79,11 @@ objetivo es solo local), nota rayada "TODO" (editable; su botón `Subir la nota`
 solo si es local) y botón-polaroid
 "Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
 columnas con cada foto a su proporción real; en celular la tarjeta es foto +
-nombre y el doble clic/segundo toque abre la modal con las opciones. FIRST VIEWPORT (`/pool`): título + select de
+nombre y el doble clic/segundo toque abre la modal con las opciones. Las
+cartas se pueden reordenar arrastrándolas (ratón: arrastrar; táctil: mantener
+pulsado 350 ms): la carta levantada se señala y la que hay debajo se marca con
+punteado, y al soltar cambian de sitio — solo visual, no se guarda en datos ni
+en storage: al recargar vuelve el orden por defecto. FIRST VIEWPORT (`/pool`): título + select de
 tipo + barra Tipos/Nuevo objetivo + los mismos tape-links y sync badge en la
 nav; lista de filas (miniatura, tipo, nombre, seguimiento solo lectura,
 Editar/Terminado/Poner/Borrar, con `solo aquí` + `Subir a la cuenta` cuando

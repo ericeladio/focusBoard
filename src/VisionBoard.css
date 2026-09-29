@@ -103,6 +103,45 @@
   }
 }
 
+/* --- arrastre visual del muro ---
+   Reordena las polaroids en pantalla: con ratón se arrastra y con táctil
+   manteniendo pulsado. No se guarda nada, es un gesto de la sesión. */
+
+.frame--goal {
+  cursor: grab;
+  /* el largo pulsado no debe abrir el callout de la foto en iOS */
+  -webkit-touch-callout: none;
+}
+
+.wall__grid.is-arrastre {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* el cursor de las cartas es `grab`; mientras hay una en el aire todo el
+   muro se conmueve */
+.wall__grid.is-arrastre .frame {
+  cursor: grabbing;
+}
+
+/* La carta levantada viaja fija bajo el cursor (position/left/top/width van
+   en inline desde el gesto). `pointer-events: none` la salta al medir, para
+   ver qué carta hay debajo del puntero. */
+.frame.frame--goal.is-dragging {
+  pointer-events: none;
+  transform: rotate(2deg) scale(1.04);
+  box-shadow:
+    0 34px 55px -20px rgba(74, 68, 50, 0.55),
+    0 8px 18px rgba(74, 68, 50, 0.18);
+}
+
+/* Dónde va a caer: punteado alrededor de la carta pisada (sin moverle
+   caja, que así no salta nada mientras se apunta). */
+.frame.frame--goal.is-drag-over {
+  outline: 2px dashed var(--ink-soft);
+  outline-offset: 5px;
+}
+
 .frame__photo {
   aspect-ratio: 4 / 5;
   overflow: hidden;
