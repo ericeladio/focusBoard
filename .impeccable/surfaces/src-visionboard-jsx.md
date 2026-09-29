@@ -24,14 +24,16 @@ nombres y pies; sistema para el resto. Esquinas rectas, sombra doble, sin glass.
 
 STORY: el visitante ve su muro (tope 7 en foco) y el pool en lista con filtro por
 tipo. Crea objetivos con nombre, tipo, imagen y seguimiento (porcentaje con
-slider, racha de días u objetivos compuestos que agrupan otros) validados con
+slider o racha de días; los compuestos agrupan otros y se eligen con el tipo
+`Compuesto`) validados con
 zod. La compuesta se auto-marca en el muro cuando todas sus partes tienen avance
 hoy (percent: subido hoy o en 100%; racha: marcada hoy) y desmarca sola si alguna
 deja de avanzar; sus partes no ocupan cupo de los 7 pero siguen en el pool, con
-la etiqueta "dentro de: <compuesta>", y se editan dentro de su modal. Los
-compuestos no piden tipo: van solos al tipo `Compuesto` (se crea al vuelo) y el
-form oculta las tarjetas de seguimiento cuando el tipo es `Compuesto` (solo se
-ven sus partes; se sale cambiando de tipo). La racha se deriva de la cadena de
+la etiqueta "dentro de: <compuesta>", y se editan dentro de su modal. En
+Seguimiento no hay ficha "Compuesta": solo porcentaje y racha, y el tipo
+`Compuesto` viaja siempre en el desplegable (se crea al vuelo si no existía);
+elegido él, Seguimiento desaparece y solo se ven sus partes (se sale cambiando
+de tipo). La racha se deriva de la cadena de
 marcas: `Hoy` la extiende, `Deshacer hoy` la revierte, y si se rompe el hilo se
 pinta 0 sola. La nota rayada "TODO" es la única nota decorativa: su lista
 es editable con doble clic y se persiste en localStorage (`fb.note`), acotada a

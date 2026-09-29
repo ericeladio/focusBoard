@@ -217,6 +217,9 @@ try {
     'form(racha)',
     renderForm(goals[1]),
     ['Meta de días', 'Llegar a N días', 'Indefinido', 'value="30"'],
+    // En Seguimiento ya no hay ficha "Compuesta": el compuesto se elige
+    // con el tipo `Compuesto` (que sí está en el desplegable).
+    ['Compuesta'],
   )
 
   console.log(fallos ? `\n${fallos} fallo(s)` : '\nrender-check OK')

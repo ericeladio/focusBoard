@@ -7,7 +7,7 @@ import {
 } from '../lib/schemas.js'
 import { useStore } from '../lib/storeContext.js'
 import { markedToday, streakOf } from '../lib/dates.js'
-import { esTipoCompuesto, modoPorTipo, padreDe } from '../lib/composite.js'
+import { esTipoCompuesto, ensureCompuestoType, modoPorTipo, padreDe } from '../lib/composite.js'
 import { PAGINAS_POR_DEFECTO, etiquetaDe } from '../lib/lectura.js'
 
 const EMPTY = {
@@ -78,7 +78,10 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
     setErrors((current) => ({ ...current, [key]: undefined }))
   }
 
-  const padreActual = editing ? padreDe(editing.id, goals) : null
+  // El tipo `Compuesto` viaja siempre en el desplegable: es la única puerta
+  // de entrada a un objetivo compuesto (la ficha "Compuesta" del seguimiento
+  // ya no existe). Si todavía no está creado, el store lo crea al guardar.
+  const tiposVisibles = useMemo(() => ensureCompuestoType(types), [types])
 
   const candidatos = goals.filter(
     (goal) => goal.id !== editing?.id && goal.seguimiento !== 'compuesta',
@@ -206,7 +209,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
             <option value="">
               {types.length === 0 ? 'Sin tipos creados' : 'Elige un tipo'}
             </option>
-            {types.map((type) => (
+            {tiposVisibles.map((type) => (
               <option key={type.id} value={type.id}>
                 {type.nombre}
               </option>
@@ -241,8 +244,9 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           {errors.imagen && <p className="field__error">{errors.imagen}</p>}
         </div>
 
-        {/* El tipo `Compuesto` no despliega seguimiento: ya es compuesta por
-            definición y aquí solo se eligen sus partes. */}
+        {/* Seguimiento solo ofrece porcentaje y racha: "compuesta" no es una
+            ficha más, se activa eligiendo el tipo `Compuesto` (ahora mismo no
+            se despliega nada y aquí solo se eligen sus partes). */}
         {!esTipoCompuesto(values.tipoId, types) && values.seguimiento !== 'paginas' && (
         <fieldset className="field">
           <legend>Seguimiento</legend>
@@ -274,30 +278,6 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
               />
               <span className="opt__title">Racha de días</span>
               <span className="opt__hint">Sumas un día cuando lo cumples</span>
-            </label>
-            <label
-              className={
-                values.seguimiento === 'compuesta'
-                  ? 'opt is-active'
-                  : padreActual
-                    ? 'opt is-blocked'
-                    : 'opt'
-              }
-            >
-              <input
-                type="radio"
-                name="seguimiento"
-                value="compuesta"
-                checked={values.seguimiento === 'compuesta'}
-                disabled={Boolean(padreActual)}
-                onChange={() => update('seguimiento', 'compuesta')}
-              />
-              <span className="opt__title">Compuesta</span>
-              <span className="opt__hint">
-                {padreActual
-                  ? `Ya es parte de ${padreActual.nombre}`
-                  : 'Se marca sola si todas sus partes avanzan hoy'}
-              </span>
             </label>
           </div>
           {errors.seguimiento && (

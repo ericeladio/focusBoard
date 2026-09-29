@@ -224,11 +224,14 @@ Tipos/Nuevo objetivo: borde tinta, fondo polaroid, esquinas rectas; opciones
 "Todos los tipos" + cada tipo. Los chips de partes (`goal__chip`) siguen siendo
 etiquetas de cinta más pequeñas: `tape` pendiente, fondo tinta cuando avanza hoy. **Sheet** — modal de papel con
 margen rojo, esquinas rectas y sombra alta; `opt` son las fichas de opción
-(porcentaje, racha, compuesta) y `pick` la lista de partes con checkbox del form.
+(porcentaje, racha) y `pick` la lista de partes con checkbox del form.
 Para racha, `opt` también elige la meta de días: `Llegar a N días` (input
 numérico 1..3650) o `Indefinido`, separados del resto por una línea punteada.
-Los compuestos no piden tipo: el form oculta ese campo y el objetivo se asigna
-solo al tipo `Compuesto` (se crea al vuelo si todavía no existe).
+La compuesta no es una ficha de seguimiento: se activa eligiendo el tipo
+`Compuesto`, que viaja siempre en el desplegable (si todavía no existe, el
+store lo crea al guardar). Con ese tipo elegido, Seguimiento no se despliega
+y solo se piden las partes; al cambiar a otro tipo, el seguimiento vuelve a
+porcentaje o racha y las partes se sueltan.
 
 **Buttons** — `btn` papel con borde tinta, hover `sticky`; `btn--ink` relleno
 tinta; `btn--ghost` subrayado discreto.

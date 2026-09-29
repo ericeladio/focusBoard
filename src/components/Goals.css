@@ -153,7 +153,8 @@
   color: var(--ink);
 }
 
-/* --- botón-polaroid "Añadir" --- */
+/* --- botón-polaroid "Añadir" ---
+   Más pequeño que una meta: es una acción del muro, no un objetivo. */
 
 .frame--add {
   appearance: none;
@@ -161,6 +162,13 @@
   cursor: pointer;
   text-align: center;
   border: 0;
+  width: 65%;
+  padding: 0.6rem 0.6rem 2.1rem;
+}
+
+.frame--add .frame__caption {
+  bottom: 0.4rem;
+  font-size: 1.15rem;
 }
 
 .frame--add .frame__photo--add {
@@ -174,6 +182,20 @@
   position: relative;
   width: 2.2rem;
   height: 2.2rem;
+}
+
+/* el "+" a la escala de la tarjeta de añadir */
+.frame--add .plus {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.frame--add .plus::before {
+  width: 1.7rem;
+}
+
+.frame--add .plus::after {
+  height: 1.7rem;
 }
 
 .plus::before,
@@ -480,11 +502,6 @@
 .opt.is-active {
   border-color: var(--ink);
   background: var(--sticky);
-}
-
-.opt.is-blocked {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .opt__title {
