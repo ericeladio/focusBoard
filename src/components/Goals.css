@@ -197,12 +197,8 @@
   transform: translate(-50%, -50%);
 }
 
-.frame--add:hover:not(:disabled) .frame__photo--add {
+.frame--add:hover .frame__photo--add {
   border-color: var(--ink);
-}
-
-.frame--add:disabled {
-  opacity: 0.5;
 }
 
 /* --- link con cinta (navegación) --- */

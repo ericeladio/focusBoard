@@ -146,6 +146,31 @@ try {
     ],
     ['Archivo ocultoXYZ'],
   )
+  // Con hueco el botón se enseña; lleno desaparece (sin estado "Muro lleno").
+  check('/  (con hueco)', render('/'), ['Añadir objetivo'], ['Muro lleno'])
+
+  const extras = Array.from({ length: 5 }, (_, i) => ({
+    id: `x${i}`,
+    nombre: `Extra ${i}`,
+    tipoId: 'seed-personal',
+    imagen: '/seed-photo.png',
+    seguimiento: 'percent',
+    valor: 10,
+    marcas: [],
+    ultimoMovimiento: day(0),
+    createdAt: 100 + i,
+    enMuro: true,
+    finalizadoEn: null,
+  }))
+  kv.set('fb.goals', JSON.stringify([...goals, ...extras]))
+  check(
+    '/  (lleno)',
+    render('/'),
+    ['7 de 7 en el muro'],
+    ['Añadir objetivo', 'Muro lleno'],
+  )
+  kv.set('fb.goals', JSON.stringify(goals))
+
   check(
     '/pool',
     render('/pool'),

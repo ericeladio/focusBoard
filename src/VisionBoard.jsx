@@ -108,21 +108,22 @@ function VisionBoard() {
           )}
         </article>
 
-        <button
-          type="button"
-          className="frame frame--add"
-          style={{ '--tilt': '-1.5deg' }}
-          onClick={() => setAddOpen(true)}
-          disabled={wallFull}
-          aria-label={wallFull ? 'Muro lleno' : 'Añadir objetivo'}
-        >
-          <span className="frame__photo frame__photo--add">
-            <span className="plus" aria-hidden="true" />
-          </span>
-          <span className="frame__caption">
-            {wallFull ? 'Muro lleno' : 'Añadir objetivo'}
-          </span>
-        </button>
+        {/* Lleno no se enseña desactivado: el muro topa y el resto vive
+            en el pool (decirlo aquí ya lo dice el contador de arriba). */}
+        {!wallFull && (
+          <button
+            type="button"
+            className="frame frame--add"
+            style={{ '--tilt': '-1.5deg' }}
+            onClick={() => setAddOpen(true)}
+            aria-label="Añadir objetivo"
+          >
+            <span className="frame__photo frame__photo--add">
+              <span className="plus" aria-hidden="true" />
+            </span>
+            <span className="frame__caption">Añadir objetivo</span>
+          </button>
+        )}
       </div>
 
       <GoalForm
