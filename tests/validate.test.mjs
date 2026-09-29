@@ -174,14 +174,87 @@ const baseGoal = {
   assert.equal(record.createdAt, Date.parse('2026-01-02T03:04:05.000Z'), 'createdAt → ms')
   assert.equal(record.deletedAt, null)
   assert.equal(record.totalPaginas, null, 'sin columna → null')
-  assert.equal(goalParams(record, 'local').length, 14)
-  assert.equal(goalParams(record, 'local')[13], null, 'el total viaja como null si no aplica')
+  assert.equal(record.metaDias, null, 'sin columna → meta indefinida')
+  assert.equal(record.finalizadoEn, null, 'sin columna → vivo')
+  const params = goalParams(record, 'local')
+  assert.equal(params.length, 18)
+  assert.equal(params[13], null, 'el total viaja como null si no aplica')
+  assert.equal(params[14], null, 'sin archivar → fecha null')
+  assert.equal(params[15], false, 'sin columna no se limpia nada (bandera ausente)')
+  assert.equal(params[16], null, 'meta viaja como null si no aplica')
+  assert.equal(params[17], false, 'la meta no se pisa sin bandera')
 
   const conPaginas = rowToGoal({ ...row, seguimiento: 'paginas', total_paginas: 1181, valor: 468 })
   assert.equal(conPaginas.totalPaginas, 1181, 'la columna total_paginas → totalPaginas')
   assert.equal(goalParams(conPaginas, 'local')[13], 1181)
+
+  const archivada = rowToGoal({
+    ...row,
+    meta_dias: 30,
+    finalizado_en: '2026-09-28',
+  })
+  assert.equal(archivada.metaDias, 30, 'la columna meta_dias → metaDias')
+  assert.equal(archivada.finalizadoEn, '2026-09-28', 'la columna finalizado_en → finalizadoEn')
+  assert.equal(goalParams(archivada, 'local')[14], '2026-09-28')
+  assert.equal(goalParams(archivada, 'local')[16], 30)
+
   assert.equal(typeParams({ id: 't', nombre: 'X', updatedAt: TS }, 'local').length, 4)
   assert.equal(noteParams({ texto: 'hola', updatedAt: TS }, 'local').length, 3)
+}
+
+// meta de días y archivado: la clave ausente no toca la fila, la vacía sí
+{
+  const ausente = sanitizeGoal({ ...baseGoal, seguimiento: 'streak' }, TS)
+  assert.equal(ausente.ok, true, ausente.error)
+  assert.equal(ausente.record.metaDias, null, 'sin meta → null')
+  assert.equal(ausente.record.metaDiasSet, false, 'clave ausente → no se escribe')
+  assert.equal(ausente.record.finalizadoEn, null, 'sin fecha → vivo')
+  assert.equal(ausente.record.finalizadoSet, false, 'clave ausente → se conserva el archivado')
+
+  const conMeta = sanitizeGoal({ ...baseGoal, seguimiento: 'streak', metaDias: 30 }, TS)
+  assert.equal(conMeta.record.metaDias, 30, 'meta numérica')
+  assert.equal(conMeta.record.metaDiasSet, true, 'clave presente → se escribe')
+
+  const texto = sanitizeGoal({ ...baseGoal, seguimiento: 'streak', metaDias: '45' }, TS)
+  assert.equal(texto.record.metaDias, 45, 'meta en texto → 45')
+
+  const tope = sanitizeGoal({ ...baseGoal, seguimiento: 'streak', metaDias: 999999 }, TS)
+  assert.equal(tope.record.metaDias, 3650, 'meta enorme → tope 3650')
+
+  const vacia = sanitizeGoal({ ...baseGoal, seguimiento: 'streak', metaDias: null }, TS)
+  assert.equal(vacia.record.metaDias, null, 'null explícito → indefinida')
+  assert.equal(vacia.record.metaDiasSet, true, 'null explícito sí limpia la fila')
+
+  const cero = sanitizeGoal({ ...baseGoal, seguimiento: 'streak', metaDias: 0 }, TS)
+  assert.equal(cero.record.metaDias, null, '0 → indefinida')
+
+  const fecha = sanitizeGoal({ ...baseGoal, finalizadoEn: '2026-09-28' }, TS)
+  assert.equal(fecha.ok, true, fecha.error)
+  assert.equal(fecha.record.finalizadoEn, '2026-09-28', 'fecha válida')
+  assert.equal(fecha.record.finalizadoSet, true, 'fecha presente → se escribe')
+
+  const reabrir = sanitizeGoal({ ...baseGoal, finalizadoEn: null }, TS)
+  assert.equal(reabrir.ok, true, reabrir.error)
+  assert.equal(reabrir.record.finalizadoEn, null, 'null explícito → reabrir')
+  assert.equal(reabrir.record.finalizadoSet, true, 'null explícito sí limpia el archivado')
+
+  const enBlanco = sanitizeGoal({ ...baseGoal, finalizadoEn: '' }, TS)
+  assert.equal(enBlanco.record.finalizadoEn, null, 'vacío → reabrir')
+  assert.equal(enBlanco.record.finalizadoSet, true)
+
+  const fechaMala = sanitizeGoal({ ...baseGoal, finalizadoEn: 'ayer' }, TS)
+  assert.equal(fechaMala.ok, false, 'fecha ilegible → la op falla')
+  assert.equal(fechaMala.error, 'bad_finalizado')
+
+  const opMala = normalizeOp({
+    entity: 'goal',
+    op: 'put',
+    id: 'g_1',
+    ts: TS,
+    data: { ...baseGoal, finalizadoEn: '28/09/2026' },
+  })
+  assert.equal(opMala.ok, false, 'normalizeOp propaga bad_finalizado')
+  assert.equal(opMala.error, 'bad_finalizado')
 }
 
 // modo páginas: el total por objetivo, con la ausencia en null

@@ -60,6 +60,7 @@ const SEED_GOALS = [
     imagen: LOKI,
     seguimiento: 'streak',
     valor: 0,
+    metaDias: 30,
     marcas: [pastISO(4), pastISO(3), pastISO(2), pastISO(1)],
     createdAt: 2,
     enMuro: true,
@@ -78,6 +79,12 @@ function normalizeGoal(goal, index = 0) {
     rest.totalPaginas =
       Number.isFinite(total) && total > 0 ? Math.round(total) : PAGINAS_POR_DEFECTO
   }
+  const meta = Number(rest.metaDias)
+  rest.metaDias = Number.isFinite(meta) && meta > 0 ? Math.round(meta) : null
+  rest.finalizadoEn =
+    typeof rest.finalizadoEn === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rest.finalizadoEn)
+      ? rest.finalizadoEn
+      : null
   if (!Array.isArray(rest.componentes)) rest.componentes = []
   rest.componentes = rest.componentes.filter((id) => typeof id === 'string')
   if (typeof rest.createdAt !== 'number') rest.createdAt = index
@@ -210,6 +217,14 @@ function goalOp(record) {
         : null,
       marcas: Array.isArray(record.marcas) ? record.marcas : [],
       ultimoMovimiento: record.ultimoMovimiento ?? null,
+      // Ambas claves viajan siempre: en el servidor "la clave está" significa
+      // "escribe esto" (por eso vaciar la fecha sirve para reabrir) y una
+      // clave ausente (cliente viejo) conserva lo que ya esté en la fila.
+      metaDias:
+        Number.isFinite(Number(record.metaDias)) && Number(record.metaDias) > 0
+          ? Math.round(Number(record.metaDias))
+          : null,
+      finalizadoEn: typeof record.finalizadoEn === 'string' ? record.finalizadoEn : null,
       imagenKey: record.imagenKey ?? null,
       createdAt: record.createdAt ?? Date.now(),
       enMuro: Boolean(record.enMuro),
@@ -332,7 +347,7 @@ export function StoreProvider({ children }) {
   const goalsView = useMemo(() => reconcileComposites(goals, hoy), [goals, hoy])
 
   const focusCount = goalsView.filter(
-    (goal) => goal.enMuro && !esHijoDe(goal.id, goalsView),
+    (goal) => goal.enMuro && !goal.finalizadoEn && !esHijoDe(goal.id, goalsView),
   ).length
   const wallFull = focusCount >= MAX_FOCUS
 
@@ -624,6 +639,8 @@ export function StoreProvider({ children }) {
           imagenKey,
           seguimiento,
           totalPaginas: Number(values.totalPaginas) || PAGINAS_POR_DEFECTO,
+          metaDias: Number(values.metaDias) || null,
+          finalizadoEn: null,
           componentes:
             seguimiento === 'compuesta' ? values.componentes.slice(0, MAX_FOCUS) : [],
           valor: 0,
@@ -667,6 +684,7 @@ export function StoreProvider({ children }) {
             seguimiento,
             componentes,
             totalPaginas: Number(values.totalPaginas) || PAGINAS_POR_DEFECTO,
+            metaDias: Number(values.metaDias) || null,
             ...(imagenKey ? { imagenKey } : {}),
             ...(cambioModo ? { marcas: [], valor: 0, ultimoMovimiento: todayISO() } : {}),
           }
@@ -718,6 +736,36 @@ export function StoreProvider({ children }) {
               ? { ...goal, componentes: goal.componentes.filter((item) => item !== id) }
               : goal,
           ),
+      )
+    },
+    [setGoals],
+  )
+
+  // Terminar: archiva el objetivo (fecha de hoy) y lo saca del muro. Vive
+  // entonces en /cumplidos; no se borra ni pierde su avance.
+  const finalizarGoal = useCallback(
+    (id) => {
+      setGoals((current) =>
+        current.map((goal) =>
+          goal.id !== id || goal.finalizadoEn
+            ? goal
+            : { ...goal, finalizadoEn: todayISO(), enMuro: false },
+        ),
+      )
+    },
+    [setGoals],
+  )
+
+  // Reabrir: solo limpia la fecha. Vuelve al pool, no al muro, para no
+  // pisar el cupo de los 7 sin que nadie lo pida.
+  const reabrirGoal = useCallback(
+    (id) => {
+      setGoals((current) =>
+        current.map((goal) =>
+          goal.id !== id || !goal.finalizadoEn
+            ? goal
+            : { ...goal, finalizadoEn: null },
+        ),
       )
     },
     [setGoals],
@@ -808,6 +856,8 @@ export function StoreProvider({ children }) {
     placeInWall,
     removeFromWall,
     removeGoal,
+    finalizarGoal,
+    reabrirGoal,
     setPercent,
     setPaginas,
     markToday,

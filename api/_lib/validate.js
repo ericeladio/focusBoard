@@ -50,6 +50,34 @@ function totalPaginasOf(input) {
   return Math.max(1, Math.min(10000, Math.round(parsed)))
 }
 
+// ¿Trae la clave el cliente? Distingue "ausente" (cliente viejo: no se toca
+// lo que ya esté en la fila) de "vacío" (cliente nuevo que limpia el dato,
+// p. ej. al reabrir un objetivo terminado).
+function trae(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key)
+}
+
+// Meta de días de una racha: entero 1..3650 o null = indefinida.
+function metaDiasOf(value) {
+  if (value == null || value === '') return null
+  const parsed = typeof value === 'string' ? Number(value) : value
+  if (!Number.isFinite(parsed)) return null
+  const dias = Math.round(parsed)
+  if (dias <= 0) return null
+  return Math.min(3650, dias)
+}
+
+const FECHA_RE = /^\d{4}-\d{2}-\d{2}$/
+
+// Fecha de archivado (YYYY-MM-DD) o null = vivo. Una fecha mal escrita no se
+// tolera: fallamos en vez de desarchivar el objetivo por una op rota.
+function finalizadoOf(value) {
+  if (value == null || value === '') return { ok: true, value: null }
+  const texto = String(value)
+  if (!FECHA_RE.test(texto)) return { ok: false, value: null }
+  return { ok: true, value: texto }
+}
+
 function fail(error) {
   return { ok: false, error }
 }
@@ -87,6 +115,15 @@ export function sanitizeGoal(input, ts) {
 
   const createdAt = toIso(input.createdAt) ?? ts
 
+  const metaSet = trae(input, 'metaDias')
+  const metaDias = metaSet ? metaDiasOf(input.metaDias) : null
+
+  const fechaSet = trae(input, 'finalizadoEn')
+  const finalizado = fechaSet
+    ? finalizadoOf(input.finalizadoEn)
+    : { ok: true, value: null }
+  if (!finalizado.ok) return fail('bad_finalizado')
+
   return {
     ok: true,
     record: {
@@ -97,6 +134,10 @@ export function sanitizeGoal(input, ts) {
       componentes,
       valor: asInt(input.valor, 0, 0, 100000),
       totalPaginas: totalPaginasOf(input.totalPaginas),
+      metaDias,
+      metaDiasSet: metaSet,
+      finalizadoEn: finalizado.value,
+      finalizadoSet: fechaSet,
       marcas,
       ultimoMovimiento,
       imagenKey,

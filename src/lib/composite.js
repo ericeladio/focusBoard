@@ -54,11 +54,14 @@ export function padreDe(id, goals) {
 }
 
 // ¿Este objetivo tiene avance hoy?
+//   archivado → siempre (ya se terminó: cuenta como cumplido)
 //   percent  → lo subiste hoy, o ya está en 100%
 //   paginas  → leíste hoy, o ya está en su total
 //   streak   → lo marcaste hoy
 //   compuesta → no aplica (un solo nivel, no se anidan)
 export function esAvanceHoy(goal, hoy = todayISO()) {
+  // Terminado = cumplido: una parte archivada nunca desmonta su compuesta.
+  if (goal.finalizadoEn) return true
   if (goal.seguimiento === 'percent') {
     return goal.valor >= 100 || goal.ultimoMovimiento === hoy
   }

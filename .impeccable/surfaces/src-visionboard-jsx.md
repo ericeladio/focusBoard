@@ -7,7 +7,8 @@ related_targets: []
 
 # Vision Board + Objetivos (foxus-board)
 
-Scope: surface con dos rutas (`/` muro, `/pool` lista), modo Experience.
+Scope: surface con tres rutas (`/` muro, `/pool` lista, `/cumplidos`
+terminados), modo Experience.
 
 ## Direction contract
 
@@ -40,14 +41,26 @@ cargados; orden por `createdAt` descendente. Los % que llevan 3+ días sin
 subir (con valor > 0) muestran "N días sin avance" en rojo `paper-margin`, en
 muro y pool; resetea solo al subir el slider.
 
-FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-link al
-pool + sync badge de cinta (estado del sync; "Entrar" abre la hoja de passcode);
+Cada objetivo se puede TERMINAR: el botón `Terminado` (muro, modal y fila del
+pool) lo archiva con fecha de hoy, lo saca del muro y del pool y lo pasa a
+`/cumplidos`. En porcentaje/páginas aparece solo al 100%, en rachas SIEMPRE
+y en compuestas cuando está lista hoy. La racha acepta meta de días
+(`metaDias` 1..3650) o `Indefinido`: con meta se lee "4 de 30 días" y, al
+llegar, el botón se enciende — pero nunca archiva solo. Una parte archivada
+cuenta como avance y no desmonta su compuesta. `Reabrir` (desde
+`/cumplidos`) solo limpia la fecha: el objetivo vuelve al pool.
+
+FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-links
+al pool y a cumplidos + sync badge de cinta (estado del sync; "Entrar" abre la hoja de passcode);
 polaroids de objetivos, nota rayada "TODO" (editable) y botón-polaroid
 "Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
 columnas con cada foto a su proporción real; en celular la tarjeta es foto +
 nombre y el doble clic/segundo toque abre la modal con las opciones. FIRST VIEWPORT (`/pool`): título + select de
-tipo + barra Tipos/Nuevo objetivo + el mismo sync badge en la nav; lista de filas (miniatura, tipo, nombre,
-seguimiento solo lectura, Editar/Poner/Borrar) y hint de doble clic.
+tipo + barra Tipos/Nuevo objetivo + los mismos tape-links y sync badge en la
+nav; lista de filas (miniatura, tipo, nombre, seguimiento solo lectura,
+Editar/Terminado/Poner/Borrar) y hint de doble clic. FIRST VIEWPORT
+(`/cumplidos`): título + contador de cumplidos + tape-links y sync badge;
+años como etiqueta de cinta, meses con recuento y filas con Reabrir/Borrar.
 
 FORM: réplica del sketch.webp (pinned por brief) ampliada a app de objetivos.
 Seed key: pinned-request, sin roll.

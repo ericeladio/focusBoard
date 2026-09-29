@@ -1,5 +1,6 @@
 import { useStore } from '../lib/storeContext.js'
 import { inactiveDays, markedToday, streakOf } from '../lib/dates.js'
+import GoalDone from './GoalDone.jsx'
 import { padreDe } from '../lib/composite.js'
 import { etiquetaDe, pctDe } from '../lib/lectura.js'
 
@@ -59,6 +60,7 @@ function GoalRow({ goal, onEdit }) {
         <button type="button" className="btn btn--ghost" onClick={() => onEdit(goal)}>
           Editar
         </button>
+        <GoalDone goal={goal} />
         {padre ? (
           <button
             type="button"

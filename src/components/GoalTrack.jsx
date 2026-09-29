@@ -1,12 +1,23 @@
 import { useStore } from '../lib/storeContext.js'
-import { inactiveDays, markedToday, streakOf } from '../lib/dates.js'
+import { inactiveDays, markedToday } from '../lib/dates.js'
+import { etiquetaRacha, fechaCorta, metaAlcanzada } from '../lib/cumplidos.js'
 import { etiquetaDe, totalPaginasDe } from '../lib/lectura.js'
 
 function GoalTrack({ goal }) {
   const { setPercent, setPaginas, markToday, unmarkToday } = useStore()
 
   const isMarked = markedToday(goal.marcas)
-  const streak = streakOf(goal.marcas)
+
+  // Terminado: ya no admite avance, solo queda la fecha en la que se cerró.
+  if (goal.finalizadoEn) {
+    return (
+      <div className="goal__track">
+        <span className="goal__value goal__value--done">
+          Terminado el {fechaCorta(goal.finalizadoEn)}
+        </span>
+      </div>
+    )
+  }
 
   if (goal.seguimiento === 'paginas') {
     // El tope es el total del libro, no un 100: el avance lo pinta el front.
@@ -42,9 +53,12 @@ function GoalTrack({ goal }) {
         >
           {isMarked ? 'Deshacer hoy' : 'Hoy'}
         </button>
-        <span className="goal__value">
-          {streak} {streak === 1 ? 'día' : 'días'}
-        </span>
+        <span className="goal__value">{etiquetaRacha(goal)}</span>
+        {metaAlcanzada(goal) && (
+          <span className="goal__value goal__value--meta goal__value--done">
+            Meta de días cumplida
+          </span>
+        )}
       </div>
     )
   }

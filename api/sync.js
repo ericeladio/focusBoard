@@ -33,7 +33,8 @@ function clientInfo(req) {
 }
 
 const GOAL_COLUMNS = `id, nombre, tipo_id, seguimiento, componentes, valor, total_paginas, marcas,
-  ultimo_movimiento, imagen_key, created_at, en_muro, updated_at, deleted_at`
+  ultimo_movimiento, imagen_key, created_at, en_muro, updated_at, deleted_at, meta_dias,
+  finalizado_en`
 const TYPE_COLUMNS = `id, nombre, created_at, updated_at, deleted_at`
 
 async function pull(userId, since) {

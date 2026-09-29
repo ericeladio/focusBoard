@@ -17,7 +17,9 @@ function Pool() {
   const [editing, setEditing] = useState(null)
 
   const shown = goals
-    .filter((goal) => filter === 'all' || goal.tipoId === filter)
+    .filter(
+      (goal) => !goal.finalizadoEn && (filter === 'all' || goal.tipoId === filter),
+    )
     .sort((a, b) => b.createdAt - a.createdAt)
   const enMuro = goals.filter((goal) => goal.enMuro).length
 
@@ -49,6 +51,9 @@ function Pool() {
         <nav className="wall__nav">
           <Link to="/" className="tape-link">
             Volver al muro
+          </Link>
+          <Link to="/cumplidos" className="tape-link">
+            Cumplidos
           </Link>
           <SyncBadge />
         </nav>

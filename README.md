@@ -1,7 +1,8 @@
 # focusBoard · Vision Board
 
 Muro de visión local-first: polaroids con objetivos, rachas, páginas leídas,
-compuestas y una nota rayada sobre pared crema. PWA (funciona sin red) con sync
+compuestas, cumplidos archivados por año y mes en `/cumplidos` y una nota
+rayada sobre pared crema. PWA (funciona sin red) con sync
 opcional a Postgres (Neon) + R2 (Cloudflare) a través de la API de Vercel.
 
 ## Comandos
@@ -12,10 +13,12 @@ opcional a Postgres (Neon) + R2 (Cloudflare) a través de la API de Vercel.
 | `npm run build`     | build de producción + service worker            |
 | `npm run preview`   | sirve `dist/` en local                          |
 | `npm test`          | suites de Node (`tests/*.test.mjs`)             |
+| `npm run test:render` | render SSR de muro, pool, `/cumplidos` y form  |
 | `npm run lint`      | oxlint                                          |
 | `npm run db:migrate`| aplica `db/schema.sql` con `DATABASE_URL`       |
 | `node scripts/smoke.mjs` | prueba login, sync e imágenes contra BD y R2 |
 | `node scripts/migrate-paginas.mjs` | crea `goals.total_paginas`; con `--apply` convierte las metas de lectura |
+| `node scripts/migrate-cumplidos.mjs` | crea `goals.meta_dias` y `goals.finalizado_en` |
 | `npm run icons`     | regenera los iconos PWA                         |
 
 ## Entorno
@@ -82,7 +85,8 @@ en el proceso. Funciona igual que producción, sin Vercel CLI.
 ```
 api/            funciones de Vercel (sync, login, proxy de imágenes)
 db/schema.sql   esquema idempotente (Neon/Postgres)
-scripts/        migrate.mjs (esquema), migrate-paginas.mjs (modo páginas), smoke.mjs (prueba de punta a punta), dev-api.mjs (API en dev)
+scripts/        migrate.mjs (esquema), migrate-paginas.mjs (modo páginas), migrate-cumplidos.mjs (meta de días y cumplidos),
+                smoke.mjs (prueba de punta a punta), render-check.mjs (render SSR), dev-api.mjs (API en dev)
 src/lib/        store React + lww, sync, idb, image, api
 src/components/ tarjetas, formularios, SyncBadge, LoginSheet
 tests/          node --test

@@ -83,4 +83,54 @@ const img = new File(['x'], 'a.png', { type: 'image/png' })
   assert.equal(r.success, false, 'seguimiento fuera del enum → inválido')
 }
 
+// meta de días de la racha: opcional, indefinida por defecto y acotada
+{
+  const r = goalSchema.safeParse({
+    nombre: 'Racha con meta', tipoId: 't', imagen: img, seguimiento: 'streak',
+    componentes: [],
+  })
+  assert.equal(r.success, true, JSON.stringify(r.error?.issues))
+  assert.equal(r.data.metaDias, null, 'sin meta → indefinida')
+}
+{
+  const r = goalUpdateSchema.safeParse({
+    nombre: 'Racha con meta', tipoId: 't', seguimiento: 'streak',
+    metaDias: '30', componentes: [],
+  })
+  assert.equal(r.success, true, JSON.stringify(r.error?.issues))
+  assert.equal(r.data.metaDias, 30, 'meta del input numérico → 30')
+}
+{
+  const r = goalSchema.safeParse({
+    nombre: 'Racha explícita', tipoId: 't', imagen: img, seguimiento: 'streak',
+    metaDias: null, componentes: [],
+  })
+  assert.equal(r.success, true, JSON.stringify(r.error?.issues))
+  assert.equal(r.data.metaDias, null, 'null explícito sigue siendo indefinida')
+}
+{
+  const r = goalSchema.safeParse({
+    nombre: 'Racha sin días', tipoId: 't', imagen: img, seguimiento: 'streak',
+    metaDias: 0, componentes: [],
+  })
+  assert.equal(r.success, false, '0 no es meta de días')
+  assert.equal(issuesToFieldErrors(r.error).metaDias, 'Mínimo 1 día')
+}
+{
+  const r = goalUpdateSchema.safeParse({
+    nombre: 'Racha vacía', tipoId: 't', seguimiento: 'streak',
+    metaDias: '', componentes: [],
+  })
+  assert.equal(r.success, false, 'campo vacío con meta activa → error')
+  assert.equal(issuesToFieldErrors(r.error).metaDias, 'Mínimo 1 día')
+}
+{
+  const r = goalSchema.safeParse({
+    nombre: 'Racha enorme', tipoId: 't', imagen: img, seguimiento: 'streak',
+    metaDias: 4000, componentes: [],
+  })
+  assert.equal(r.success, false, '4000 días fuera de rango')
+  assert.equal(issuesToFieldErrors(r.error).metaDias, 'Máximo 3650 días')
+}
+
 console.log('schemas.test: OK')

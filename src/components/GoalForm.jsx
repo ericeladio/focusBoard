@@ -15,6 +15,8 @@ const EMPTY = {
   tipoId: '',
   seguimiento: 'percent',
   totalPaginas: PAGINAS_POR_DEFECTO,
+  metaDias: '',
+  metaModo: 'libre',
   componentes: [],
 }
 
@@ -28,6 +30,8 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           tipoId: editing.tipoId,
           seguimiento: modoPorTipo(editing.seguimiento, editing.tipoId, types),
           totalPaginas: editing.totalPaginas ?? PAGINAS_POR_DEFECTO,
+          metaDias: editing.metaDias ? String(editing.metaDias) : '',
+          metaModo: editing.metaDias ? 'dias' : 'libre',
           componentes: editing.componentes ?? [],
         }
       : EMPTY,
@@ -86,6 +90,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
   }
 
   function estadoDe(candidato) {
+    if (candidato.finalizadoEn) return 'terminado'
     if (candidato.seguimiento === 'percent') return `${candidato.valor}%`
     if (candidato.seguimiento === 'paginas') return etiquetaDe(candidato)
     return markedToday(candidato.marcas)
@@ -127,7 +132,10 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
   async function submit(event) {
     event.preventDefault()
     const schema = editing ? goalUpdateSchema : goalSchema
-    const result = schema.safeParse({ ...values, imagen: file })
+    // `libre` = sin meta de días: el campo viaja como null para poder
+    // vaciar una meta que ya tenía puesta.
+    const metaDias = values.metaModo === 'libre' ? null : values.metaDias
+    const result = schema.safeParse({ ...values, metaDias, imagen: file })
     if (!result.success) {
       setErrors(issuesToFieldErrors(result.error))
       return
@@ -294,6 +302,71 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           </div>
           {errors.seguimiento && (
             <p className="field__error">{errors.seguimiento}</p>
+          )}
+
+          {/* Meta de días de la racha: con tope o indefinida. */}
+          {values.seguimiento === 'streak' && (
+            <div className="field field--meta">
+              <span className="field__label">Meta de días</span>
+              <div className="option-cards">
+                <label
+                  className={values.metaModo === 'dias' ? 'opt is-active' : 'opt'}
+                >
+                  <input
+                    type="radio"
+                    name="metaModo"
+                    value="dias"
+                    checked={values.metaModo === 'dias'}
+                    onChange={() => update('metaModo', 'dias')}
+                  />
+                  <span className="opt__title">Llegar a N días</span>
+                  <span className="opt__hint">Terminado se enciende al llegar</span>
+                </label>
+                <label
+                  className={values.metaModo === 'libre' ? 'opt is-active' : 'opt'}
+                >
+                  <input
+                    type="radio"
+                    name="metaModo"
+                    value="libre"
+                    checked={values.metaModo === 'libre'}
+                    onChange={() => update('metaModo', 'libre')}
+                  />
+                  <span className="opt__title">Indefinido</span>
+                  <span className="opt__hint">Sin tope: no termina sola</span>
+                </label>
+              </div>
+              {values.metaModo === 'dias' && (
+                <>
+                  <label className="field__label" htmlFor="goal-meta-dias">
+                    Días de la meta
+                  </label>
+                  <input
+                    id="goal-meta-dias"
+                    className="input"
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    max="3650"
+                    value={values.metaDias}
+                    onChange={(event) => update('metaDias', event.target.value)}
+                    aria-invalid={Boolean(errors.metaDias)}
+                    aria-describedby={
+                      errors.metaDias ? 'goal-meta-dias-error' : undefined
+                    }
+                  />
+                  {errors.metaDias && (
+                    <p className="field__error" id="goal-meta-dias-error">
+                      {errors.metaDias}
+                    </p>
+                  )}
+                </>
+              )}
+              <p className="field__hint">
+                En las rachas Terminado siempre está: con meta se enciende al
+                llegar a los días.
+              </p>
+            </div>
           )}
         </fieldset>
         )}

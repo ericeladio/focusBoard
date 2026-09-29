@@ -43,14 +43,16 @@ const esImagen = (res) => (res.headers.get('content-type') ?? '').startsWith('im
 
 console.log(`VERIFY: ${BASE}\n`)
 
-// 1. La app se sirve (y no el login de Vercel).
+// 1. La app se sirve (y no el login de Vercel): las tres rutas de la SPA.
 {
-  const res = await fetch(`${BASE}/`, { redirect: 'manual' })
-  const tipo = res.headers.get('content-type') ?? ''
-  paso(
-    res.status === 200 && tipo.includes('text/html'),
-    `GET / → ${res.status} ${tipo}${res.status === 200 ? '' : ' (¿protección de Vercel?)'}`,
-  )
+  for (const ruta of ['/', '/pool', '/cumplidos']) {
+    const res = await fetch(`${BASE}${ruta}`, { redirect: 'manual' })
+    const tipo = res.headers.get('content-type') ?? ''
+    paso(
+      res.status === 200 && tipo.includes('text/html'),
+      `GET ${ruta} → ${res.status} ${tipo}${res.status === 200 ? '' : ' (¿protección de Vercel?)'}`,
+    )
+  }
 }
 
 // 2. La API responde JSON sin sesión (aquí es donde el HTML del login de
@@ -122,6 +124,22 @@ let metas = []
     clavesOk && totalesOk2,
     `por páginas → ${paginas.length} meta(s)` +
       (paginas.length ? `: ${paginas.map((g) => `${g.nombre}=${g.totalPaginas}`).join(', ')}` : ''),
+  )
+
+  // Los cumplimientos viajan en cada meta: la clave existe siempre (null =
+  // sin meta / sigue vivo) y el formato es el que espera la página nueva.
+  const fechaOk = metas.every(
+    (g) => g.finalizadoEn === null || /^\d{4}-\d{2}-\d{2}$/.test(String(g.finalizadoEn)),
+  )
+  const metaOk = metas.every(
+    (g) => g.metaDias === null || (Number.isInteger(g.metaDias) && g.metaDias > 0),
+  )
+  const terminadas = metas.filter((g) => g.finalizadoEn)
+  const conMeta = metas.filter((g) => g.metaDias !== null)
+  paso(
+    fechaOk && metaOk,
+    `cumplidos → ${terminadas.length} terminada(s), ${conMeta.length} con meta de días` +
+      (terminadas.length ? `: ${terminadas.map((g) => `${g.nombre}=${g.finalizadoEn}`).join(', ')}` : ''),
   )
 }
 

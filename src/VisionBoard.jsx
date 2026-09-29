@@ -17,9 +17,14 @@ function VisionBoard() {
   const [noteEditing, setNoteEditing] = useState(false)
   const [noteDraft, setNoteDraft] = useState('')
 
-  const enMuro = goals.filter((goal) => goal.enMuro && !esHijoDe(goal.id, goals))
-  const enPool = goals.filter((goal) => !goal.enMuro && !esHijoDe(goal.id, goals))
-  const titulos = goals.map((goal) => goal.nombre)
+  const enMuro = goals.filter(
+    (goal) => goal.enMuro && !goal.finalizadoEn && !esHijoDe(goal.id, goals),
+  )
+  const enPool = goals.filter(
+    (goal) => !goal.enMuro && !goal.finalizadoEn && !esHijoDe(goal.id, goals),
+  )
+  // La nota por defecto lista los pendientes: lo archivado ya no es pendiente.
+  const titulos = goals.filter((goal) => !goal.finalizadoEn).map((goal) => goal.nombre)
   const nota = note ?? titulos.join('\n')
 
   function startNoteEdit() {
@@ -56,6 +61,9 @@ function VisionBoard() {
         <nav className="wall__nav">
           <Link to="/pool" className="tape-link">
             Pool de objetivos
+          </Link>
+          <Link to="/cumplidos" className="tape-link">
+            Cumplidos
           </Link>
           <SyncBadge />
         </nav>

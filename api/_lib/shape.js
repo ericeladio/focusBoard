@@ -7,6 +7,8 @@ export function rowToGoal(row) {
     componentes: row.componentes ?? [],
     valor: row.valor,
     totalPaginas: row.total_paginas ?? null,
+    metaDias: row.meta_dias ?? null,
+    finalizadoEn: row.finalizado_en ?? null,
     marcas: row.marcas ?? [],
     ultimoMovimiento: row.ultimo_movimiento ?? null,
     imagenKey: row.imagen_key ?? null,
@@ -38,13 +40,16 @@ export function rowToNote(row) {
 // si no, su copia local se queda sin que nadie se entere.
 // `total_paginas` solo aplica al modo `paginas`. El `coalesce` del update
 // protege el valor contra un cliente viejo que no manda el campo: en vez de
-// pisarlo con null se conserva el que ya había.
+// pisarlo con null se conserva el que ya había. `finalizado_en` y `meta_dias`
+// no pueden usar coalesce porque vaciarlos es una orden legítima (reabrir,
+// pasar a indefinido): por eso viajan con su bandera ($16 y $18) y solo se
+// escriben si el cliente los trae; sin la bandera, la fila se conserva.
 export const GOAL_UPSERT = `
   with applied as (
     insert into goals (id, user_id, nombre, tipo_id, seguimiento, componentes, valor, marcas,
                        ultimo_movimiento, imagen_key, created_at, en_muro, updated_at, deleted_at,
-                       total_paginas)
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, null, $14)
+                       total_paginas, finalizado_en, meta_dias)
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, null, $14, $15, $17)
     on conflict (id) do update set
       nombre = excluded.nombre,
       tipo_id = excluded.tipo_id,
@@ -56,6 +61,8 @@ export const GOAL_UPSERT = `
       imagen_key = excluded.imagen_key,
       en_muro = excluded.en_muro,
       total_paginas = coalesce(excluded.total_paginas, goals.total_paginas),
+      finalizado_en = case when $16 then excluded.finalizado_en else goals.finalizado_en end,
+      meta_dias = case when $18 then excluded.meta_dias else goals.meta_dias end,
       updated_at = excluded.updated_at,
       deleted_at = null
     where goals.user_id = excluded.user_id and excluded.updated_at > goals.updated_at
@@ -80,6 +87,10 @@ export function goalParams(record, userId) {
     record.enMuro,
     record.updatedAt,
     record.totalPaginas ?? null,
+    record.finalizadoEn ?? null,
+    Boolean(record.finalizadoSet),
+    record.metaDias ?? null,
+    Boolean(record.metaDiasSet),
   ]
 }
 

@@ -88,9 +88,10 @@ components:
 Un muro físico traducido a pantalla: elementos sujetos con cinta washi, chinches
 y clip sobre una pared crema. El sketch (`public/sketch.webp`) es la referencia
 de composición; la portada de *Matantei Loki Ragnarok* es el material fotográfico.
-Modo Experience: el artefacto lidera, la interfaz desaparece. Dos rutas: el muro
-(`/`) con hasta 7 objetivos en foco, y el pool (`/pool`) con todos los objetivos
-y filtro por tipo.
+Modo Experience: el artefacto lidera, la interfaz desaparece. Tres rutas: el muro
+(`/`) con hasta 7 objetivos en foco, el pool (`/pool`) con todos los objetivos
+y filtro por tipo, y cumplidos (`/cumplidos`) con los objetivos terminados
+agrupados por año y mes.
 
 ## Colors
 
@@ -147,7 +148,14 @@ hoja.
 `hand-small` y su seguimiento: slider con lectura en `handwriting` o el toggle
 `Hoy` / `Deshacer hoy` (`btn--ink`, estado `is-active`) + contador de racha.
 La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
-pinta 0 sola. Los objetivos **compuestos** no muestran slider ni `Hoy`: una
+pinta 0 sola. Puede llevar **meta de días** (`metaDias`, 1..3650) o ser
+indefinida: se lee `4 de 30 días` (o `4 días` sin meta) y, al llegar, el
+contador añade "Meta de días cumplida" en tinta. El botón **Terminado**
+archiva el objetivo (fecha `finalizadoEn`: sale del muro y del pool y pasa a
+`/cumplidos`): en rachas está siempre visible, en porcentaje/páginas solo al
+llegar al 100% y en compuestas cuando está lista hoy. Con meta de días el
+botón se enciende (`btn--ink`) al llegar, pero nunca archiva solo: el gesto
+siempre es del usuario. Los objetivos **compuestos** no muestran slider ni `Hoy`: una
 línea de estado `Listo · N días` (tinta), `Falta M de K · N días` (rojo
 `paper-margin`) o `Sin partes` sobre chips-cinta de sus partes — fondo `tape`, invertidos a
 tinta cuando esa parte avanza hoy. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
@@ -161,14 +169,25 @@ tenga huecos. Las partes de una compuesta no aparecen en el muro (se editan en
 el pool y dentro de la modal), y su chip-cinta es lo que se ve en celular.
 
 **Goal row** — fila de papel del pool: miniatura 4:5, tipo y nombre, seguimiento
-solo lectura (barra fina de tinta + `%`, días, o `Listo hoy · N días` en tinta
-para compuestas) y acciones fantasma (Editar, Poner/Quitar del muro, Borrar).
+solo lectura (barra fina de tinta + `%`, días con su meta, o `Listo hoy · N días`
+en tinta para compuestas) y acciones fantasma (Editar, Terminado, Poner/Quitar
+del muro, Borrar).
 Las partes llevan la etiqueta `dentro de: <compuesta>` bajo el nombre y su botón
 "Poner en el muro" queda deshabilitado con ese motivo. Doble clic en la fila abre
 el form con los datos cargados. Lleva el mismo indicador rojo "N días sin
 avance" que la tarjeta.
 Hover: sube 2px con la misma sombra, a media suavidad. Orden: los más
 recientes primero (`createdAt`).
+
+**Cumplidos** — página `/cumplidos`: los objetivos terminados agrupados por
+año y por mes (`Septiembre (2)`), de lo más reciente a lo más antiguo. El año
+es una etiqueta de cinta rotada en Caveat display; cada cumplido es una fila
+`.row` como las del pool (miniatura, tipo, nombre, `Terminado el 29 sep 2026`
+en `label` y el logro final: racha con meta, páginas o %) con acciones
+**Reabrir** (limpia solo la fecha y lo devuelve al pool, nunca al muro) y
+**Borrar**. Estado vacío en manuscrito sobre polaroid rotada. La cabecera
+repite el patrón del muro: título, contador (`N cumplidos · M este año`),
+tape-links al muro/pool y el sync badge.
 
 **Botón-polaroid** — el "Añadir" del muro: marco con foto punteada y `+` dibujado
 en CSS; deshabilitado con pie "Muro lleno" a 7/7.
@@ -201,6 +220,8 @@ Tipos/Nuevo objetivo: borde tinta, fondo polaroid, esquinas rectas; opciones
 etiquetas de cinta más pequeñas: `tape` pendiente, fondo tinta cuando avanza hoy. **Sheet** — modal de papel con
 margen rojo, esquinas rectas y sombra alta; `opt` son las fichas de opción
 (porcentaje, racha, compuesta) y `pick` la lista de partes con checkbox del form.
+Para racha, `opt` también elige la meta de días: `Llegar a N días` (input
+numérico 1..3650) o `Indefinido`, separados del resto por una línea punteada.
 Los compuestos no piden tipo: el form oculta ese campo y el objetivo se asigna
 solo al tipo `Compuesto` (se crea al vuelo si todavía no existe).
 
@@ -215,7 +236,12 @@ espejo con sello LWW por registro (`updatedAt`). Toda edición local se sella co
 tandas; los borrados dejan lápidas (90 días) que también viajan. El orden de cada
 sync es pull → imágenes → outbox → borrado de objetos ya no usados, así lo del
 servidor manda sobre lo local sin pisar ediciones en vuelo. Conflicto: gana el
-sello más nuevo; a igual sello, el borrado.
+sello más nuevo; a igual sello, el borrado. Los campos de cumplimiento
+(`metaDias`, `finalizadoEn`) viajan siempre en la op: si un cliente viejo no
+los manda, el servidor conserva lo que hay en la fila; escribir `null` de forma
+explícita es la orden de reabrir (o de dejar la meta indefinida) y una fecha
+que no sea `YYYY-MM-DD` rechaza la op (`bad_finalizado`) en vez de
+desarchivar nada.
 
 Imágenes: WebP a máx. 2048px y calidad .9 (JPEG como plan B en Safari), blob en
 IndexedDB (`imagenKey`) subido a un bucket R2 privado por `PUT /api/images/<clave>`
@@ -254,7 +280,9 @@ se activa solo en `serve` y escribe en los datos reales, igual que producción.
 - Do: tope de 7 objetivos en el muro; el pool no tiene cota y se filtra por tipo.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
 - Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos).
+- Do: `Terminado` siempre disponible en rachas; la meta de días solo resalta el botón, nunca archiva sola.
 - Don't: gradiente en texto, glassmorphism decorativo, tarjetas redondeadas.
 - Don't: más de 7 en foco; con el muro lleno, el objetivo nuevo va al pool.
 - Don't: anidar compuestas (un solo nivel) ni mostrar las partes como cartas independientes en el muro.
 - Don't: iconos Unicode/emoji; la chinche y el clip se dibujan en CSS.
+- Don't: cumplidos dentro del muro o del pool: su página es `/cumplidos`, y un objetivo archivado no ocupa cupo de los 7.

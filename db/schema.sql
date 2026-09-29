@@ -29,6 +29,9 @@ create table if not exists goals (
   imagen_key       text,
   created_at       timestamptz not null,
   en_muro          boolean not null default false,
+  total_paginas    integer,
+  meta_dias        integer,
+  finalizado_en    text,
   updated_at       timestamptz not null,
   deleted_at       timestamptz
 );

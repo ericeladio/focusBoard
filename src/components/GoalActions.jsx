@@ -1,5 +1,6 @@
 import { useStore } from '../lib/storeContext.js'
 import { padreDe } from '../lib/composite.js'
+import GoalDone from './GoalDone.jsx'
 
 function GoalActions({ goal, variant = 'wall' }) {
   const { goals, placeInWall, removeFromWall, removeGoal, wallFull } = useStore()
@@ -46,6 +47,7 @@ function GoalActions({ goal, variant = 'wall' }) {
           Poner en el muro
         </button>
       )}
+      <GoalDone goal={goal} />
       <button type="button" className="btn btn--ghost" onClick={confirmRemove}>
         Borrar
       </button>

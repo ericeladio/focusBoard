@@ -337,11 +337,143 @@ assert.equal(libroViejo.totalPaginas, 1181, 'el cliente viejo no pisa el total')
 assert.equal(libroViejo.valor, 469, 'el resto del put sí se aplicó')
 paso(14, 'put sin totalPaginas → total 1181 intacto ✓')
 
+// --- cumplimientos: meta de días, archivar y reabrir ---
+const HOY_ISO = new Date().toISOString().slice(0, 10)
+const rachaData = (extra) => ({
+  id: 'smoke-racha',
+  nombre: 'Racha de prueba',
+  tipoId: 'smoke-tipo',
+  seguimiento: 'streak',
+  componentes: [],
+  marcas: [],
+  valor: 0,
+  enMuro: true,
+  createdAt: Date.now(),
+  ...extra,
+})
+const ts = () => new Date().toISOString()
+
+res = await call(sync, {
+  method: 'POST',
+  ...auth,
+  body: {
+    ops: [
+      {
+        seq: 0,
+        entity: 'goal',
+        op: 'put',
+        id: 'smoke-racha',
+        ts: ts(),
+        data: rachaData({ metaDias: 30, finalizadoEn: null, updatedAt: ts() }),
+      },
+    ],
+  },
+})
+assert.deepEqual(res.body.acked, [0], 'racha con meta → aplicado')
+res = await call(sync, { method: 'GET', ...auth })
+let racha = res.body.goals.find((g) => g.id === 'smoke-racha')
+assert.ok(racha, 'la racha volvió')
+assert.equal(racha.metaDias, 30, 'la meta de días viaja en el pull')
+assert.equal(racha.finalizadoEn, null, 'sigue viva')
+
+// Un cliente viejo no manda las claves nuevas: no puede vaciarlas.
+res = await call(sync, {
+  method: 'POST',
+  ...auth,
+  body: {
+    ops: [
+      {
+        seq: 1,
+        entity: 'goal',
+        op: 'put',
+        id: 'smoke-racha',
+        ts: ts(),
+        data: rachaData({ valor: 1, updatedAt: ts() }),
+      },
+    ],
+  },
+})
+assert.deepEqual(res.body.acked, [1], 'put sin claves nuevas → aplicado')
+res = await call(sync, { method: 'GET', ...auth })
+racha = res.body.goals.find((g) => g.id === 'smoke-racha')
+assert.equal(racha.metaDias, 30, 'el cliente viejo no pisa la meta')
+assert.equal(racha.finalizadoEn, null, 'el cliente viejo no archiva')
+assert.equal(racha.valor, 1, 'el resto del put sí se aplicó')
+
+// Terminar (archivar) y luego reabrir (vaciar la fecha).
+res = await call(sync, {
+  method: 'POST',
+  ...auth,
+  body: {
+    ops: [
+      {
+        seq: 2,
+        entity: 'goal',
+        op: 'put',
+        id: 'smoke-racha',
+        ts: ts(),
+        data: rachaData({ finalizadoEn: HOY_ISO, metaDias: 7, updatedAt: ts() }),
+      },
+    ],
+  },
+})
+assert.deepEqual(res.body.acked, [2], 'terminar → aplicado')
+res = await call(sync, { method: 'GET', ...auth })
+racha = res.body.goals.find((g) => g.id === 'smoke-racha')
+assert.equal(racha.finalizadoEn, HOY_ISO, 'la fecha de archivado viaja en el pull')
+assert.equal(racha.metaDias, 7, 'la meta se actualizó')
+
+res = await call(sync, {
+  method: 'POST',
+  ...auth,
+  body: {
+    ops: [
+      {
+        seq: 0,
+        entity: 'goal',
+        op: 'put',
+        id: 'smoke-racha',
+        ts: ts(),
+        data: rachaData({ finalizadoEn: null, metaDias: null, updatedAt: ts() }),
+      },
+    ],
+  },
+})
+assert.deepEqual(res.body.acked, [0], 'reabrir → aplicado')
+res = await call(sync, { method: 'GET', ...auth })
+racha = res.body.goals.find((g) => g.id === 'smoke-racha')
+assert.equal(racha.finalizadoEn, null, 'reabrir limpia la fecha')
+assert.equal(racha.metaDias, null, 'la meta vacía queda indefinida')
+
+// Una fecha ilegible no desarchiva nada: la op falla.
+res = await call(sync, {
+  method: 'POST',
+  ...auth,
+  body: {
+    ops: [
+      {
+        seq: 1,
+        entity: 'goal',
+        op: 'put',
+        id: 'smoke-racha',
+        ts: ts(),
+        data: rachaData({ finalizadoEn: 'ayer', updatedAt: ts() }),
+      },
+    ],
+  },
+})
+assert.equal(res.body.failed[0]?.seq, 1, 'fecha ilegible → falla')
+assert.equal(res.body.failed[0]?.error, 'bad_finalizado', 'error bad_finalizado')
+paso(
+  15,
+  'meta de días → pull; cliente viejo no la pisa; terminar/reabrir; fecha ilegible → bad_finalizado ✓',
+)
+
 // --- logout y limpieza ---
 res = await call(logout, { method: 'POST' })
 assert.equal(res.code, 200)
 assert.match(res.headers['Set-Cookie'], /^fb_session=;/, 'cookie borrada')
-paso(15, 'logout → cookie expirada ✓')
+paso(16, 'logout → cookie expirada ✓')
 
 const sql = db()
 // La BD puede tener datos reales: solo borramos lo que creó este smoke.

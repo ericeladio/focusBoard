@@ -38,6 +38,16 @@ const componentesField = z
   .max(MAX_FOCUS, `Máximo ${MAX_FOCUS} partes`)
   .default([])
 
+// Meta de días de una racha. `null` = indefinida (sin tope): el campo viaja
+// siempre para que un cliente nuevo pueda vaciar la meta que había.
+const metaDiasField = z.coerce
+  .number({ message: 'Pon los días de la meta' })
+  .int('Pon un número entero de días')
+  .min(1, 'Mínimo 1 día')
+  .max(3650, 'Máximo 3650 días')
+  .nullable()
+  .default(null)
+
 function checkTipo(data, ctx) {
   if (data.seguimiento === 'compuesta' || data.tipoId) return
   ctx.addIssue({
@@ -81,6 +91,7 @@ export const goalSchema = z
     imagen: imagenFile,
     seguimiento: seguimientoField,
     totalPaginas: totalPaginasField,
+    metaDias: metaDiasField,
     componentes: componentesField,
   })
   .superRefine(checkComponentes)
@@ -93,6 +104,7 @@ export const goalUpdateSchema = z
     imagen: imagenFile.optional(),
     seguimiento: seguimientoField,
     totalPaginas: totalPaginasField,
+    metaDias: metaDiasField,
     componentes: componentesField,
   })
   .superRefine(checkComponentes)

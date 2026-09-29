@@ -52,6 +52,35 @@ assert.equal(
   'sin total declarado se usa el default (200)',
 )
 
+// --- esAvanceHoy con partes archivadas (terminadas) ---
+assert.equal(
+  esAvanceHoy({ ...pct(40, ANTES), finalizadoEn: HOY }, HOY),
+  true,
+  'parte archivada cuenta como avance sin tocar nada',
+)
+assert.equal(
+  esAvanceHoy({ ...str([AYER]), finalizadoEn: HOY }, HOY),
+  true,
+  'racha archivada cuenta (aunque no esté marcada hoy)',
+)
+assert.equal(
+  esAvanceHoy({ ...pag(0, 200, ANTES), finalizadoEn: HOY }, HOY),
+  true,
+  'páginas archivadas cuentan',
+)
+{
+  const goals = [
+    { ...pct(40, ANTES), finalizadoEn: HOY },
+    { ...str([AYER]), finalizadoEn: HOY },
+    comp(['p1', 's1']),
+  ]
+  assert.equal(
+    estadoCompuesta(goals[2], goals, HOY).completa,
+    true,
+    'compuesta completa cuando sus partes están terminadas',
+  )
+}
+
 // --- estadoCompuesta ---
 {
   const goals = [pct(40, HOY), str([AYER]), comp(['p1', 's1'])]
