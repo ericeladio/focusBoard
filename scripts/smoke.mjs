@@ -29,6 +29,7 @@ const logout = (await import(P('api/logout.js'))).default
 const sync = (await import(P('api/sync.js'))).default
 const images = (await import(P('api/images/[...key].js'))).default
 const { db, rows } = await import(P('api/_lib/db.js'))
+const { clavesDe } = await import(P('api/_lib/limiter.js'))
 
 function fakeRes() {
   const res = {
@@ -65,12 +66,28 @@ const cookieOf = (res) => String(res.headers['Set-Cookie'] ?? '').split(';')[0]
 
 console.log('SMOKE: API de focusBoard\n')
 
-// --- login ---
-let res = await call(login, { method: 'POST', body: { passcode: 'incorrecto' } })
-assert.equal(res.code, 401, 'passcode malo → 401')
-paso(1, 'passcode incorrecto → 401 ✓')
+// Todas las llamadas a login viajan con la misma identidad sintética: no toca
+// la IP real ni el navegador, y sus contadores se borran antes y después.
+// (En producción el bloqueo es por IP + dispositivo + user-agent.)
+const IDENTIDAD = {
+  'x-forwarded-for': '203.0.113.9',
+  'x-focus-device': 'smoke-device',
+  'user-agent': 'focus-smoke',
+}
+const clavesSmoke = clavesDe({ headers: IDENTIDAD }).map((clave) => clave.clave)
+const loginCon = (passcode) =>
+  call(login, { method: 'POST', headers: { ...IDENTIDAD }, body: { passcode } })
+const limpiarIntentos = () =>
+  db().query('delete from login_attempts where clave = any($1::text[])', [clavesSmoke])
+await limpiarIntentos()
 
-res = await call(login, { method: 'POST', body: { passcode: process.env.PASSCODE } })
+// --- login ---
+let res = await loginCon('incorrecto')
+assert.equal(res.code, 401, 'passcode malo → 401')
+assert.equal(res.body.restantes, 4, 'el servidor dice cuántos intentos quedan')
+paso(1, 'passcode incorrecto → 401 con restantes ✓')
+
+res = await loginCon(process.env.PASSCODE)
 assert.equal(res.code, 200, 'passcode bueno → 200')
 const cookie = cookieOf(res)
 assert.match(cookie, /^fb_session=/, 'fija fb_session')
@@ -475,6 +492,40 @@ assert.equal(res.code, 200)
 assert.match(res.headers['Set-Cookie'], /^fb_session=;/, 'cookie borrada')
 paso(16, 'logout → cookie expirada ✓')
 
+// --- límite de intentos ---
+// 5 fallos → 30 min (nivel 1). El bloqueo se mira antes del passcode, así que
+// dentro de él ni siquiera la clave correcta sirve.
+await limpiarIntentos()
+for (let intento = 1; intento <= 4; intento++) {
+  res = await loginCon('incorrecto')
+  assert.equal(res.code, 401, `fallo ${intento} → 401`)
+  assert.equal(res.body.restantes, 5 - intento, `fallo ${intento} → quedan ${5 - intento}`)
+}
+res = await loginCon('incorrecto')
+assert.equal(res.code, 429, '5º fallo → 429')
+assert.equal(res.headers['Retry-After'], '1800', 'Retry-After de 30 minutos')
+assert.equal(res.body.retry_after, 1800, 'el cuerpo trae lo mismo')
+assert.ok(res.body.hasta, 'y hasta cuándo dura')
+paso(17, '4 fallos → 401 con restantes; el 5º → 429 + Retry-After 1800 ✓')
+
+res = await loginCon(process.env.PASSCODE)
+assert.equal(res.code, 429, 'bloqueado: el passcode correcto no pasa')
+paso(18, 'con bloqueo activo, el passcode correcto → 429 ✓')
+
+// `node scripts/unlock-login.mjs` hace exactamente esto.
+await limpiarIntentos()
+res = await loginCon(process.env.PASSCODE)
+assert.equal(res.code, 200, 'sin contadores → el login correcto vuelve')
+paso(19, 'desbloqueamos (borramos la identidad) → 200 ✓')
+
+// Un acierto borra la fila entera: el siguiente fallo vuelve a su cupo.
+res = await loginCon('incorrecto')
+assert.equal(res.code, 401, 'fallo tras el acierto → 401')
+assert.equal(res.body.restantes, 4, 'el contador empezó de cero')
+res = await loginCon(process.env.PASSCODE)
+assert.equal(res.code, 200, 'y el acierto lo vuelve a limpiar')
+paso(20, 'un acierto reinicia los contadores ✓')
+
 const sql = db()
 // La BD puede tener datos reales: solo borramos lo que creó este smoke.
 await sql.query(`delete from goals where user_id = 'local' and id like 'smoke-%'`)
@@ -482,6 +533,7 @@ await sql.query(`delete from types where user_id = 'local' and id like 'smoke-%'
 await sql.query(
   `delete from images where user_id = 'local' and (key like 'img-goals/smoke-%' or key like 'smoke-%')`,
 )
+await limpiarIntentos()
 
 // La nota es única por usuario: la restauramos solo si sigue siendo la nuestra
 // (si alguien la editó después, manda lo suyo y no tocamos nada).

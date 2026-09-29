@@ -52,3 +52,17 @@ create table if not exists images (
 
 create index if not exists goals_user_updated_idx on goals (user_id, updated_at);
 create index if not exists types_user_updated_idx on types (user_id, updated_at);
+
+-- Intentos fallidos de passcode. Una fila por identidad (ip / disp / ua,
+-- hasheadas): `nivel` marca la escalada (0 → 5 fallos y 30 min; 1 → 2 fallos
+-- y 24 h) y `bloqueado_hasta` el instante en el que vuelve a haber intentos.
+-- Sin FK a users: los contadores se crean antes de que exista la sesión.
+create table if not exists login_attempts (
+  clave           text primary key,
+  fallos          integer not null default 0,
+  nivel           integer not null default 0,
+  bloqueado_hasta timestamptz,
+  actualizado     timestamptz not null default now()
+);
+
+create index if not exists login_attempts_bloqueo_idx on login_attempts (bloqueado_hasta);

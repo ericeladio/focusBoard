@@ -16,7 +16,9 @@ opcional a Postgres (Neon) + R2 (Cloudflare) a través de la API de Vercel.
 | `npm run test:render` | render SSR de muro, pool, `/cumplidos` y form  |
 | `npm run lint`      | oxlint                                          |
 | `npm run db:migrate`| aplica `db/schema.sql` con `DATABASE_URL`       |
-| `node scripts/smoke.mjs` | prueba login, sync e imágenes contra BD y R2 |
+| `node scripts/migrate-login-limite.mjs` | crea (si falta) la tabla `login_attempts` y enseña qué está bloqueado |
+| `node scripts/unlock-login.mjs` | borra los contadores de intentos (desbloquea el login; `ip`/`disp`/`ua` para afinar) |
+| `node scripts/smoke.mjs` | prueba login, sync, imágenes y el bloqueo de intentos contra BD y R2 |
 | `node scripts/migrate-paginas.mjs` | crea `goals.total_paginas`; con `--apply` convierte las metas de lectura |
 | `node scripts/migrate-cumplidos.mjs` | crea `goals.meta_dias` y `goals.finalizado_en` |
 | `npm run icons`     | regenera los iconos PWA                         |
@@ -35,6 +37,7 @@ van los mismos nombres en **Project → Settings → Environment Variables**.
 | `R2_BUCKET`         | bucket de fotos (`focusboard`)                        |
 | `PASSCODE`          | PIN de entrada (mínimo 4 caracteres)                  |
 | `SESSION_SECRET`    | firma de la cookie de sesión (32+ bytes hex)          |
+| `LOGIN_LOCK_SALT`   | (opcional) sal para hashear los contadores de intentos; si falta se usa `SESSION_SECRET` |
 
 ## Desarrollo local
 

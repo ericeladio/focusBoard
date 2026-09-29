@@ -1,9 +1,11 @@
 import { imageKeyToSegment } from '../../shared/imageKey.js'
 
 export class AuthError extends Error {
-  constructor() {
+  constructor(restantes = null) {
     super('sin_sesion')
     this.name = 'AuthError'
+    // Intentos que quedan antes del bloqueo (si el servidor no lo dice, null).
+    this.restantes = Number.isFinite(restantes) ? restantes : null
   }
 }
 
@@ -14,10 +16,44 @@ export class OfflineError extends Error {
   }
 }
 
+export class RateLimitError extends Error {
+  constructor(retryAfter, hasta) {
+    super('demasiados_intentos')
+    this.name = 'RateLimitError'
+    this.retryAfter = Math.max(1, Number(retryAfter) || 1)
+    this.hasta = hasta || new Date(Date.now() + this.retryAfter * 1000).toISOString()
+  }
+}
+
+// Identidad de dispositivo para el límite de intentos: un UUID en
+// localStorage. No es una sesión ni sustituye al passcode; solo evita que
+// borrar cookies / abrir otra ventana salte el bloqueo. Se lee aquí, no al
+// importar el módulo, para no tocar localStorage en el render del servidor.
+const DEVICE_KEY = 'fb.device'
+
+export function deviceId() {
+  try {
+    let id = window.localStorage.getItem(DEVICE_KEY)
+    if (!id) {
+      id = window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+      window.localStorage.setItem(DEVICE_KEY, id)
+    }
+    return id
+  } catch {
+    return null
+  }
+}
+
 async function request(path, options = {}) {
+  const headers = { ...(options.headers ?? {}) }
+  const device = deviceId()
+  if (device) headers['x-focus-device'] = device
+
   let response
   try {
-    response = await fetch(path, { credentials: 'same-origin', ...options })
+    response = await fetch(path, { credentials: 'same-origin', ...options, headers })
   } catch {
     throw new OfflineError()
   }
@@ -28,7 +64,6 @@ async function request(path, options = {}) {
   } catch {
     raw = ''
   }
-  if (response.status === 401) throw new AuthError()
 
   let data = null
   try {
@@ -36,6 +71,16 @@ async function request(path, options = {}) {
   } catch {
     data = null
   }
+
+  // Se mira el cuerpo antes de decidir el tipo de error: el 401 de login
+  // trae `restantes` y el 429 trae el tiempo de bloqueo.
+  if (response.status === 401 && (data === null || typeof data !== 'object')) {
+    throw new AuthError()
+  }
+  if (response.status === 429 && data !== null && typeof data === 'object') {
+    throw new RateLimitError(data.retry_after, data.hasta)
+  }
+
   // Un 200 con HTML no es un error de red: es que aquí no hay backend (por
   // ejemplo `npm run dev` sin el servidor de API). Sin esto el fallo se
   // traga más abajo y nunca se sube nada.
@@ -45,6 +90,7 @@ async function request(path, options = {}) {
     error.noJson = true
     throw error
   }
+  if (response.status === 401) throw new AuthError(data.restantes)
   if (!response.ok) {
     const error = new Error(data?.error ?? `http_${response.status}`)
     error.status = response.status

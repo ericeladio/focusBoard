@@ -209,10 +209,15 @@ Clic: reintentar la sincronización (o abrir la hoja de passcode). Sin iconos ni
 emoji; el color nunca es rojo (el `paper-margin` sigue siendo de una sola voz).
 
 **Hoja de entrada** — modal `sheet` ya existente con passcode (`type="password"`,
-autofocus): una línea de ayuda, el campo y `Cancelar`/`Entrar`. Se abre sola
-cuando el servidor rechaza la sesión (401) y no vuelve a molestar tras cerrarla
-hasta el siguiente rechazo; `Escape` y `×` la cierran. El error va en
-`field__error` (`Passcode incorrecto`, `Sin conexión: …`).
+autofocus): una línea de ayuda (incluye la política de bloqueo), el campo y
+`Cancelar`/`Entrar`. Se abre sola cuando el servidor rechaza la sesión (401) y no
+vuelve a molestar tras cerrarla hasta el siguiente rechazo; `Escape` y `×` la
+cierran. El error va en `field__error`: `Passcode incorrecto: quedan N
+intentos` (si el servidor manda `restantes`), `Sin conexión: …` y, con el
+bloqueo activo, `Bloqueado por demasiados intentos: vuelve a probar en mm:ss`
+con la cuenta atrás corriendo (sobrevive a cerrar la hoja o a un reload vía
+`fb.bloqueadoHasta`); mientras tanto el botón se desactiva y dice `Espera
+mm:ss`.
 
 **Filtro del pool** — `select` de papel (`pool__filter`) en la barra junto a
 Tipos/Nuevo objetivo: borde tinta, fondo polaroid, esquinas rectas; opciones
@@ -280,6 +285,19 @@ no debe viajar.
 Acceso: passcode propio (env `PASSCODE`) + cookie firmada por 30 días. Sin
 sesión el muro sigue siendo usable en local y la hoja de entrada aparece sola
 cuando el servidor rechaza.
+
+Límite de intentos (tabla `login_attempts`): cada fallo cuenta a la vez contra
+la IP (primer tramo de `x-forwarded-for`), el user-agent y el id de dispositivo
+(`x-focus-device`, UUID en `fb.device`), guardados hasheados con
+`LOGIN_LOCK_SALT` (o `SESSION_SECRET`). 5 fallos bloquean 30 minutos; a partir
+de ahí, 2 fallos bloquean 24 h, con el contador empezando de cero en cada
+bloqueo, y un acierto borra la fila entera (vuelve el cupo de 5). El bloqueo se
+comprueba ANTES de mirar el passcode: dentro de él la clave correcta también da
+429 con `Retry-After`, así que probar sigue siendo caro y la hoja muestra la
+cuenta atrás. Si la tabla no existe (migración pendiente) no se bloquea nada
+(fail-open: mejor dejar pasar que dejar al dueño fuera). Desbloquear sin
+esperar: `node scripts/unlock-login.mjs` (o esperar). La migración:
+`node scripts/migrate-login-limite.mjs` (idempotente).
 
 En desarrollo, `npm run dev` monta las mismas funciones de `api/` mediante el
 plugin `scripts/dev-api.mjs`, así `/api/*` existe también en local (mismo

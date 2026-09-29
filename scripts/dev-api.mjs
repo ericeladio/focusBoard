@@ -158,7 +158,14 @@ async function dispatch(req, res, loadHandler) {
   }
 
   const { default: handler } = await loadHandler(route.handler)
-  await handler({ method, url: req.url, headers: req.headers, query: route.query, body }, shim)
+  // En local no llega `x-forwarded-for` (en Vercel sí): sin este default la
+  // identidad por IP sería `desconocido` y todos los intentos de la máquina
+  // compartirían contador.
+  const headers = { ...req.headers }
+  if (!headers['x-forwarded-for'] && !headers['x-real-ip']) {
+    headers['x-forwarded-for'] = '127.0.0.1'
+  }
+  await handler({ method, url: req.url, headers, query: route.query, body }, shim)
   if (!shim.sent()) shim.status(204).end()
 }
 
