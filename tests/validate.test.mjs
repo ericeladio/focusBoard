@@ -173,9 +173,48 @@ const baseGoal = {
   assert.equal(record.enMuro, true)
   assert.equal(record.createdAt, Date.parse('2026-01-02T03:04:05.000Z'), 'createdAt → ms')
   assert.equal(record.deletedAt, null)
-  assert.equal(goalParams(record, 'local').length, 13)
+  assert.equal(record.totalPaginas, null, 'sin columna → null')
+  assert.equal(goalParams(record, 'local').length, 14)
+  assert.equal(goalParams(record, 'local')[13], null, 'el total viaja como null si no aplica')
+
+  const conPaginas = rowToGoal({ ...row, seguimiento: 'paginas', total_paginas: 1181, valor: 468 })
+  assert.equal(conPaginas.totalPaginas, 1181, 'la columna total_paginas → totalPaginas')
+  assert.equal(goalParams(conPaginas, 'local')[13], 1181)
   assert.equal(typeParams({ id: 't', nombre: 'X', updatedAt: TS }, 'local').length, 4)
   assert.equal(noteParams({ texto: 'hola', updatedAt: TS }, 'local').length, 3)
+}
+
+// modo páginas: el total por objetivo, con la ausencia en null
+{
+  const paginas = sanitizeGoal({ ...baseGoal, seguimiento: 'paginas', totalPaginas: 1181 }, TS)
+  assert.equal(paginas.ok, true, paginas.error)
+  assert.equal(paginas.record.seguimiento, 'paginas')
+  assert.equal(paginas.record.totalPaginas, 1181)
+  assert.equal(paginas.record.valor, 42)
+
+  const sinTotal = sanitizeGoal({ ...baseGoal, seguimiento: 'paginas' }, TS)
+  assert.equal(sinTotal.ok, true, sinTotal.error)
+  assert.equal(sinTotal.record.totalPaginas, null, 'sin total → null (se conserva el de la fila)')
+
+  const basura = sanitizeGoal({ ...baseGoal, seguimiento: 'paginas', totalPaginas: 'x' }, TS)
+  assert.equal(basura.record.totalPaginas, null, 'total ilegible → null')
+
+  const cero = sanitizeGoal({ ...baseGoal, seguimiento: 'paginas', totalPaginas: 0 }, TS)
+  assert.equal(cero.record.totalPaginas, null, 'total 0 → null (evita divisiones raras)')
+
+  const enorme = sanitizeGoal({ ...baseGoal, seguimiento: 'paginas', totalPaginas: 999999 }, TS)
+  assert.equal(enorme.record.totalPaginas, 10000, 'tope de 10000 páginas')
+
+  const put = normalizeOp({
+    seq: 9,
+    entity: 'goal',
+    op: 'put',
+    id: 'g_1',
+    ts: TS,
+    data: { ...baseGoal, seguimiento: 'paginas', totalPaginas: 200 },
+  })
+  assert.equal(put.ok, true, put.error)
+  assert.equal(put.record.seguimiento, 'paginas', 'paginas es un modo válido de sync')
 }
 
 // filas sin columnas opcionales

@@ -142,10 +142,32 @@ const ops = [
     ts: '2020-01-01T00:00:00.000Z',
     data: { id: 'smoke-meta', nombre: 'pisada vieja', seguimiento: 'percent', componentes: [], marcas: [], valor: 99 },
   },
+  {
+    // El tipo lectura se sigue por páginas: el total va en el propio objetivo.
+    seq: 5,
+    entity: 'goal',
+    op: 'put',
+    id: 'smoke-libro',
+    ts: TS,
+    data: {
+      id: 'smoke-libro',
+      nombre: 'Libro de prueba',
+      tipoId: 'smoke-tipo',
+      seguimiento: 'paginas',
+      totalPaginas: 1181,
+      componentes: [],
+      valor: 468,
+      marcas: [],
+      ultimoMovimiento: '2026-09-28',
+      enMuro: true,
+      createdAt: Date.now(),
+      updatedAt: TS,
+    },
+  },
 ]
 res = await call(sync, { method: 'POST', ...auth, body: { ops } })
 assert.equal(res.code, 200, 'push → 200')
-assert.deepEqual(res.body.acked, [0, 1, 2], `ackeados: ${JSON.stringify(res.body.acked)}`)
+assert.deepEqual(res.body.acked, [0, 1, 2, 5], `ackeados: ${JSON.stringify(res.body.acked)}`)
 assert.deepEqual(
   res.body.rejected,
   [{ seq: 4, reason: 'stale' }],
@@ -155,7 +177,7 @@ assert.equal(res.body.failed[0].seq, 3, 'la op con imagenKey inválida falla')
 assert.equal(res.body.failed[0].error, 'bad_image_key', 'error bad_image_key')
 paso(
   5,
-  'push → acked [0,1,2]; sello viejo → rejected(stale); seq 3 falla (bad_image_key) ✓',
+  'push → acked [0,1,2,5]; sello viejo → rejected(stale); seq 3 falla (bad_image_key) ✓',
 )
 
 res = await call(sync, { method: 'GET', ...auth })
@@ -165,6 +187,11 @@ assert.equal(goal.nombre, 'Meta de prueba', 'el sello viejo no pisó el nombre')
 assert.equal(goal.valor, 10, 'el sello viejo no pisó el valor')
 assert.equal(goal.imagenKey, IMG_KEY, 'imagenKey con carpeta intacta')
 assert.equal(res.body.goals.find((g) => g.id === 'smoke-mala'), undefined, 'la meta con clave mala no existe')
+const libro = res.body.goals.find((g) => g.id === 'smoke-libro')
+assert.ok(libro, 'la meta por páginas volvió')
+assert.equal(libro.seguimiento, 'paginas', 'modo páginas')
+assert.equal(libro.totalPaginas, 1181, 'el total por objetivo viaja en el pull')
+assert.equal(libro.valor, 468, 'las páginas leídas viajan como valor')
 assert.equal(res.body.types.find((t) => t.id === 'smoke-tipo')?.nombre, 'Smoke', 'el tipo volvió')
 assert.equal(res.body.note?.texto, NOTA_SMOKE, 'la nota volvió')
 // Los totales vivos son lo único que permite a un cliente notar que le
@@ -278,11 +305,43 @@ res = await call(images, { method: 'GET', headers: { cookie }, url: urlOf(IMG_KE
 assert.equal(res.code, 404, 'objeto borrado → 404')
 paso(13, 'borré la meta → el objeto sale de R2 ✓')
 
+// Un cliente viejo (que no manda totalPaginas) no puede borrar el total de un
+// objetivo por páginas: el valor queda en la fila y el SQL lo conserva.
+res = await call(sync, {
+  method: 'POST',
+  ...auth,
+  body: {
+    ops: [
+      {
+        seq: 0,
+        entity: 'goal',
+        op: 'put',
+        id: 'smoke-libro',
+        ts: new Date().toISOString(),
+        data: {
+          id: 'smoke-libro',
+          nombre: 'Libro de prueba',
+          seguimiento: 'paginas',
+          componentes: [],
+          marcas: [],
+          valor: 469,
+        },
+      },
+    ],
+  },
+})
+assert.deepEqual(res.body.acked, [0], 'put sin total → aplicado')
+res = await call(sync, { method: 'GET', ...auth })
+const libroViejo = res.body.goals.find((g) => g.id === 'smoke-libro')
+assert.equal(libroViejo.totalPaginas, 1181, 'el cliente viejo no pisa el total')
+assert.equal(libroViejo.valor, 469, 'el resto del put sí se aplicó')
+paso(14, 'put sin totalPaginas → total 1181 intacto ✓')
+
 // --- logout y limpieza ---
 res = await call(logout, { method: 'POST' })
 assert.equal(res.code, 200)
 assert.match(res.headers['Set-Cookie'], /^fb_session=;/, 'cookie borrada')
-paso(14, 'logout → cookie expirada ✓')
+paso(15, 'logout → cookie expirada ✓')
 
 const sql = db()
 // La BD puede tener datos reales: solo borramos lo que creó este smoke.

@@ -3,7 +3,7 @@ import { isValidImageKey } from '../../shared/imageKey.js'
 export { isValidImageKey }
 
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/
-const SEGUIMIENTO = ['percent', 'streak', 'compuesta']
+const SEGUIMIENTO = ['percent', 'streak', 'compuesta', 'paginas']
 const ACTIONS = ['put', 'del']
 const ENTITIES = ['goal', 'type', 'note']
 
@@ -38,6 +38,16 @@ function asInt(value, fallback, min, max) {
   const parsed = typeof value === 'string' ? Number(value) : value
   if (!Number.isFinite(parsed)) return fallback
   return Math.max(min, Math.min(max, Math.round(parsed)))
+}
+
+// Total de páginas del modo `paginas`. `null` = el cliente no lo sabe (o es
+// un cliente viejo): en el upsert se conserva el valor que ya esté en la fila
+// en vez de pisarlo con un 0.
+function totalPaginasOf(input) {
+  const parsed =
+    typeof input === 'string' ? Number(input) : typeof input === 'number' ? input : NaN
+  if (!Number.isFinite(parsed) || parsed <= 0) return null
+  return Math.max(1, Math.min(10000, Math.round(parsed)))
 }
 
 function fail(error) {
@@ -86,6 +96,7 @@ export function sanitizeGoal(input, ts) {
       seguimiento: input.seguimiento,
       componentes,
       valor: asInt(input.valor, 0, 0, 100000),
+      totalPaginas: totalPaginasOf(input.totalPaginas),
       marcas,
       ultimoMovimiento,
       imagenKey,
