@@ -71,7 +71,7 @@ function VisionBoard() {
           style={{ '--tilt': '-2.5deg' }}
           title="Doble clic para editar"
         >
-          <h2>Este año</h2>
+          <h2>TODO</h2>
           {noteEditing ? (
             <textarea
               className="note__edit"

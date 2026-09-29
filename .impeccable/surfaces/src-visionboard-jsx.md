@@ -29,9 +29,10 @@ hoy (percent: subido hoy o en 100%; racha: marcada hoy) y desmarca sola si algun
 deja de avanzar; sus partes no ocupan cupo de los 7 pero siguen en el pool, con
 la etiqueta "dentro de: <compuesta>", y se editan dentro de su modal. Los
 compuestos no piden tipo: van solos al tipo `Compuesto` (se crea al vuelo) y el
-form oculta el selector de tipo en esa modalidad. La racha se deriva de la cadena de
+form oculta las tarjetas de seguimiento cuando el tipo es `Compuesto` (solo se
+ven sus partes; se sale cambiando de tipo). La racha se deriva de la cadena de
 marcas: `Hoy` la extiende, `Deshacer hoy` la revierte, y si se rompe el hilo se
-pinta 0 sola. La nota rayada "Este año" es la única nota decorativa: su lista
+pinta 0 sola. La nota rayada "TODO" es la única nota decorativa: su lista
 es editable con doble clic y se persiste en localStorage (`fb.note`), acotada a
 8 líneas con `overflow-wrap` para que el texto no desborde la hoja. Doble clic en
 una fila del pool abre el form con los datos
@@ -41,7 +42,7 @@ muro y pool; resetea solo al subir el slider.
 
 FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-link al
 pool + sync badge de cinta (estado del sync; "Entrar" abre la hoja de passcode);
-polaroids de objetivos, nota rayada "Este año" (editable) y botón-polaroid
+polaroids de objetivos, nota rayada "TODO" (editable) y botón-polaroid
 "Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
 columnas con cada foto a su proporción real; en celular la tarjeta es foto +
 nombre y el doble clic/segundo toque abre la modal con las opciones. FIRST VIEWPORT (`/pool`): título + select de
