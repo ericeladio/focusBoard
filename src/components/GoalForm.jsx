@@ -8,8 +8,24 @@ import {
 import { useStore } from '../lib/storeContext.js'
 import { markedToday, streakOf } from '../lib/dates.js'
 import { padreDe } from '../lib/composite.js'
+import { PAGINAS_POR_DEFECTO, esNombreLectura, etiquetaDe } from '../lib/lectura.js'
 
-const EMPTY = { nombre: '', tipoId: '', seguimiento: 'percent', componentes: [] }
+const EMPTY = {
+  nombre: '',
+  tipoId: '',
+  seguimiento: 'percent',
+  totalPaginas: PAGINAS_POR_DEFECTO,
+  componentes: [],
+}
+
+// El tipo `lectura` decide el modo: si es de lectura se sigue por páginas y
+// no se ofrecen las otras opciones; si sale de ahí, vuelve a porcentaje.
+function forzarModo(seguimiento, tipoId, types) {
+  if (seguimiento === 'compuesta') return seguimiento
+  const tipo = types.find((type) => type.id === tipoId)
+  if (esNombreLectura(tipo?.nombre)) return 'paginas'
+  return seguimiento === 'paginas' ? 'percent' : seguimiento
+}
 
 function GoalForm({ open, onClose, onManageTypes, editing = null }) {
   const { types, goals, addGoal, updateGoal, focusCount, wallFull } = useStore()
@@ -19,7 +35,8 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
       ? {
           nombre: editing.nombre,
           tipoId: editing.tipoId,
-          seguimiento: editing.seguimiento,
+          seguimiento: forzarModo(editing.seguimiento, editing.tipoId, types),
+          totalPaginas: editing.totalPaginas ?? PAGINAS_POR_DEFECTO,
           componentes: editing.componentes ?? [],
         }
       : EMPTY,
@@ -79,6 +96,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
 
   function estadoDe(candidato) {
     if (candidato.seguimiento === 'percent') return `${candidato.valor}%`
+    if (candidato.seguimiento === 'paginas') return etiquetaDe(candidato)
     return markedToday(candidato.marcas)
       ? 'avance hoy'
       : `${streakOf(candidato.marcas)} días`
@@ -91,6 +109,17 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
     if (actual && actual.nombre.toLowerCase() === 'compuesto') {
       setValues((current) => ({ ...current, tipoId: '' }))
     }
+  }
+
+  // El tipo manda el modo: al cambiar de tipo se recalcula en el momento,
+  // no en un efecto (evita renders en cascada y el modo queda consistente).
+  function cambiarTipo(nextTipoId) {
+    setValues((current) => ({
+      ...current,
+      tipoId: nextTipoId,
+      seguimiento: forzarModo(current.seguimiento, nextTipoId, types),
+    }))
+    setErrors((current) => ({ ...current, tipoId: undefined }))
   }
 
   function toggleParte(id) {
@@ -182,7 +211,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
               id="goal-tipo"
               className="input"
               value={values.tipoId}
-              onChange={(event) => update('tipoId', event.target.value)}
+              onChange={(event) => cambiarTipo(event.target.value)}
               aria-invalid={Boolean(errors.tipoId)}
             >
               <option value="">
@@ -224,6 +253,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           {errors.imagen && <p className="field__error">{errors.imagen}</p>}
         </div>
 
+        {values.seguimiento !== 'paginas' && (
         <fieldset className="field">
           <legend>Seguimiento</legend>
           <div className="option-cards">
@@ -284,6 +314,38 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
             <p className="field__error">{errors.seguimiento}</p>
           )}
         </fieldset>
+        )}
+
+        {values.seguimiento === 'paginas' && (
+          <fieldset className="field">
+            <legend>Seguimiento</legend>
+            <p className="field__hint">Por páginas: lo pide el tipo del objetivo.</p>
+            <label className="field__label" htmlFor="goal-paginas">
+              Páginas del libro
+            </label>
+            <input
+              id="goal-paginas"
+              className="input"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="10000"
+              value={values.totalPaginas}
+              onChange={(event) => update('totalPaginas', event.target.value)}
+              aria-invalid={Boolean(errors.totalPaginas)}
+              aria-describedby={errors.totalPaginas ? 'goal-paginas-error' : undefined}
+            />
+            {errors.totalPaginas && (
+              <p className="field__error" id="goal-paginas-error">
+                {errors.totalPaginas}
+              </p>
+            )}
+            <p className="field__hint">
+              El avance se marca en el muro: páginas leídas de{' '}
+              {values.totalPaginas || PAGINAS_POR_DEFECTO}.
+            </p>
+          </fieldset>
+        )}
 
         {values.seguimiento === 'compuesta' && (
           <fieldset className="field">

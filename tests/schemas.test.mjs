@@ -50,4 +50,37 @@ const img = new File(['x'], 'a.png', { type: 'image/png' })
   assert.equal(r.success, true, JSON.stringify(r.error?.issues))
 }
 
+// por páginas: total opcional (200 por defecto) y dentro de rango
+{
+  const r = goalSchema.safeParse({
+    nombre: 'Libro largo', tipoId: 't', imagen: img, seguimiento: 'paginas',
+    componentes: [],
+  })
+  assert.equal(r.success, true, JSON.stringify(r.error?.issues))
+  assert.equal(r.data.totalPaginas, 200, 'sin total se pone 200')
+}
+{
+  const r = goalUpdateSchema.safeParse({
+    nombre: 'Libro largo', tipoId: 't', seguimiento: 'paginas',
+    totalPaginas: '1181', componentes: [],
+  })
+  assert.equal(r.success, true, JSON.stringify(r.error?.issues))
+  assert.equal(r.data.totalPaginas, 1181, 'total del input numérico → 1181')
+}
+{
+  const r = goalSchema.safeParse({
+    nombre: 'Sin páginas', tipoId: 't', imagen: img, seguimiento: 'paginas',
+    totalPaginas: 0, componentes: [],
+  })
+  assert.equal(r.success, false)
+  assert.equal(issuesToFieldErrors(r.error).totalPaginas, 'Mínimo 1 página')
+}
+{
+  const r = goalSchema.safeParse({
+    nombre: 'Modo raro', tipoId: 't', imagen: img, seguimiento: 'lectura',
+    componentes: [],
+  })
+  assert.equal(r.success, false, 'seguimiento fuera del enum → inválido')
+}
+
 console.log('schemas.test: OK')

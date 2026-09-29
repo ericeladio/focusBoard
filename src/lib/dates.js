@@ -68,9 +68,10 @@ export function daysSince(iso) {
   return Math.max(0, Math.round((today - then) / 86400000))
 }
 
-// Objetivo en %: días seguidos sin subir. 0 = no se muestra nada.
+// Objetivo con avance por porcentaje o por páginas: días seguidos sin
+// subir. 0 = no se muestra nada.
 export function inactiveDays(goal) {
-  if (goal.seguimiento !== 'percent') return 0
+  if (goal.seguimiento !== 'percent' && goal.seguimiento !== 'paginas') return 0
   if (!goal.valor || goal.valor <= 0) return 0
   if (typeof goal.ultimoMovimiento !== 'string') return 0
   return daysSince(goal.ultimoMovimiento)

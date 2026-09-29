@@ -8,6 +8,7 @@ import { deleteBlob, getBlob, queueImageDelete, queueOps, saveBlob } from './idb
 import { encodeImage, newImageKey } from './image.js'
 import { mergeCollection } from './lww.js'
 import { migrateLegacyImages } from './migrate.js'
+import { PAGINAS_POR_DEFECTO, esLectura } from './lectura.js'
 import {
   getSyncStatus,
   hasSynced,
@@ -83,6 +84,11 @@ function ensureCompuestoType(types) {
 function normalizeGoal(goal, index = 0) {
   if (!goal || typeof goal !== 'object') return goal
   const rest = { ...goal }
+  if (rest.seguimiento === 'paginas') {
+    const total = Number(rest.totalPaginas)
+    rest.totalPaginas =
+      Number.isFinite(total) && total > 0 ? Math.round(total) : PAGINAS_POR_DEFECTO
+  }
   if (!Array.isArray(rest.componentes)) rest.componentes = []
   rest.componentes = rest.componentes.filter((id) => typeof id === 'string')
   if (typeof rest.createdAt !== 'number') rest.createdAt = index
@@ -208,6 +214,11 @@ function goalOp(record) {
       seguimiento: record.seguimiento,
       componentes: Array.isArray(record.componentes) ? record.componentes : [],
       valor: Number(record.valor) || 0,
+      // null = "no sé": en el servidor se conserva el total que ya esté en
+      // la fila, en vez de pisarlo con un 0.
+      totalPaginas: Number.isFinite(Number(record.totalPaginas)) && Number(record.totalPaginas) > 0
+        ? Math.round(Number(record.totalPaginas))
+        : null,
       marcas: Array.isArray(record.marcas) ? record.marcas : [],
       ultimoMovimiento: record.ultimoMovimiento ?? null,
       imagenKey: record.imagenKey ?? null,
@@ -612,6 +623,9 @@ export function StoreProvider({ children }) {
       if (esCompuesta) setTypes((current) => ensureCompuestoType(current))
       const tipoId = esCompuesta ? compuestoId(types) : values.tipoId
       const imagenKey = await storeImage(file)
+      // El tipo `lectura` manda el modo: por páginas, no por porcentaje.
+      const tipo = types.find((item) => item.id === tipoId)
+      const seguimiento = esLectura(tipo) && !esCompuesta ? 'paginas' : values.seguimiento
       setGoals((current) => [
         ...current,
         {
@@ -619,11 +633,10 @@ export function StoreProvider({ children }) {
           nombre: values.nombre,
           tipoId,
           imagenKey,
-          seguimiento: values.seguimiento,
+          seguimiento,
+          totalPaginas: Number(values.totalPaginas) || PAGINAS_POR_DEFECTO,
           componentes:
-            values.seguimiento === 'compuesta'
-              ? values.componentes.slice(0, MAX_FOCUS)
-              : [],
+            seguimiento === 'compuesta' ? values.componentes.slice(0, MAX_FOCUS) : [],
           valor: 0,
           marcas: [],
           ultimoMovimiento: todayISO(),
@@ -648,17 +661,23 @@ export function StoreProvider({ children }) {
       setGoals((current) =>
         current.map((goal) => {
           if (goal.id !== id) return goal
-          const cambioModo = goal.seguimiento !== values.seguimiento
+          const tipo = types.find((item) => item.id === tipoId)
+          const seguimiento =
+            esLectura(tipo) && values.seguimiento !== 'compuesta'
+              ? 'paginas'
+              : values.seguimiento
+          const cambioModo = goal.seguimiento !== seguimiento
           const componentes =
-            values.seguimiento === 'compuesta'
+            seguimiento === 'compuesta'
               ? values.componentes.filter((item) => item !== id).slice(0, MAX_FOCUS)
               : []
           return {
             ...goal,
             nombre: values.nombre,
             tipoId,
-            seguimiento: values.seguimiento,
+            seguimiento,
             componentes,
+            totalPaginas: Number(values.totalPaginas) || PAGINAS_POR_DEFECTO,
             ...(imagenKey ? { imagenKey } : {}),
             ...(cambioModo ? { marcas: [], valor: 0, ultimoMovimiento: todayISO() } : {}),
           }
@@ -733,6 +752,28 @@ export function StoreProvider({ children }) {
     [setGoals],
   )
 
+  // Páginas leídas: el tope es el total del propio objetivo, no un 100.
+  const setPaginas = useCallback(
+    (id, valor) => {
+      const pedidas = Math.round(Number(valor))
+      if (!Number.isFinite(pedidas)) return
+      setGoals((current) =>
+        current.map((goal) => {
+          if (goal.id !== id || goal.seguimiento !== 'paginas') return goal
+          const total = Number(goal.totalPaginas) || PAGINAS_POR_DEFECTO
+          const clamped = Math.max(0, Math.min(total, pedidas))
+          const increased = clamped > goal.valor
+          return {
+            ...goal,
+            valor: clamped,
+            ...(increased ? { ultimoMovimiento: todayISO() } : {}),
+          }
+        }),
+      )
+    },
+    [setGoals],
+  )
+
   const markToday = useCallback(
     (id) => {
       setGoals((current) =>
@@ -779,6 +820,7 @@ export function StoreProvider({ children }) {
     removeFromWall,
     removeGoal,
     setPercent,
+    setPaginas,
     markToday,
     unmarkToday,
     sync,

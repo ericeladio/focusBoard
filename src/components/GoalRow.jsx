@@ -1,6 +1,7 @@
 import { useStore } from '../lib/storeContext.js'
 import { inactiveDays, markedToday, streakOf } from '../lib/dates.js'
 import { padreDe } from '../lib/composite.js'
+import { etiquetaDe, pctDe } from '../lib/lectura.js'
 
 function GoalRow({ goal, onEdit }) {
   const { goals, types, placeInWall, removeFromWall, removeGoal, wallFull } = useStore()
@@ -27,15 +28,12 @@ function GoalRow({ goal, onEdit }) {
       </div>
 
       <div className="row__track">
-        {goal.seguimiento === 'percent' ? (
+        {goal.seguimiento === 'percent' || goal.seguimiento === 'paginas' ? (
           <>
             <span className="row__bar" aria-hidden="true">
-              <span
-                className="row__fill"
-                style={{ width: `${goal.valor}%` }}
-              />
+              <span className="row__fill" style={{ width: `${pctDe(goal)}%` }} />
             </span>
-            <span className="goal__value">{goal.valor}%</span>
+            <span className="goal__value">{etiquetaDe(goal)}</span>
             {inactiveDays(goal) >= 3 && (
               <span className="goal__value goal__value--alert">
                 {inactiveDays(goal)} días sin avance

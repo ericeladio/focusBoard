@@ -20,9 +20,18 @@ const nombreField = z
 
 const tipoField = z.string()
 
-const seguimientoField = z.enum(['percent', 'streak', 'compuesta'], {
+const seguimientoField = z.enum(['percent', 'streak', 'compuesta', 'paginas'], {
   message: 'Elige cómo darle seguimiento',
 })
+
+// Solo lo usa el modo `paginas`; para el resto de los modos el número se
+// ignora, así que el default (200) no molesta a nadie.
+const totalPaginasField = z.coerce
+  .number({ message: 'Pon las páginas totales' })
+  .int('Pon un número entero de páginas')
+  .min(1, 'Mínimo 1 página')
+  .max(10000, 'Máximo 10000 páginas')
+  .default(200)
 
 const componentesField = z
   .array(z.string().min(1))
@@ -71,6 +80,7 @@ export const goalSchema = z
     tipoId: tipoField,
     imagen: imagenFile,
     seguimiento: seguimientoField,
+    totalPaginas: totalPaginasField,
     componentes: componentesField,
   })
   .superRefine(checkComponentes)
@@ -82,6 +92,7 @@ export const goalUpdateSchema = z
     tipoId: tipoField,
     imagen: imagenFile.optional(),
     seguimiento: seguimientoField,
+    totalPaginas: totalPaginasField,
     componentes: componentesField,
   })
   .superRefine(checkComponentes)

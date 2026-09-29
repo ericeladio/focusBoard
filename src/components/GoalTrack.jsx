@@ -1,11 +1,36 @@
 import { useStore } from '../lib/storeContext.js'
 import { inactiveDays, markedToday, streakOf } from '../lib/dates.js'
+import { etiquetaDe, totalPaginasDe } from '../lib/lectura.js'
 
 function GoalTrack({ goal }) {
-  const { setPercent, markToday, unmarkToday } = useStore()
+  const { setPercent, setPaginas, markToday, unmarkToday } = useStore()
 
   const isMarked = markedToday(goal.marcas)
   const streak = streakOf(goal.marcas)
+
+  if (goal.seguimiento === 'paginas') {
+    // El tope es el total del libro, no un 100: el avance lo pinta el front.
+    const total = totalPaginasDe(goal)
+    return (
+      <div className="goal__track">
+        <input
+          type="range"
+          min="0"
+          max={total}
+          step="1"
+          value={Math.min(Number(goal.valor) || 0, total)}
+          onChange={(event) => setPaginas(goal.id, event.target.value)}
+          aria-label={`Páginas leídas de ${goal.nombre}`}
+        />
+        <span className="goal__value">{etiquetaDe(goal)}</span>
+        {inactiveDays(goal) >= 3 && (
+          <span className="goal__value goal__value--alert">
+            {inactiveDays(goal)} días sin avance
+          </span>
+        )}
+      </div>
+    )
+  }
 
   if (goal.seguimiento === 'streak') {
     return (

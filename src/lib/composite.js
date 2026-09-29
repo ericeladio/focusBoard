@@ -1,4 +1,5 @@
 import { shiftISO, todayISO } from './dates.js'
+import { totalPaginasDe } from './lectura.js'
 
 export function esHijoDe(id, goals) {
   return goals.some(
@@ -13,12 +14,18 @@ export function padreDe(id, goals) {
 }
 
 // ¿Este objetivo tiene avance hoy?
-//   percent → lo subiste hoy, o ya está en 100%
-//   streak  → lo marcaste hoy
+//   percent  → lo subiste hoy, o ya está en 100%
+//   paginas  → leíste hoy, o ya está en su total
+//   streak   → lo marcaste hoy
 //   compuesta → no aplica (un solo nivel, no se anidan)
 export function esAvanceHoy(goal, hoy = todayISO()) {
   if (goal.seguimiento === 'percent') {
     return goal.valor >= 100 || goal.ultimoMovimiento === hoy
+  }
+  if (goal.seguimiento === 'paginas') {
+    return (
+      (Number(goal.valor) || 0) >= totalPaginasDe(goal) || goal.ultimoMovimiento === hoy
+    )
   }
   if (goal.seguimiento === 'streak') return goal.marcas.includes(hoy)
   return false

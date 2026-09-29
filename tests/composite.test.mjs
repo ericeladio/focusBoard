@@ -23,6 +23,10 @@ const comp = (componentes, marcas = []) => ({
   id: 'c1', nombre: 'Comp', seguimiento: 'compuesta', valor: 0,
   marcas, componentes, enMuro: false,
 })
+const pag = (valor, totalPaginas = 1181, ultimoMovimiento = HOY) => ({
+  id: 'g1', nombre: 'Libro', seguimiento: 'paginas', valor, totalPaginas,
+  ultimoMovimiento, marcas: [], componentes: [],
+})
 
 // --- esAvanceHoy ---
 assert.equal(esAvanceHoy(pct(40, HOY), HOY), true, 'percent subido hoy')
@@ -31,6 +35,17 @@ assert.equal(esAvanceHoy(pct(100, ANTES), HOY), true, '100% cuenta siempre')
 assert.equal(esAvanceHoy(str([HOY]), HOY), true, 'streak marcado hoy')
 assert.equal(esAvanceHoy(str([AYER]), HOY), false, 'streak no marcado hoy')
 assert.equal(esAvanceHoy(comp(['p1']), HOY), false, 'compuesta no aplica')
+
+// --- esAvanceHoy en modo páginas ---
+assert.equal(esAvanceHoy(pag(468, 1181, HOY), HOY), true, 'páginas leídas hoy')
+assert.equal(esAvanceHoy(pag(468, 1181, ANTES), HOY), false, 'páginas sin tocar hoy')
+assert.equal(esAvanceHoy(pag(1181, 1181, ANTES), HOY), true, 'libro terminado cuenta siempre')
+assert.equal(esAvanceHoy(pag(0, 200, null), HOY), false, 'sin páginas no hay avance')
+assert.equal(
+  esAvanceHoy({ seguimiento: 'paginas', valor: 200, totalPaginas: null, ultimoMovimiento: ANTES }, HOY),
+  true,
+  'sin total declarado se usa el default (200)',
+)
 
 // --- estadoCompuesta ---
 {

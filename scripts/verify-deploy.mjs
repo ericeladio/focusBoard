@@ -110,6 +110,19 @@ let metas = []
     totalesOk,
     `totales vivos → goals=${body?.goalsTotal} (vistas ${vivos}), types=${body?.typesTotal}`,
   )
+
+  // El modo por páginas (tipo lectura) lleva su total en cada meta: la clave
+  // tiene que existir siempre y, si hay total, tiene que ser entero > 0.
+  const paginas = metas.filter((g) => g.seguimiento === 'paginas')
+  const clavesOk = metas.every(
+    (g) => g.totalPaginas === null || (Number.isInteger(g.totalPaginas) && g.totalPaginas > 0),
+  )
+  const totalesOk2 = paginas.every((g) => Number.isInteger(g.totalPaginas) && g.totalPaginas > 0)
+  paso(
+    clavesOk && totalesOk2,
+    `por páginas → ${paginas.length} meta(s)` +
+      (paginas.length ? `: ${paginas.map((g) => `${g.nombre}=${g.totalPaginas}`).join(', ')}` : ''),
+  )
 }
 
 // 5. Cada foto que anuncian las metas tiene que venir por su URL nueva:
