@@ -8,10 +8,11 @@ import { MAX_FOCUS } from './lib/schemas.js'
 import GoalCard from './components/GoalCard.jsx'
 import GoalForm from './components/GoalForm.jsx'
 import GoalTypeForm from './components/GoalTypeForm.jsx'
+import LocalChip from './components/LocalChip.jsx'
 import SyncBadge from './components/SyncBadge.jsx'
 
 function VisionBoard() {
-  const { goals, wallFull, note, setNote } = useStore()
+  const { goals, wallFull, note, setNote, noteLocal, subirNota } = useStore()
   const [addOpen, setAddOpen] = useState(false)
   const [typesOpen, setTypesOpen] = useState(false)
   const [noteEditing, setNoteEditing] = useState(false)
@@ -79,7 +80,9 @@ function VisionBoard() {
           style={{ '--tilt': '-2.5deg' }}
           title="Doble clic para editar"
         >
-          <h2>TODO</h2>
+          <h2>
+            TODO{noteLocal && <LocalChip />}
+          </h2>
           {noteEditing ? (
             <textarea
               className="note__edit"
@@ -105,6 +108,16 @@ function VisionBoard() {
                 ))
               )}
             </ul>
+          )}
+          {noteLocal && (
+            <button
+              type="button"
+              className="btn btn--ghost note__subir"
+              onClick={subirNota}
+              title="Pasa esta nota a la cuenta: pasa a sincronizarse con el passcode"
+            >
+              Subir la nota a la cuenta
+            </button>
           )}
         </article>
 

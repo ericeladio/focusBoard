@@ -9,11 +9,20 @@ import {
 } from './composite.js'
 import { StoreContext } from './storeContext.js'
 import { imageUrl } from './api.js'
-import { deleteBlob, getBlob, queueImageDelete, queueOps, saveBlob } from './idb.js'
+import { deleteBlob, getBlob, queueImageDelete, queueOps, readOutbox, removeOps, saveBlob } from './idb.js'
 import { encodeImage, newImageKey } from './image.js'
 import { mergeCollection } from './lww.js'
 import { migrateLegacyImages } from './migrate.js'
 import { PAGINAS_POR_DEFECTO, esLectura } from './lectura.js'
+import {
+  clavesOutbox,
+  esLocal,
+  imagenesLocales,
+  marcarLocal,
+  marcarLocales,
+  marcarNotaLocal,
+} from './local.js'
+import { collectOps, goalOp, noteOp, stampArray, typeOp } from './ops.js'
 import {
   getSyncStatus,
   hasSynced,
@@ -70,6 +79,13 @@ const SEED_GOALS = [
 // Se decide una sola vez al cargar: si ya se sincronizó antes no volvemos a
 // sembrar el tablero (un reinstalado debe recuperar lo del servidor).
 const SYNCED_AT_START = hasSynced()
+
+// Un registro nuevo pertenece a la cuenta solo si este navegador ya ha
+// sincronizado con una; si no, es local y no se sube nunca hasta que alguien
+// lo suba a la cuenta a mano.
+function duenioNuevo() {
+  return hasSynced() ? {} : { local: true }
+}
 
 function normalizeGoal(goal, index = 0) {
   if (!goal || typeof goal !== 'object') return goal
@@ -182,94 +198,16 @@ function putTombstone(list, id, ts) {
   return next
 }
 
-function stampArray(prev, next) {
-  if (next === prev) return next
-  const prevById = new Map(prev.map((record) => [record.id, record]))
-  let stamped = null
-  return next.map((record) => {
-    if (!record || typeof record !== 'object') return record
-    const old = prevById.get(record.id)
-    if (old === record) return record
-    // Cambió: sello nuevo. Sin esto el servidor rechazaría la edición
-    // (su guarda exige `updated_at` estrictamente mayor).
-    if (!stamped) stamped = nextTs()
-    return { ...record, updatedAt: stamped }
-  })
-}
-
-function goalOp(record) {
-  return {
-    entity: 'goal',
-    op: 'put',
-    id: record.id,
-    ts: record.updatedAt,
-    data: {
-      id: record.id,
-      nombre: record.nombre,
-      tipoId: record.tipoId ?? null,
-      seguimiento: record.seguimiento,
-      componentes: Array.isArray(record.componentes) ? record.componentes : [],
-      valor: Number(record.valor) || 0,
-      // null = "no sé": en el servidor se conserva el total que ya esté en
-      // la fila, en vez de pisarlo con un 0.
-      totalPaginas: Number.isFinite(Number(record.totalPaginas)) && Number(record.totalPaginas) > 0
-        ? Math.round(Number(record.totalPaginas))
-        : null,
-      marcas: Array.isArray(record.marcas) ? record.marcas : [],
-      ultimoMovimiento: record.ultimoMovimiento ?? null,
-      // Ambas claves viajan siempre: en el servidor "la clave está" significa
-      // "escribe esto" (por eso vaciar la fecha sirve para reabrir) y una
-      // clave ausente (cliente viejo) conserva lo que ya esté en la fila.
-      metaDias:
-        Number.isFinite(Number(record.metaDias)) && Number(record.metaDias) > 0
-          ? Math.round(Number(record.metaDias))
-          : null,
-      finalizadoEn: typeof record.finalizadoEn === 'string' ? record.finalizadoEn : null,
-      imagenKey: record.imagenKey ?? null,
-      createdAt: record.createdAt ?? Date.now(),
-      enMuro: Boolean(record.enMuro),
-      updatedAt: record.updatedAt,
-    },
-  }
-}
-
-function typeOp(record) {
-  return {
-    entity: 'type',
-    op: 'put',
-    id: record.id,
-    ts: record.updatedAt,
-    data: { id: record.id, nombre: record.nombre, updatedAt: record.updatedAt },
-  }
-}
-
-function noteOp(note) {
-  return {
-    entity: 'note',
-    op: 'put',
-    id: 'note',
-    ts: note.updatedAt,
-    data: { texto: note.texto },
-  }
-}
-
-function collectOps(prevList, list, entity, ops) {
-  const prevById = new Map(prevList.map((record) => [record.id, record]))
-  for (const record of list) {
-    const old = prevById.get(record.id)
-    if (old === record) continue
-    if (!record.updatedAt) continue
-    if (old && old.updatedAt === record.updatedAt) continue
-    ops.push(entity === 'goal' ? goalOp(record) : typeOp(record))
-  }
-}
-
 export function StoreProvider({ children }) {
+  // Quien tiene lo que hay en este navegador: si todavía no ha sincronizado
+  // con una cuenta, todo lo que hay aquí (semillas incluidas) es local y no
+  // sale del dispositivo hasta que alguien lo suba a la cuenta.
   const [types, setTypesRaw] = useState(() => {
     const loaded = read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES)
     const crudo = read(KEY_GOALS, SYNCED_AT_START ? [] : SEED_GOALS)
     const tieneCompuesta = crudo.some((goal) => goal?.seguimiento === 'compuesta')
-    return tieneCompuesta ? ensureCompuestoType(loaded) : loaded
+    const lista = tieneCompuesta ? ensureCompuestoType(loaded) : loaded
+    return SYNCED_AT_START ? lista : marcarLocales(lista)
   })
   const [goals, setGoalsRaw] = useState(() => {
     const loaded = read(KEY_GOALS, SYNCED_AT_START ? [] : SEED_GOALS).map((goal, index) =>
@@ -281,13 +219,16 @@ export function StoreProvider({ children }) {
       const limpio = goal.componentes.some((id) => !ids.has(id))
         ? { ...goal, componentes: goal.componentes.filter((id) => ids.has(id)) }
         : goal
-      if (limpio.seguimiento !== 'compuesta' || limpio.tipoId === tipoCompuesto) {
-        return limpio
-      }
-      return { ...limpio, tipoId: tipoCompuesto }
+      const base =
+        limpio.seguimiento !== 'compuesta' || limpio.tipoId === tipoCompuesto
+          ? limpio
+          : { ...limpio, tipoId: tipoCompuesto }
+      return SYNCED_AT_START ? base : marcarLocal(base)
     })
   })
-  const [note, setNoteRaw] = useState(() => readNote())
+  const [note, setNoteRaw] = useState(() =>
+    SYNCED_AT_START ? readNote() : marcarNotaLocal(readNote()),
+  )
   const [hoy, setHoy] = useState(() => todayISO())
   const [imageUrls, setImageUrls] = useState({})
   const [sync, setSync] = useState(() => getSyncStatus())
@@ -329,7 +270,8 @@ export function StoreProvider({ children }) {
       setNoteRaw((current) => {
         const texto = typeof value === 'string' && value.trim() ? value : null
         if (texto === current.texto) return current
-        return { texto, updatedAt: nextTs() }
+        // Editar no cambia el dueño: una nota local sigue sin subirse.
+        return { texto, updatedAt: nextTs(), ...(current.local ? { local: true } : {}) }
       }),
     [],
   )
@@ -484,7 +426,7 @@ export function StoreProvider({ children }) {
     const ops = []
     collectOps(prev.goals, goals, 'goal', ops)
     collectOps(prev.types, types, 'type', ops)
-    if (prev.note !== note && note.updatedAt) ops.push(noteOp(note))
+    if (prev.note !== note && note.updatedAt && !esLocal(note)) ops.push(noteOp(note))
 
     let tombstones = readTombstones()
     let tombstonesChanged = false
@@ -495,10 +437,14 @@ export function StoreProvider({ children }) {
       const nextIds = new Set(list.map((record) => record.id))
       for (const old of prevList) {
         if (nextIds.has(old.id)) continue
-        const ts = nextTs()
-        ops.push({ entity, op: 'del', id: old.id, ts })
-        tombstones = putTombstone(tombstones, `${entity}:${old.id}`, ts)
-        tombstonesChanged = true
+        // Lo local nunca existió en el servidor: no hay nada que borrar
+        // allá, y una lápida solo serviría para esconderlo en otro equipo.
+        if (!esLocal(old)) {
+          const ts = nextTs()
+          ops.push({ entity, op: 'del', id: old.id, ts })
+          tombstones = putTombstone(tombstones, `${entity}:${old.id}`, ts)
+          tombstonesChanged = true
+        }
         if (entity === 'goal' && old.imagenKey) {
           const stillUsed = goals.some((goal) => goal.imagenKey === old.imagenKey)
           if (!stillUsed) dropImage(old.imagenKey)
@@ -531,7 +477,9 @@ export function StoreProvider({ children }) {
       const mergedTypes = mergeCollection(current.types, remoteTypes, strip('type:'))
 
       let mergedNote = current.note
-      if (remoteNote && remoteNote.updatedAt) {
+      // La nota local (escrita sin cuenta) no se pisa con la de la cuenta:
+      // son dos notas de dos dueños, y la local se queda aquí.
+      if (!esLocal(current.note) && remoteNote && remoteNote.updatedAt) {
         const newer =
           !current.note.updatedAt ||
           Date.parse(remoteNote.updatedAt) > Date.parse(current.note.updatedAt)
@@ -543,25 +491,26 @@ export function StoreProvider({ children }) {
         }
       }
 
-      // Lo local que nunca se sincronizó se sella ahora (y por tanto se sube);
-      // lo que traía el servidor ya venía sellado y manda.
+      // Lo que vino del servidor ya venía sellado. Lo único que se sella aquí
+      // es un registro de la cuenta que llegó sin sello; lo local no se sella
+      // nunca, porque sellarlo es la manera que tenía de subirse solo.
       const ops = []
       const goalsOut = mergedGoals.records.map((record) => {
-        if (record.updatedAt) return record
+        if (record.updatedAt || esLocal(record)) return record
         const ts = nextTs()
         const stamped = { ...record, updatedAt: ts }
         ops.push(goalOp(stamped))
         return stamped
       })
       const typesOut = mergedTypes.records.map((record) => {
-        if (record.updatedAt) return record
+        if (record.updatedAt || esLocal(record)) return record
         const ts = nextTs()
         const stamped = { ...record, updatedAt: ts }
         ops.push(typeOp(stamped))
         return stamped
       })
       let noteOut = mergedNote
-      if (noteOut.texto && !noteOut.updatedAt) {
+      if (noteOut.texto && !noteOut.updatedAt && !esLocal(noteOut)) {
         noteOut = { ...noteOut, updatedAt: nextTs() }
         ops.push(noteOp(noteOut))
       }
@@ -572,9 +521,12 @@ export function StoreProvider({ children }) {
       ])
 
       // Lo que cambió aquí también se encola ya: `pull()` lo espera.
+      // `collectOps` deja fuera lo local, así que solo sale lo de la cuenta.
       collectOps(current.goals, goalsOut, 'goal', ops)
       collectOps(current.types, typesOut, 'type', ops)
-      if (current.note !== noteOut && noteOut.updatedAt) ops.push(noteOp(noteOut))
+      if (current.note !== noteOut && noteOut.updatedAt && !esLocal(noteOut)) {
+        ops.push(noteOp(noteOut))
+      }
 
       setGoalsRaw(goalsOut)
       setTypesRaw(typesOut)
@@ -588,7 +540,43 @@ export function StoreProvider({ children }) {
     [],
   )
 
-  useEffect(() => startSyncEngine({ onRemote: applyRemote }), [applyRemote])
+  // --- outbox: lo local no sale de aquí ---
+  // Quedan operaciones de antes de que existiera esta regla (o de cuando no
+  // había cuenta): se retiran, porque subirlas es exactamente lo que no
+  // queremos. Los registros nuevos ya no llegan a encolarse.
+  useEffect(() => {
+    const claves = clavesOutbox(snapshot.current)
+    if (!claves.size) return undefined
+    let alive = true
+    ;(async () => {
+      try {
+        const outbox = await readOutbox()
+        const keys = outbox.filter((op) => claves.has(op.key)).map((op) => op.key)
+        if (alive && keys.length) await removeOps(keys)
+        if (alive) await refreshPending()
+      } catch (error) {
+        console.warn('Outbox local:', error?.message ?? error)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  // El motor ignora operaciones y fotos de lo local (nunca se suben, y no
+  // cuentan como pendientes). Se lee del snapshot para no arrastrar estados.
+  const localRecords = useCallback(
+    () => ({
+      ids: clavesOutbox(snapshot.current),
+      images: imagenesLocales(snapshot.current.goals),
+    }),
+    [],
+  )
+
+  useEffect(
+    () => startSyncEngine({ onRemote: applyRemote, localRecords }),
+    [applyRemote, localRecords],
+  )
 
   const login = useCallback(async (passcode) => {
     await requestLogin(passcode)
@@ -604,7 +592,10 @@ export function StoreProvider({ children }) {
       if (types.some((type) => type.nombre.toLowerCase() === clean.toLowerCase())) {
         return 'Ese tipo ya existe'
       }
-      setTypes((current) => [...current, { id: crypto.randomUUID(), nombre: clean }])
+      setTypes((current) => [
+        ...current,
+        { id: crypto.randomUUID(), nombre: clean, ...duenioNuevo() },
+      ])
       return null
     },
     [types, setTypes],
@@ -624,7 +615,7 @@ export function StoreProvider({ children }) {
   const addGoal = useCallback(
     async (values, file) => {
       const esCompuesta = values.seguimiento === 'compuesta'
-      if (esCompuesta) setTypes((current) => ensureCompuestoType(current))
+      if (esCompuesta) setTypes((current) => ensureCompuestoType(current, duenioNuevo()))
       const tipoId = esCompuesta ? compuestoId(types) : values.tipoId
       const imagenKey = await storeImage(file)
       // El tipo `lectura` manda el modo: por páginas, no por porcentaje.
@@ -650,6 +641,7 @@ export function StoreProvider({ children }) {
           enMuro:
             current.filter((goal) => goal.enMuro && !esHijoDe(goal.id, current)).length <
             MAX_FOCUS,
+          ...duenioNuevo(),
         },
       ])
     },
@@ -659,7 +651,7 @@ export function StoreProvider({ children }) {
   const updateGoal = useCallback(
     async (id, values, file) => {
       const esCompuesta = values.seguimiento === 'compuesta'
-      if (esCompuesta) setTypes((current) => ensureCompuestoType(current))
+      if (esCompuesta) setTypes((current) => ensureCompuestoType(current, duenioNuevo()))
       const tipoId = esCompuesta ? compuestoId(types) : values.tipoId
       const anterior = goals.find((goal) => goal.id === id)
       const imagenKey = file ? await storeImage(file) : null
@@ -842,11 +834,41 @@ export function StoreProvider({ children }) {
     [setGoals],
   )
 
+  // --- dueño: subir lo local a la cuenta ---
+  // Es la única puerta de salida de lo local: se quita la marca, se sella con
+  // una fecha nueva y el outbox normal lo sube en la próxima ronda (con la
+  // foto, si la tiene). Si no hay sesión, queda en cola hasta la siguiente.
+  const subirACuenta = useCallback(
+    (id) => {
+      setGoals((current) =>
+        current.map((goal) => {
+          if (goal.id !== id || !goal.local) return goal
+          const copia = { ...goal }
+          delete copia.local
+          return copia
+        }),
+      )
+    },
+    [setGoals],
+  )
+
+  const subirNota = useCallback(() => {
+    setNoteRaw((current) => {
+      if (!current.local) return current
+      const copia = { ...current, updatedAt: nextTs() }
+      delete copia.local
+      return copia
+    })
+  }, [])
+
   const value = {
     types,
     goals: displayGoals,
     note: note.texto,
+    noteLocal: Boolean(note.local),
     setNote,
+    subirACuenta,
+    subirNota,
     focusCount,
     wallFull,
     addType,

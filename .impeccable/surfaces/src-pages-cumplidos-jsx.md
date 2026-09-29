@@ -35,7 +35,10 @@ cumplir la meta de días de una racha (o cuando quieras en rachas
 indefinidas), o con su compuesta lista. Orden: de lo más reciente a lo más
 antiguo, agrupado año → mes. `Reabrir` limpia solo la fecha (`finalizadoEn`)
 y el objetivo vuelve al pool, nunca al muro, para no pisar el cupo de los
-siete; `Borrar` pide confirmación y lo borra igual que en el pool. Si no hay
+siete; `Borrar` pide confirmación y lo borra igual que en el pool. Si el
+objetivo es solo local, la fila lleva el chip `solo aquí` y el botón ghost
+`Subir a la cuenta` (mismos `LocalChip`/`SubirCuenta` que en el pool): el
+registro sube a la cuenta sin reabrirlo ni salir de `/cumplidos`. Si no hay
 nada, un polaroid rotado con texto manuscrito explica cómo se llega aquí.
 El grupo de mes nace de `groupCumplidos()` (puro, testeado en
 `tests/cumplidos.test.mjs`), que descarta lo no archivado y lo que no sea

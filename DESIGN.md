@@ -263,6 +263,20 @@ de red) y `Sincronizado`; el `title` añade el motivo. Nunca se informa "todo
 bien" mientras quede cola, y los cambios siempre quedan guardados en el
 dispositivo aunque el servidor esté caído.
 
+Datos "solo aquí": lo que existía cuando se activó el passcode por primera vez
+(metas, tipos y la nota creadas sin cuenta) se marca `local: true` al cargar y
+al crear, y ese dueño manda sobre todo lo demás: no entra en el outbox, su foto
+no se sube, el badge no lo cuenta como "N por subir" y `applyRemote` no lo pisa
+con lo que traiga el servidor. En la tarjeta, en la fila del pool y en
+`/cumplidos` se enseña el chip `solo aquí` junto al botón `Subir a la cuenta`
+(`Subir la nota` en la nota TODO): quitar la marca es el único camino para que
+esos datos suban, y es una acción del usuario, nunca automática. Los borrados
+de lo local no dejan lápida ni op: solo se elimina su blob. Límite conocido: lo
+que ya se había subido antes de existir este dueño sigue en la cuenta (no hay
+acción para retirarlo de allí). Para quien ya tiene cuenta, localStorage pasa a
+ser caché: el servidor manda y la marca `local` es el dueño explícito de lo que
+no debe viajar.
+
 Acceso: passcode propio (env `PASSCODE`) + cookie firmada por 30 días. Sin
 sesión el muro sigue siendo usable en local y la hoja de entrada aparece sola
 cuando el servidor rechaza.

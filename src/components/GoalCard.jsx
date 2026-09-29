@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../lib/storeContext.js'
 import GoalControls from './GoalControls.jsx'
 import GoalOptions from './GoalOptions.jsx'
+import LocalChip from './LocalChip.jsx'
 
 const TILTS = ['-4deg', '3deg', '-2deg', '4.5deg', '-3.5deg', '2deg', '-5deg']
 
@@ -73,7 +74,10 @@ function GoalCard({ goal, index = 0, variant = 'wall' }) {
         </div>
 
         <div className="goal__body">
-          <span className="goal__type">{type ? type.nombre : 'Sin tipo'}</span>
+          <span className="goal__type">
+            {type ? type.nombre : 'Sin tipo'}
+            {goal.local && <LocalChip />}
+          </span>
           <figcaption className="goal__name">{goal.nombre}</figcaption>
           <GoalControls goal={goal} variant={variant} />
         </div>

@@ -144,7 +144,7 @@ try {
       'Terminado',
       '4 de 30 días',
     ],
-    ['Archivo ocultoXYZ'],
+    ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta'],
   )
   // Con hueco el botón se enseña; lleno desaparece (sin estado "Muro lleno").
   check('/  (con hueco)', render('/'), ['Añadir objetivo'], ['Muro lleno'])
@@ -170,6 +170,26 @@ try {
     ['Añadir objetivo', 'Muro lleno'],
   )
   kv.set('fb.goals', JSON.stringify(goals))
+
+  // Objetivo local (de antes de poner el passcode): se enseña con su marca
+  // y con la única puerta de salida, subirlo a la cuenta.
+  const localGoal = {
+    ...goals[0],
+    id: 'l1',
+    nombre: 'Solo local XYZ',
+    local: true,
+    enMuro: true,
+    finalizadoEn: null,
+  }
+  kv.set('fb.goals', JSON.stringify([...goals, localGoal]))
+  check(
+    '/  (local)',
+    render('/'),
+    ['Solo local XYZ', 'solo aquí', 'Subir a la cuenta'],
+    [],
+  )
+  kv.set('fb.goals', JSON.stringify(goals))
+  check('/  (sin local)', render('/'), [], ['solo aquí'])
 
   check(
     '/pool',

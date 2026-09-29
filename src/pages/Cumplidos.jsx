@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../lib/storeContext.js'
 import { todayISO } from '../lib/dates.js'
 import SyncBadge from '../components/SyncBadge.jsx'
+import LocalChip from '../components/LocalChip.jsx'
+import SubirCuenta from '../components/SubirCuenta.jsx'
 import { etiquetaRacha, fechaCorta, groupCumplidos } from '../lib/cumplidos.js'
 import { etiquetaDe } from '../lib/lectura.js'
 import '../VisionBoard.css'
@@ -77,6 +79,7 @@ function Cumplidos() {
                           <span className="goal__type row__type">
                             {types.find((item) => item.id === goal.tipoId)
                               ?.nombre ?? 'Sin tipo'}
+                            {goal.local && <LocalChip />}
                           </span>
                           <span className="row__name">{goal.nombre}</span>
                           <span className="done__fecha">
@@ -104,6 +107,7 @@ function Cumplidos() {
                           >
                             Borrar
                           </button>
+                          <SubirCuenta goal={goal} />
                         </div>
                       </li>
                     ))}

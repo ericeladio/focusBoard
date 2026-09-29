@@ -1,6 +1,8 @@
 import { useStore } from '../lib/storeContext.js'
 import { inactiveDays, markedToday, streakOf } from '../lib/dates.js'
 import GoalDone from './GoalDone.jsx'
+import LocalChip from './LocalChip.jsx'
+import SubirCuenta from './SubirCuenta.jsx'
 import { padreDe } from '../lib/composite.js'
 import { etiquetaDe, pctDe } from '../lib/lectura.js'
 
@@ -23,6 +25,7 @@ function GoalRow({ goal, onEdit }) {
       <div className="row__info">
         <span className="goal__type row__type">
           {type ? type.nombre : 'Sin tipo'}
+          {goal.local && <LocalChip />}
         </span>
         <span className="row__name">{goal.nombre}</span>
         {padre && <span className="row__parent">dentro de {padre.nombre}</span>}
@@ -92,6 +95,7 @@ function GoalRow({ goal, onEdit }) {
         <button type="button" className="btn btn--ghost" onClick={confirmRemove}>
           Borrar
         </button>
+        <SubirCuenta goal={goal} />
       </div>
     </li>
   )

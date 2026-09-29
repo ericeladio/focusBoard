@@ -28,6 +28,9 @@ let status = {
 const listeners = new Set()
 let serverTimeMs = 0
 let onRemote = null
+// Registros que no son de la cuenta: sus operaciones y fotos no salen nunca
+// (y no cuentan como pendientes). El store pasa la lista en cada arranque.
+let localRecords = () => ({ ids: new Set(), images: new Set() })
 let running = false
 let timer = null
 // La primera ronda de la sesión baja todo: es la única forma de reparar
@@ -69,12 +72,17 @@ export function adoptServerTime(iso) {
 
 export async function countPending() {
   try {
-    const [ops, uploads, deletes] = await Promise.all([
-      idb.outboxCount(),
+    const { ids, images } = localRecords()
+    const [outbox, uploads, deletes] = await Promise.all([
+      idb.readOutbox(),
       idb.pendingUploads(),
       idb.readImageDeletes(),
     ])
-    return ops.length + uploads.length + deletes.length
+    // Solo lo que va a la cuenta: lo local no está "pendiente de subir",
+    // porque no se va a subir.
+    const ops = outbox.filter((op) => !ids.has(op.key)).length
+    const fotos = uploads.filter((record) => !images.has(record.key)).length
+    return ops + fotos + deletes.length
   } catch {
     return 0
   }
@@ -107,8 +115,12 @@ async function handleError(error) {
 }
 
 async function uploadPending() {
+  const { images } = localRecords()
   const pending = await idb.pendingUploads()
   for (const record of pending) {
+    // La foto de un objetivo local se queda en IndexedDB: subirla sería
+    // meter datos de antes del pass en la cuenta.
+    if (images.has(record.key)) continue
     try {
       await api.putImage(record.key, record.blob)
       await idb.markUploaded(record.key)
@@ -153,8 +165,13 @@ async function flush() {
 
     const uploads = await idb.pendingUploads()
     const blocked = new Set(uploads.map((record) => record.key))
+    const { ids: locales } = localRecords()
+    // Red de seguridad: aunque algo local se colara en el outbox (una versión
+    // vieja, un fallo), no sale de este dispositivo.
     const ready = outbox.filter(
-      (op) => !(op.entity === 'goal' && op.data?.imagenKey && blocked.has(op.data.imagenKey)),
+      (op) =>
+        !locales.has(op.key) &&
+        !(op.entity === 'goal' && op.data?.imagenKey && blocked.has(op.data.imagenKey)),
     )
     if (!ready.length) return
 
@@ -317,6 +334,7 @@ export async function logout() {
 export function startSyncEngine(handlers = {}) {
   if (timer) return stopSyncEngine
   onRemote = handlers.onRemote ?? null
+  localRecords = handlers.localRecords ?? localRecords
 
   idb.getMeta('serverTime').then((value) => adoptServerTime(value)).catch(() => {})
   idb.getMeta('lastPullAt').catch(() => {})

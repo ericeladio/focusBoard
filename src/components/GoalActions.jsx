@@ -1,6 +1,7 @@
 import { useStore } from '../lib/storeContext.js'
 import { padreDe } from '../lib/composite.js'
 import GoalDone from './GoalDone.jsx'
+import SubirCuenta from './SubirCuenta.jsx'
 
 function GoalActions({ goal, variant = 'wall' }) {
   const { goals, placeInWall, removeFromWall, removeGoal, wallFull } = useStore()
@@ -51,6 +52,7 @@ function GoalActions({ goal, variant = 'wall' }) {
       <button type="button" className="btn btn--ghost" onClick={confirmRemove}>
         Borrar
       </button>
+      <SubirCuenta goal={goal} />
     </div>
   )
 }

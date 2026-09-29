@@ -14,10 +14,12 @@ export function compuestoId(types) {
   return types.find(esCompuestoType)?.id ?? ID_COMPUESTO
 }
 
-export function ensureCompuestoType(types) {
+// `extra` permite que el llamante le ponga el dueño (ver `lib/local.js`):
+// un tipo de sistema creado antes de tener cuenta también es local.
+export function ensureCompuestoType(types, extra = {}) {
   return types.some(esCompuestoType)
     ? types
-    : [...types, { id: ID_COMPUESTO, nombre: NOMBRE_COMPUESTO }]
+    : [...types, { id: ID_COMPUESTO, nombre: NOMBRE_COMPUESTO, ...extra }]
 }
 
 // ¿El objetivo es del tipo Compuesto? (si el tipo ni siquiera está en la

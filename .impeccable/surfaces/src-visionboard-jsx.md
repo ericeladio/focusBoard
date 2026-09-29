@@ -50,17 +50,29 @@ llegar, el botón se enciende — pero nunca archiva solo. Una parte archivada
 cuenta como avance y no desmonta su compuesta. `Reabrir` (desde
 `/cumplidos`) solo limpia la fecha: el objetivo vuelve al pool.
 
+DUEÑO "solo aquí": lo creado antes de entrar con passcode (o sin cuenta) se
+marca `local` y no viaja — ni a la cola de subida, ni con su foto —; el chip
+`solo aquí` (tinta sobre cinta, `LocalChip`) aparece junto al nombre en la
+tarjeta del muro, en la fila del pool, en las filas de `/cumplidos` y en la
+nota rayada "TODO", siempre acompañado del botón ghost `Subir a la cuenta`
+(`Subir la nota` en la nota) que lo promueve a cuenta (`SubirCuenta`). No
+cuenta como pendiente en el badge. Borrarlo no deja lápida.
+
 FIRST VIEWPORT (`/`): título manuscrito + "{n} de 7 en el muro" + tape-links
 al pool y a cumplidos + sync badge de cinta (estado del sync; "Entrar" abre la hoja de passcode);
-polaroids de objetivos, nota rayada "TODO" (editable) y botón-polaroid
+polaroids de objetivos (con chip `solo aquí` + `Subir a la cuenta` cuando el
+objetivo es solo local), nota rayada "TODO" (editable; su botón `Subir la nota`
+solo si es local) y botón-polaroid
 "Añadir" (deshabilitado a 7/7). En celular (≤48rem) el muro es un mosaico de dos
 columnas con cada foto a su proporción real; en celular la tarjeta es foto +
 nombre y el doble clic/segundo toque abre la modal con las opciones. FIRST VIEWPORT (`/pool`): título + select de
 tipo + barra Tipos/Nuevo objetivo + los mismos tape-links y sync badge en la
 nav; lista de filas (miniatura, tipo, nombre, seguimiento solo lectura,
-Editar/Terminado/Poner/Borrar) y hint de doble clic. FIRST VIEWPORT
+Editar/Terminado/Poner/Borrar, con `solo aquí` + `Subir a la cuenta` cuando
+aplica) y hint de doble clic. FIRST VIEWPORT
 (`/cumplidos`): título + contador de cumplidos + tape-links y sync badge;
-años como etiqueta de cinta, meses con recuento y filas con Reabrir/Borrar.
+años como etiqueta de cinta, meses con recuento y filas con Reabrir/Borrar (y
+`solo aquí` + `Subir a la cuenta` cuando aplica).
 
 FORM: réplica del sketch.webp (pinned por brief) ampliada a app de objetivos.
 Seed key: pinned-request, sin roll.
