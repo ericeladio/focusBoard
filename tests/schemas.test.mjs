@@ -50,6 +50,37 @@ const img = new File(['x'], 'a.png', { type: 'image/png' })
   assert.equal(r.success, true, JSON.stringify(r.error?.issues))
 }
 
+// update sin cambiar la imagen: el form manda imagen=null → sigue válida
+// (si no, editar cualquier objetivo pediría subir la foto otra vez)
+{
+  const r = goalUpdateSchema.safeParse({
+    nombre: 'Sin foto nueva', tipoId: 't', seguimiento: 'percent',
+    imagen: null, componentes: [],
+  })
+  assert.equal(r.success, true, JSON.stringify(r.error?.issues))
+  assert.equal(r.data.imagen, null, 'sin imagen el dato viaja como null')
+}
+
+// update con foto nueva → el File llega tal cual
+{
+  const r = goalUpdateSchema.safeParse({
+    nombre: 'Foto nueva', tipoId: 't', seguimiento: 'percent',
+    imagen: img, componentes: [],
+  })
+  assert.equal(r.success, true, JSON.stringify(r.error?.issues))
+  assert.equal(r.data.imagen, img, 'el archivo nuevo se conserva')
+}
+
+// crear sin foto → sigue pidiendo la imagen (no se afloja el alta)
+{
+  const r = goalSchema.safeParse({
+    nombre: 'Sin foto', tipoId: 't', seguimiento: 'percent',
+    imagen: null, componentes: [],
+  })
+  assert.equal(r.success, false, 'alta sin imagen → error')
+  assert.equal(issuesToFieldErrors(r.error).imagen, 'Añade una imagen')
+}
+
 // por páginas: total opcional (200 por defecto) y dentro de rango
 {
   const r = goalSchema.safeParse({

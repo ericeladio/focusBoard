@@ -101,7 +101,9 @@ export const goalUpdateSchema = z
   .object({
     nombre: nombreField,
     tipoId: tipoField,
-    imagen: imagenFile.optional(),
+    // `nullish`: el form manda `null` cuando no se elige archivo nuevo, y eso
+    // significa "conservar la imagen actual" (el store no pisa `imagenKey`).
+    imagen: imagenFile.nullish(),
     seguimiento: seguimientoField,
     totalPaginas: totalPaginasField,
     metaDias: metaDiasField,
