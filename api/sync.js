@@ -38,7 +38,7 @@ const TYPE_COLUMNS = `id, nombre, created_at, updated_at, deleted_at`
 
 async function pull(userId, since) {
   const sql = db()
-  const [goals, types, note] = await Promise.all([
+  const [goals, types, note, totals] = await Promise.all([
     sql.query(
       `select ${GOAL_COLUMNS} from goals where user_id = $1 and updated_at > $2 order by updated_at`,
       [userId, since],
@@ -48,31 +48,57 @@ async function pull(userId, since) {
       [userId, since],
     ),
     sql.query(`select texto, updated_at from notes where user_id = $1`, [userId]),
+    sql.query(
+      `select (select count(*)::int from goals where user_id = $1 and deleted_at is null) as goals_total,
+              (select count(*)::int from types where user_id = $1 and deleted_at is null) as types_total`,
+      [userId],
+    ),
   ])
+  // Totales vivos: sin ellos una ventana vacía es indistinguible de
+  // "el dispositivo ya tiene todo", que es justo el caso que se rompe.
+  const total = rows(totals)[0] ?? {}
   return {
     serverTime: new Date().toISOString(),
     goals: rows(goals).map(rowToGoal),
     types: rows(types).map(rowToType),
     note: rowToNote(rows(note)[0]),
+    goalsTotal: Number(total.goals_total ?? 0),
+    typesTotal: Number(total.types_total ?? 0),
   }
 }
 
+// 'applied' → guardado. 'stale' → el sello del cliente es más viejo que la
+// fila del servidor: el registro existente manda y la copia local hay que
+// repararla, no celebrarla.
 async function applyOp(userId, normalized) {
   const sql = db()
   if (normalized.action === 'del') {
     const statement = normalized.entity === 'goal' ? GOAL_DELETE : TYPE_DELETE
-    await sql.query(statement, [normalized.id, userId, normalized.ts])
-    return
+    const table = normalized.entity === 'goal' ? 'goals' : 'types'
+    const result = await sql.query(statement, [normalized.id, userId, normalized.ts])
+    if (appliedFlag(result)) return 'applied'
+    // Borrar algo que ya no existe no es un rechazo: es un no-op y el
+    // cliente ya tiene su copia fuera.
+    const exists = await sql.query(
+      `select 1 from ${table} where id = $1 and user_id = $2 limit 1`,
+      [normalized.id, userId],
+    )
+    return rows(exists).length ? 'stale' : 'applied'
   }
   if (normalized.entity === 'goal') {
-    await sql.query(GOAL_UPSERT, goalParams(normalized.record, userId))
-    return
+    const result = await sql.query(GOAL_UPSERT, goalParams(normalized.record, userId))
+    return appliedFlag(result) ? 'applied' : 'stale'
   }
   if (normalized.entity === 'type') {
-    await sql.query(TYPE_UPSERT, typeParams(normalized.record, userId))
-    return
+    const result = await sql.query(TYPE_UPSERT, typeParams(normalized.record, userId))
+    return appliedFlag(result) ? 'applied' : 'stale'
   }
-  await sql.query(NOTE_UPSERT, noteParams(normalized.record, userId))
+  const result = await sql.query(NOTE_UPSERT, noteParams(normalized.record, userId))
+  return appliedFlag(result) ? 'applied' : 'stale'
+}
+
+function appliedFlag(result) {
+  return Boolean(rows(result)[0]?.applied)
 }
 
 async function push(userId, payload) {
@@ -81,6 +107,7 @@ async function push(userId, payload) {
 
   await ensureUser()
   const acked = []
+  const rejected = []
   const failed = []
   let maxTs = 0
 
@@ -94,8 +121,9 @@ async function push(userId, payload) {
     const tsMs = Date.parse(normalized.ts)
     if (Number.isFinite(tsMs) && tsMs > maxTs) maxTs = tsMs
     try {
-      await applyOp(userId, normalized)
-      acked.push(seq)
+      const outcome = await applyOp(userId, normalized)
+      if (outcome === 'applied') acked.push(seq)
+      else rejected.push({ seq, reason: 'stale' })
     } catch (error) {
       console.error('op failed:', normalized.entity, normalized.id, error)
       failed.push({ seq, error: 'db_error' })
@@ -104,7 +132,7 @@ async function push(userId, payload) {
 
   return {
     status: 200,
-    body: { acked, failed, serverTime: new Date().toISOString() },
+    body: { acked, rejected, failed, serverTime: new Date().toISOString() },
     maxTs,
   }
 }
@@ -136,6 +164,8 @@ export default async function handler(req, res) {
           ageS,
           goals: payload.goals.length,
           types: payload.types.length,
+          gt: payload.goalsTotal,
+          tt: payload.typesTotal,
         }),
       )
       return res.status(200).json(payload)
@@ -147,6 +177,7 @@ export default async function handler(req, res) {
         ...clientInfo(req),
         status: result.status,
         acked: result.body?.acked?.length ?? 0,
+        rejected: result.body?.rejected?.length ?? 0,
         failed: result.body?.failed?.length ?? 0,
         skewS: result.maxTs ? Math.round((result.maxTs - Date.now()) / 1000) : null,
       }),

@@ -145,10 +145,18 @@ const ops = [
 ]
 res = await call(sync, { method: 'POST', ...auth, body: { ops } })
 assert.equal(res.code, 200, 'push → 200')
-assert.deepEqual(res.body.acked, [0, 1, 2, 4], `ackeados: ${JSON.stringify(res.body.acked)}`)
+assert.deepEqual(res.body.acked, [0, 1, 2], `ackeados: ${JSON.stringify(res.body.acked)}`)
+assert.deepEqual(
+  res.body.rejected,
+  [{ seq: 4, reason: 'stale' }],
+  `sello viejo → rejected: ${JSON.stringify(res.body.rejected)}`,
+)
 assert.equal(res.body.failed[0].seq, 3, 'la op con imagenKey inválida falla')
 assert.equal(res.body.failed[0].error, 'bad_image_key', 'error bad_image_key')
-paso(5, 'push → acked [0,1,2,4]; seq 3 rechazado (bad_image_key); sello viejo sin efecto ✓')
+paso(
+  5,
+  'push → acked [0,1,2]; sello viejo → rejected(stale); seq 3 falla (bad_image_key) ✓',
+)
 
 res = await call(sync, { method: 'GET', ...auth })
 const goal = res.body.goals.find((g) => g.id === 'smoke-meta')
@@ -159,7 +167,19 @@ assert.equal(goal.imagenKey, IMG_KEY, 'imagenKey con carpeta intacta')
 assert.equal(res.body.goals.find((g) => g.id === 'smoke-mala'), undefined, 'la meta con clave mala no existe')
 assert.equal(res.body.types.find((t) => t.id === 'smoke-tipo')?.nombre, 'Smoke', 'el tipo volvió')
 assert.equal(res.body.note?.texto, NOTA_SMOKE, 'la nota volvió')
-paso(6, 'pull → meta/tipo/nota correctos y LWW respetado ✓')
+// Los totales vivos son lo único que permite a un cliente notar que le
+// faltan registros: una ventana vacía no lo dice.
+const vivos = rows(
+  await db().query(`select
+    (select count(*)::int from goals where user_id = 'local' and deleted_at is null) as goals_total,
+    (select count(*)::int from types where user_id = 'local' and deleted_at is null) as types_total`),
+)[0]
+assert.equal(res.body.goalsTotal, vivos.goals_total, 'goalsTotal = metas vivas reales')
+assert.equal(res.body.typesTotal, vivos.types_total, 'typesTotal = tipos vivos reales')
+paso(
+  6,
+  `pull → meta/tipo/nota correctos, LWW respetado y totales (goals=${res.body.goalsTotal}, types=${res.body.typesTotal}) ✓`,
+)
 
 // --- imágenes ---
 // Las peticiones se montan como en producción: la clave viaja en la ruta, en un
@@ -213,6 +233,39 @@ res = await call(images, { method: 'DELETE', headers: { cookie }, url: urlOf(IMG
 assert.equal(res.code, 409, 'imagen en uso → 409')
 paso(11, 'DELETE con la meta usándola → 409 image_in_use ✓')
 
+// Un borrador que nunca subió (la fila no existe) no es un rechazo, y una
+// escritura que perdió por sello tiene que verse como tal: si se contara
+// como aplicada, el cliente se quedaría con una copia que ya nadie arregla.
+res = await call(sync, {
+  method: 'POST',
+  ...auth,
+  body: {
+    ops: [
+      {
+        seq: 0,
+        entity: 'goal',
+        op: 'del',
+        id: 'smoke-nunca-existio',
+        ts: new Date().toISOString(),
+      },
+      {
+        seq: 1,
+        entity: 'goal',
+        op: 'del',
+        id: 'smoke-meta',
+        ts: '2020-01-01T00:00:00.000Z',
+      },
+    ],
+  },
+})
+assert.deepEqual(res.body.acked, [0], 'borrar algo que no existe → no-op aplicado')
+assert.deepEqual(
+  res.body.rejected,
+  [{ seq: 1, reason: 'stale' }],
+  'borrado con sello viejo sobre fila viva → rejected',
+)
+paso(12, 'del → no-op aplicado; del con sello viejo → rejected(stale) ✓')
+
 res = await call(sync, {
   method: 'POST',
   ...auth,
@@ -223,13 +276,13 @@ res = await call(images, { method: 'DELETE', headers: { cookie }, url: urlOf(IMG
 assert.equal(res.code, 200, 'DELETE → 200')
 res = await call(images, { method: 'GET', headers: { cookie }, url: urlOf(IMG_KEY) })
 assert.equal(res.code, 404, 'objeto borrado → 404')
-paso(12, 'borré la meta → el objeto sale de R2 ✓')
+paso(13, 'borré la meta → el objeto sale de R2 ✓')
 
 // --- logout y limpieza ---
 res = await call(logout, { method: 'POST' })
 assert.equal(res.code, 200)
 assert.match(res.headers['Set-Cookie'], /^fb_session=;/, 'cookie borrada')
-paso(13, 'logout → cookie expirada ✓')
+paso(14, 'logout → cookie expirada ✓')
 
 const sql = db()
 // La BD puede tener datos reales: solo borramos lo que creó este smoke.

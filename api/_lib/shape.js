@@ -31,23 +31,31 @@ export function rowToNote(row) {
   return { texto: row.texto, updatedAt: row.updated_at }
 }
 
+// Cada escritura devuelve `applied`: el `where ... > updated_at` descarta los
+// sellos viejos sin tocar la fila, y hasta ahora eso se contaba como éxito.
+// El cliente tiene que poder distinguir "guardado" de "tu sello perdió",
+// si no, su copia local se queda sin que nadie se entere.
 export const GOAL_UPSERT = `
-  insert into goals (id, user_id, nombre, tipo_id, seguimiento, componentes, valor, marcas,
-                     ultimo_movimiento, imagen_key, created_at, en_muro, updated_at, deleted_at)
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, null)
-  on conflict (id) do update set
-    nombre = excluded.nombre,
-    tipo_id = excluded.tipo_id,
-    seguimiento = excluded.seguimiento,
-    componentes = excluded.componentes,
-    valor = excluded.valor,
-    marcas = excluded.marcas,
-    ultimo_movimiento = excluded.ultimo_movimiento,
-    imagen_key = excluded.imagen_key,
-    en_muro = excluded.en_muro,
-    updated_at = excluded.updated_at,
-    deleted_at = null
-  where goals.user_id = excluded.user_id and excluded.updated_at > goals.updated_at
+  with applied as (
+    insert into goals (id, user_id, nombre, tipo_id, seguimiento, componentes, valor, marcas,
+                       ultimo_movimiento, imagen_key, created_at, en_muro, updated_at, deleted_at)
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, null)
+    on conflict (id) do update set
+      nombre = excluded.nombre,
+      tipo_id = excluded.tipo_id,
+      seguimiento = excluded.seguimiento,
+      componentes = excluded.componentes,
+      valor = excluded.valor,
+      marcas = excluded.marcas,
+      ultimo_movimiento = excluded.ultimo_movimiento,
+      imagen_key = excluded.imagen_key,
+      en_muro = excluded.en_muro,
+      updated_at = excluded.updated_at,
+      deleted_at = null
+    where goals.user_id = excluded.user_id and excluded.updated_at > goals.updated_at
+    returning id
+  )
+  select exists (select 1 from applied) as applied
 `
 
 export function goalParams(record, userId) {
@@ -69,13 +77,17 @@ export function goalParams(record, userId) {
 }
 
 export const TYPE_UPSERT = `
-  insert into types (id, user_id, nombre, created_at, updated_at, deleted_at)
-  values ($1, $2, $3, now(), $4, null)
-  on conflict (id) do update set
-    nombre = excluded.nombre,
-    updated_at = excluded.updated_at,
-    deleted_at = null
-  where types.user_id = excluded.user_id and excluded.updated_at > types.updated_at
+  with applied as (
+    insert into types (id, user_id, nombre, created_at, updated_at, deleted_at)
+    values ($1, $2, $3, now(), $4, null)
+    on conflict (id) do update set
+      nombre = excluded.nombre,
+      updated_at = excluded.updated_at,
+      deleted_at = null
+    where types.user_id = excluded.user_id and excluded.updated_at > types.updated_at
+    returning id
+  )
+  select exists (select 1 from applied) as applied
 `
 
 export function typeParams(record, userId) {
@@ -83,12 +95,16 @@ export function typeParams(record, userId) {
 }
 
 export const NOTE_UPSERT = `
-  insert into notes (user_id, texto, updated_at)
-  values ($1, $2, $3)
-  on conflict (user_id) do update set
-    texto = excluded.texto,
-    updated_at = excluded.updated_at
-  where excluded.updated_at > notes.updated_at
+  with applied as (
+    insert into notes (user_id, texto, updated_at)
+    values ($1, $2, $3)
+    on conflict (user_id) do update set
+      texto = excluded.texto,
+      updated_at = excluded.updated_at
+    where excluded.updated_at > notes.updated_at
+    returning user_id
+  )
+  select exists (select 1 from applied) as applied
 `
 
 export function noteParams(record, userId) {
@@ -96,11 +112,19 @@ export function noteParams(record, userId) {
 }
 
 export const GOAL_DELETE = `
-  update goals set deleted_at = $3, updated_at = $3
-  where id = $1 and user_id = $2 and $3::timestamptz > updated_at
+  with applied as (
+    update goals set deleted_at = $3, updated_at = $3
+    where id = $1 and user_id = $2 and $3::timestamptz > updated_at
+    returning id
+  )
+  select exists (select 1 from applied) as applied
 `
 
 export const TYPE_DELETE = `
-  update types set deleted_at = $3, updated_at = $3
-  where id = $1 and user_id = $2 and $3::timestamptz > updated_at
+  with applied as (
+    update types set deleted_at = $3, updated_at = $3
+    where id = $1 and user_id = $2 and $3::timestamptz > updated_at
+    returning id
+  )
+  select exists (select 1 from applied) as applied
 `

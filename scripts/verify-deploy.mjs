@@ -97,6 +97,19 @@ let metas = []
   const ok = res.status === 200 && body && typeof body.serverTime === 'string'
   paso(ok, `GET /api/sync con sesión → ${res.status} (metas=${body?.goals?.length ?? '?'}, tipos=${body?.types?.length ?? '?'})`)
   if (ok) metas = body.goals ?? []
+
+  // Los totales vivos es lo que permite a un cliente notar que le faltan
+  // registros; sin ellos la reparación automática no puede funcionar.
+  const vivos = (metas.filter((g) => !g.deletedAt) ?? []).length
+  const totalesOk =
+    Number.isInteger(body?.goalsTotal) &&
+    Number.isInteger(body?.typesTotal) &&
+    body.goalsTotal >= vivos &&
+    body.typesTotal >= (body?.types ?? []).filter((t) => !t.deletedAt).length
+  paso(
+    totalesOk,
+    `totales vivos → goals=${body?.goalsTotal} (vistas ${vivos}), types=${body?.typesTotal}`,
+  )
 }
 
 // 5. Cada foto que anuncian las metas tiene que venir por su URL nueva:
