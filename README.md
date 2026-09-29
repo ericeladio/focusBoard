@@ -63,8 +63,10 @@ en el proceso. Funciona igual que producción, sin Vercel CLI.
 4. Deploy. Sin sesión la app funciona en local; con passcode sincroniza.
 
 Producción: **https://myfocusboard.vercel.app** (dominio del proyecto, se
-asigna solo al último deploy de producción; el dominio viejo
-`focus-board-one-blue.vercel.app` se retiró). Para comprobarlo:
+asigna solo al último deploy de producción).
+`focus-board-one-blue.vercel.app` sigue como espejo automático: no se puede
+retirar porque es el dominio generado al crear el proyecto (`focus-board` ya
+existía) y Vercel lo reasigna en cada deploy. Para comprobar:
 `node scripts/verify-deploy.mjs` (acepta otra URL como argumento).
 
 ## Cómo guarda datos
