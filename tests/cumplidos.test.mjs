@@ -5,6 +5,7 @@ import {
   groupCumplidos,
   metaAlcanzada,
   metaDiasDe,
+  paginaCumplidos,
   puedeFinalizar,
 } from '../src/lib/cumplidos.js'
 import { pastISO, todayISO } from '../src/lib/dates.js'
@@ -142,6 +143,88 @@ assert.equal(fechaCorta(null), '', 'sin fecha')
     ['nuevo', 'viejo'],
     'a igual fecha, el último en terminar queda arriba',
   )
+}
+
+// --- paginaCumplidos: lo mismo que el pool, pero reagrupando por año/mes ---
+{
+  const vacio = paginaCumplidos(groupCumplidos([]))
+  assert.equal(vacio.total, 0, 'sin cumplidos → 0')
+  assert.equal(vacio.totalPaginas, 1, 'aunque esté vacío hay una página')
+  assert.equal(vacio.pagina, 1)
+  assert.equal(vacio.desde, 0)
+  assert.deepEqual(vacio.bloques, [], 'sin bloques que pintar')
+  assert.deepEqual(paginaCumplidos(null).bloques, [], 'sin lista no rompe')
+
+  const septiembre = (n) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `m${i}`,
+      nombre: `M${i}`,
+      finalizadoEn: `2026-09-${String(30 - i).padStart(2, '0')}`,
+      updatedAt: i,
+    }))
+
+  // Pocos → una sola página, con los recuentos del mes tal cual.
+  const pocas = paginaCumplidos(groupCumplidos(septiembre(3)))
+  assert.equal(pocas.totalPaginas, 1, '3 cumplidos → una página')
+  assert.equal(pocas.visibles.length, 3, 'se ven los tres')
+  assert.equal(pocas.bloques[0].meses[0].total, 3)
+  assert.equal(pocas.bloques[0].meses[0].mostrados, 3, 'mes completo')
+
+  // Doce → dos páginas; la cabecera del mes partido dice "4 de 12".
+  const anios = groupCumplidos(septiembre(12))
+  const primera = paginaCumplidos(anios, 1)
+  assert.equal(primera.totalPaginas, 2)
+  assert.equal(primera.desde, 0)
+  assert.equal(primera.visibles.length, 10, 'de 10 en 10')
+  assert.equal(primera.bloques[0].anio, 2026)
+  assert.equal(primera.bloques[0].meses[0].label, 'Septiembre')
+  assert.equal(primera.bloques[0].meses[0].total, 12, 'el recuento real del mes')
+  assert.equal(primera.bloques[0].meses[0].mostrados, 10, 'las que caben aquí')
+
+  const segunda = paginaCumplidos(anios, 2)
+  assert.equal(segunda.desde, 10)
+  assert.equal(segunda.visibles.length, 2, 'la última página no se queda corta')
+  assert.deepEqual(
+    segunda.visibles.map((goal) => goal.id),
+    ['m10', 'm11'],
+    'sigue el orden de más reciente a más antiguo',
+  )
+  assert.equal(segunda.bloques[0].meses[0].total, 12, 'el mes sigue contando 12')
+  assert.equal(segunda.bloques[0].meses[0].mostrados, 2)
+
+  // Fuera de rango no deja hueco: se recorta a la última (o a la primera).
+  assert.equal(paginaCumplidos(anios, 99).pagina, 2, 'página 99 → la última')
+  assert.equal(paginaCumplidos(anios, 99).desde, 10, '…y su offset')
+  assert.equal(paginaCumplidos(anios, 0).pagina, 1, 'página 0 → la primera')
+  assert.equal(paginaCumplidos(anios, 'x').pagina, 1, 'nada raro → la primera')
+}
+
+// --- la página parte los meses por el orden: lo más reciente cabe entero ---
+{
+  const goals = [
+    ...Array.from({ length: 6 }, (_, i) => ({
+      id: `s${i}`,
+      finalizadoEn: `2026-09-${30 - i}`,
+      updatedAt: i,
+    })),
+    ...Array.from({ length: 6 }, (_, i) => ({
+      id: `a${i}`,
+      finalizadoEn: `2026-08-${20 - i}`,
+      updatedAt: i,
+    })),
+  ]
+  const pagina = paginaCumplidos(groupCumplidos(goals), 1)
+  assert.equal(pagina.visibles.length, 10)
+  assert.equal(pagina.bloques.length, 1, 'todo en 2026')
+  assert.deepEqual(
+    pagina.bloques[0].meses.map((mes) => mes.label),
+    ['Septiembre', 'Agosto'],
+    'el mes más reciente primero',
+  )
+  assert.equal(pagina.bloques[0].meses[0].mostrados, 6, 'septiembre entero')
+  assert.equal(pagina.bloques[0].meses[1].mostrados, 4, 'agosto partido')
+  assert.equal(pagina.bloques[0].meses[1].total, 6, 'con su recuento real')
+  assert.equal(pagina.bloques[0].meses[1].goals.length, 4, 'solo las filas de aquí')
 }
 
 console.log('cumplidos: todas las comprobaciones pasaron')

@@ -7,6 +7,7 @@
 // resalta el botón.
 import { markedToday, streakOf } from './dates.js'
 import { pctDe } from './lectura.js'
+import { POR_PAGINA } from './pager.js'
 
 const MESES = [
   'Enero',
@@ -130,4 +131,58 @@ export function groupCumplidos(goals) {
   }
 
   return anios
+}
+
+// La ventana de la página: los bloques que tocan, el recuento global y el
+// rango para el pager. Igual que en el pool salen de 10 en 10, pero aquí hay
+// que reagrupar la ventana por año/mes para seguir pintando las etiquetas.
+//   bloques:     [{ anio, meses: [{ key, anio, mes, label, total, mostrados, goals }] }]
+//                `total` es el real del mes y `mostrados` los que caen en esta
+//                página: cuando la página parte un mes se lee "(4 de 12)".
+//   visibles:    los objetivos de la página, en orden (para el rango del pager)
+//   totalPaginas, pagina y desde (offset 0) para pintar "Mostrando 11–20 de 47"
+export function paginaCumplidos(anios, pagina = 1, porPagina = POR_PAGINA) {
+  const bloques = Array.isArray(anios) ? anios : []
+  const plana = bloques.flatMap((bloque) =>
+    (bloque.meses ?? []).flatMap((grupo) => grupo.goals ?? []),
+  )
+  const total = plana.length
+  const totalPaginas = Math.max(1, Math.ceil(total / porPagina))
+  const actual = Math.min(Math.max(1, Number(pagina) || 1), totalPaginas)
+  const desde = (actual - 1) * porPagina
+  const visibles = plana.slice(desde, desde + porPagina)
+
+  const porClave = new Map()
+  for (const bloque of bloques) {
+    for (const grupo of bloque.meses ?? []) {
+      porClave.set(grupo.key, { label: grupo.label, total: grupo.total })
+    }
+  }
+
+  const salida = []
+  let i = 0
+  while (i < visibles.length) {
+    const clave = visibles[i].finalizadoEn.slice(0, 7)
+    const inicio = i
+    while (i < visibles.length && visibles[i].finalizadoEn.slice(0, 7) === clave) i++
+    const goals = visibles.slice(inicio, i)
+    const [anio, mes] = clave.split('-').map(Number)
+    let bloque = salida.at(-1)
+    if (!bloque || bloque.anio !== anio) {
+      bloque = { anio, meses: [] }
+      salida.push(bloque)
+    }
+    const real = porClave.get(clave)
+    bloque.meses.push({
+      key: clave,
+      anio,
+      mes,
+      label: real?.label ?? MESES[mes - 1] ?? String(mes),
+      total: real?.total ?? goals.length,
+      mostrados: goals.length,
+      goals,
+    })
+  }
+
+  return { bloques: salida, total, totalPaginas, pagina: actual, desde, visibles }
 }

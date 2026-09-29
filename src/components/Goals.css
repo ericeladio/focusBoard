@@ -619,7 +619,7 @@
 @media (prefers-reduced-motion: reduce) {
   .tape-link,
   .btn,
-  .pool__page {
+  .pager__page {
     transition: none;
   }
 }
@@ -739,22 +739,22 @@
   color: var(--ink-soft);
 }
 
-/* --- paginación del pool --- */
+/* --- paginación (pool y cumplidos) --- */
 
-.pool__pager {
+.pager {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.7rem;
 }
 
-.pool__pager__count {
+.pager__count {
   margin: 0;
   font-size: 0.85rem;
   color: var(--ink-soft);
 }
 
-.pool__pager__nav {
+.pager__nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -762,7 +762,7 @@
   gap: 0.5rem;
 }
 
-.pool__pages {
+.pager__pages {
   list-style: none;
   display: flex;
   align-items: center;
@@ -771,7 +771,7 @@
   padding: 0;
 }
 
-.pool__page {
+.pager__page {
   font: inherit;
   font-size: 0.85rem;
   font-weight: 500;
@@ -786,23 +786,23 @@
     color 0.18s ease;
 }
 
-.pool__page:hover {
+.pager__page:hover {
   background: var(--sticky);
   color: var(--ink);
 }
 
-.pool__page.is-current {
+.pager__page.is-current {
   background: var(--ink);
   border-color: var(--ink);
   color: var(--polaroid);
 }
 
-.pool__page.is-current:hover {
+.pager__page.is-current:hover {
   background: var(--ink);
   color: var(--polaroid);
 }
 
-.pool__gap {
+.pager__gap {
   padding: 0 0.2rem;
   color: var(--ink-soft);
   user-select: none;

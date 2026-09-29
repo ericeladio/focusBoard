@@ -192,19 +192,24 @@ avance" que la tarjeta.
 Hover: sube 2px con la misma sombra, a media suavidad. Orden: los más
 recientes primero (`createdAt`).
 
-**Paginación del pool** — la lista sale de 10 en 10. Bajo las filas,
-`pool__pager` pinta el rango (`Mostrando 11–20 de 47`) y los controles:
-`‹ Anterior`, los números (la actual en tinta sólida; pasadas 7 páginas se
-encogen los huecos con `…` y siguen cabiendo extremos y vecinas) y
-`Siguiente ›`, con los extremos deshabilitados. Cambiar el filtro vuelve a la
-primera página; un borrado que acorta la lista recorta la página pedida (nunca
+**Paginación** — pool y cumplidos comparten el componente `Pager` (clases
+`pager*`): la lista sale de 10 en 10 y, bajo las filas, pinta el rango
+(`Mostrando 11–20 de 47`) y los controles: `‹ Anterior`, los números (la
+actual en tinta sólida; pasadas 7 páginas se encogen los huecos con `…` y
+siguen cabiendo extremos y vecinas) y `Siguiente ›`, con los extremos
+deshabilitados. Cambiar el filtro del pool vuelve a la primera página; un
+borrado o un `Reabrir` que acortan la lista recortan la página pedida (nunca
 acaba en una página vacía); pasar de página lleva el scroll al inicio de la
-lista. Con menos de 10 objetivos no aparece el pager: solo queda el aviso de
+lista. Con menos de 10 no aparece el pager: en el pool solo queda el aviso de
 doble clic.
 
 **Cumplidos** — página `/cumplidos`: los objetivos terminados agrupados por
-año y por mes (`Septiembre (2)`), de lo más reciente a lo más antiguo. El año
-es una etiqueta de cinta rotada en Caveat display; cada cumplido es una fila
+año y por mes (`Septiembre (2)`), de lo más reciente a lo más antiguo. La
+lista pagina como el pool (`paginaCumplidos` reagrupa la ventana de 10 por año
+y mes) y, cuando una página parte un mes, su cabecera se lee
+`Septiembre (4 de 12)`: cuántas filas hay en esta página de cuántas tiene el
+mes. El año es una etiqueta de cinta rotada en Caveat display; cada cumplido
+es una fila
 `.row` como las del pool (miniatura, tipo, nombre, `Terminado el 29 sep 2026`
 en `label` y el logro final: racha con meta, páginas o %) con acciones
 **Reabrir** (limpia solo la fecha y lo devuelve al pool, nunca al muro) y
@@ -335,7 +340,7 @@ se activa solo en `serve` y escribe en los datos reales, igual que producción.
 
 - Do: mantener rotaciones entre -5deg y 5deg; enderezar solo en hover.
 - Do: sombras con offset y blur suave; foto siempre en marco con proporción 4:5.
-- Do: tope de 7 objetivos en el muro; el pool no tiene cota: se filtra por tipo y pagina de 10 en 10.
+- Do: tope de 7 objetivos en el muro; el pool no tiene cota: se filtra por tipo, y pool y cumplidos paginan de 10 en 10.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
 - Do: la barra de avance se confirma con `Guardar` (borrador + `Deshacer`): un roce accidental no escribe el porcentaje.
 - Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos). En pantalla solo caben 3: la tarjeta y la modal enseñan las 3 primeras pendientes y, al completar una, la ventana pasa a las que faltan.

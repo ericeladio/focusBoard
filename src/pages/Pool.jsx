@@ -5,8 +5,9 @@ import GoalRow from '../components/GoalRow.jsx'
 import GoalForm from '../components/GoalForm.jsx'
 import GoalTypeForm from '../components/GoalTypeForm.jsx'
 import SyncBadge from '../components/SyncBadge.jsx'
+import Pager from '../components/Pager.jsx'
 import { MAX_FOCUS } from '../lib/schemas.js'
-import { POR_PAGINA, paginasVisibles } from '../lib/pager.js'
+import { POR_PAGINA } from '../lib/pager.js'
 import '../VisionBoard.css'
 import '../components/Goals.css'
 
@@ -128,55 +129,15 @@ function Pool() {
             </ul>
             <p className="pool__hint">Doble clic en una fila para editarla.</p>
 
-            {totalPaginas > 1 && (
-              <nav className="pool__pager" aria-label="Páginas del pool">
-                <p className="pool__pager__count" aria-live="polite">
-                  Mostrando {desde + 1}–{desde + visibles.length} de {shown.length}
-                </p>
-                <div className="pool__pager__nav">
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={paginaActual === 1}
-                    onClick={() => irA(paginaActual - 1)}
-                  >
-                    ‹ Anterior
-                  </button>
-
-                  <ul className="pool__pages">
-                    {paginasVisibles(paginaActual, totalPaginas).map((item, i) =>
-                      typeof item === 'number' ? (
-                        <li key={item}>
-                          <button
-                            type="button"
-                            className={
-                              item === paginaActual ? 'pool__page is-current' : 'pool__page'
-                            }
-                            aria-current={item === paginaActual ? 'page' : undefined}
-                            onClick={() => irA(item)}
-                          >
-                            {item}
-                          </button>
-                        </li>
-                      ) : (
-                        <li key={`hueco-${i}`} className="pool__gap" aria-hidden="true">
-                          …
-                        </li>
-                      ),
-                    )}
-                  </ul>
-
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={paginaActual === totalPaginas}
-                    onClick={() => irA(paginaActual + 1)}
-                  >
-                    Siguiente ›
-                  </button>
-                </div>
-              </nav>
-            )}
+            <Pager
+              desde={desde}
+              mostrados={visibles.length}
+              total={shown.length}
+              totalPaginas={totalPaginas}
+              pagina={paginaActual}
+              onIrA={irA}
+              etiqueta="Páginas del pool"
+            />
           </>
         )}
       </div>

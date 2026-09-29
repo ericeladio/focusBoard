@@ -264,7 +264,7 @@ try {
   check(
     '/pool (paginado)',
     render('/pool'),
-    ['Mostrando', 'pool__pager__count', 'Pool 9', 'Siguiente ›', 'aria-current="page"'],
+    ['Mostrando', 'pager__count', 'Pool 9', 'Siguiente ›', 'aria-current="page"'],
     ['Tesis al 100'],
   )
   kv.set('fb.goals', JSON.stringify(goals))
@@ -282,8 +282,41 @@ try {
       'Reabrir',
       '100%',
     ],
-    ['Tesis al 100', 'Correr cada dia'],
+    // Con un solo cumplido no hay pager (ni rango "Mostrando…").
+    ['Tesis al 100', 'Correr cada dia', 'Mostrando'],
   )
+
+  // Más de 10 terminados → entra la paginación, igual que en el pool: la
+  // primera página no enseña todo y el mes partido se lee "10 de 12".
+  const terminados = Array.from({ length: 12 }, (_, i) => ({
+    id: `d${i}`,
+    nombre: `Terminado ${i}`,
+    tipoId: 'seed-personal',
+    imagen: '/seed-photo.png',
+    seguimiento: 'percent',
+    valor: 100,
+    marcas: [],
+    ultimoMovimiento: day(i),
+    createdAt: 700 + i,
+    enMuro: false,
+    finalizadoEn: day(i),
+  }))
+  kv.set('fb.goals', JSON.stringify(terminados))
+  check(
+    '/cumplidos (paginado)',
+    render('/cumplidos'),
+    [
+      'Mostrando',
+      'pager__count',
+      'Siguiente ›',
+      'aria-current="page"',
+      'Terminado 0',
+      // el mes que parte la página enseña "cuántas de cuántas"
+      '10 de 12',
+    ],
+    ['Terminado 11', 'Terminado 10'],
+  )
+  kv.set('fb.goals', JSON.stringify(goals))
   check(
     'form(racha)',
     renderForm(goals[1]),

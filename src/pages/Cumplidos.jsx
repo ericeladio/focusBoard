@@ -1,10 +1,17 @@
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../lib/storeContext.js'
 import { todayISO } from '../lib/dates.js'
 import SyncBadge from '../components/SyncBadge.jsx'
 import LocalChip from '../components/LocalChip.jsx'
 import SubirCuenta from '../components/SubirCuenta.jsx'
-import { etiquetaRacha, fechaCorta, groupCumplidos } from '../lib/cumplidos.js'
+import Pager from '../components/Pager.jsx'
+import {
+  etiquetaRacha,
+  fechaCorta,
+  groupCumplidos,
+  paginaCumplidos,
+} from '../lib/cumplidos.js'
 import { etiquetaDe } from '../lib/lectura.js'
 import '../VisionBoard.css'
 import '../components/Goals.css'
@@ -18,13 +25,34 @@ function logroDe(goal) {
 }
 
 // Cumplidos por año y por mes: los objetivos terminados, agrupados de lo más
-// reciente a lo más antiguo. "Reabrir" devuelve el objetivo al pool.
+// reciente a lo más antiguo, de 10 en 10 como el pool. "Reabrir" devuelve el
+// objetivo al pool.
 function Cumplidos() {
   const { goals, types, reabrirGoal, removeGoal } = useStore()
+  const [pagina, setPagina] = useState(1)
+  const listaRef = useRef(null)
 
   const anios = groupCumplidos(goals)
   const total = anios.reduce((suma, bloque) => suma + bloque.total, 0)
   const esteAnio = anios.find((bloque) => bloque.anio === Number(todayISO().slice(0, 4)))
+
+  // La ventana recortada: los bloques de esta página y el rango del pager. Un
+  // Reabrir/Borrar encorta la lista, así que la página pedida se recorta sola.
+  const { bloques, totalPaginas, pagina: paginaActual, desde, visibles } =
+    paginaCumplidos(anios, pagina)
+
+  function irA(p) {
+    setPagina(p)
+    // La lista es más alta que la pantalla: sin este salto verías a medias la
+    // página nueva desde donde estabas.
+    requestAnimationFrame(() => {
+      const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      listaRef.current?.scrollIntoView({
+        behavior: suave ? 'smooth' : 'auto',
+        block: 'start',
+      })
+    })
+  }
 
   function confirmRemove(goal) {
     if (window.confirm(`¿Borrar "${goal.nombre}"?`)) removeGoal(goal.id)
@@ -55,21 +83,27 @@ function Cumplidos() {
         </nav>
       </header>
 
-      <div className="done">
+      <div className="done" ref={listaRef}>
         {total === 0 ? (
           <p className="done__empty">
             Todavía no hay nada cumplido. Cuando termines un objetivo —al 100%
             o llegando a los días de su racha— aparecerá aquí.
           </p>
         ) : (
-          anios.map((bloque) => (
+          bloques.map((bloque) => (
             <section className="done__anio" key={bloque.anio}>
               <h2 className="done__label">{bloque.anio}</h2>
               {bloque.meses.map((grupo) => (
                 <div className="done__mes" key={grupo.key}>
                   <h3 className="done__mes-titulo">
                     {grupo.label}{' '}
-                    <span className="done__cuenta">({grupo.total})</span>
+                    {/* El mes partido por la página dice cuántas filas hay
+                        aquí y cuántas en total: "Septiembre (4 de 12)". */}
+                    <span className="done__cuenta">
+                      ({grupo.total === grupo.mostrados
+                        ? grupo.total
+                        : `${grupo.mostrados} de ${grupo.total}`})
+                    </span>
                   </h3>
                   <ul className="done__lista">
                     {grupo.goals.map((goal) => (
@@ -117,6 +151,16 @@ function Cumplidos() {
             </section>
           ))
         )}
+
+        <Pager
+          desde={desde}
+          mostrados={visibles.length}
+          total={total}
+          totalPaginas={totalPaginas}
+          pagina={paginaActual}
+          onIrA={irA}
+          etiqueta="Páginas de cumplidos"
+        />
       </div>
     </main>
   )

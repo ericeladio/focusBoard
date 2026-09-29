@@ -80,8 +80,9 @@ nav; lista de filas (miniatura, tipo, nombre, seguimiento solo lectura,
 Editar/Terminado/Poner/Borrar, con `solo aquí` + `Subir a la cuenta` cuando
 aplica) y hint de doble clic. FIRST VIEWPORT
 (`/cumplidos`): título + contador de cumplidos + tape-links y sync badge;
-años como etiqueta de cinta, meses con recuento y filas con Reabrir/Borrar (y
-`solo aquí` + `Subir a la cuenta` cuando aplica).
+años como etiqueta de cinta, meses con recuento (si la página parte un mes,
+"4 de 12") y filas con Reabrir/Borrar (y `solo aquí` + `Subir a la cuenta`
+cuando aplica), paginadas de 10 en 10 con el mismo pager que el pool.
 
 FORM: réplica del sketch.webp (pinned por brief) ampliada a app de objetivos.
 Seed key: pinned-request, sin roll.
