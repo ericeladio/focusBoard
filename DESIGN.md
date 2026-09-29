@@ -232,7 +232,11 @@ dentro de la zona segura, apple-touch 180 y `favicon.svg` equivalente a mano.
 Manifest y theme/background color salen de tokens (`wall`); SW con precache y
 fallback a `index.html` para que el muro abra sin red.
 
-**Tape-link** — navegación como etiqueta de cinta salvia en Caveat.
+**Tape-link** — navegación como etiqueta de cinta salvia en Caveat. Las tres
+cintas de la nav (Pool, Cumplidos y el sync badge) se parten en dos filas
+antes que apretarse: `.wall__nav` envuelve (`flex-wrap`) y, en pantallas de
+≤48rem, crece el aire entre ellas y las cintas se estrechan un poco, para que
+en un móvil no se queden encogidas y pegadas.
 
 **Sync badge** — la etiqueta de estado junto a la navegación en las dos rutas:
 misma cinta salvia, pero en `label` (0.78rem, tracking .14em, mayúsculas) y

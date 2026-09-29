@@ -248,9 +248,10 @@
 
 .wall__nav {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: baseline;
-  gap: 1rem;
+  gap: 0.9rem 1.1rem;
   margin-top: 1rem;
 }
 
@@ -307,6 +308,21 @@
   }
   .syncbadge:hover:not(:disabled) {
     transform: none;
+  }
+}
+
+/* En celular las tres cintas (Pool, Cumplidos y el badge) no caben en una
+   línea: sin esto se encogen y quedan pegadas unas a otras. Con el
+   envoltorio de la base, un aire mayor entre ellas y cintas algo más
+   estrechas caben holgadas (y, si no, parten en dos filas centradas). */
+@media (max-width: 48rem) {
+  .wall__nav {
+    gap: 0.9rem 1.25rem;
+  }
+
+  .tape-link {
+    padding: 0.4rem 1.15rem;
+    font-size: 1.2rem;
   }
 }
 
