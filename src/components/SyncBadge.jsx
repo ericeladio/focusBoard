@@ -16,6 +16,9 @@ function badgeLabel(sync) {
   if (sync.error === 'server_error') return 'Sin servidor'
   if (sync.pending > 0) return `${sync.pending} por subir`
   if (sync.error) return 'Reintentar'
+  if (sync.imageFailed > 0) {
+    return sync.imageFailed === 1 ? 'Foto sin subir' : `${sync.imageFailed} fotos sin subir`
+  }
   return 'Sincronizado'
 }
 
@@ -27,6 +30,11 @@ function badgeHint(sync) {
   }
   if (sync.error) return HINTS[sync.error] ?? HINTS.error
   if (sync.pending > 0) return `${sync.pending} cambios pendientes de subir`
+  if (sync.imageFailed > 0) {
+    return sync.imageFailed === 1
+      ? 'Una foto no pudo subirse al servidor. Vuelve a elegirla en su meta.'
+      : `${sync.imageFailed} fotos no pudieron subirse al servidor. Vuelve a elegirlas en sus metas.`
+  }
   return 'Todo sincronizado con el servidor'
 }
 
@@ -38,7 +46,9 @@ function SyncBadge() {
   const classes = ['syncbadge']
   if (sync.syncing) classes.push('is-busy')
   if (needsLogin) classes.push('is-locked')
-  if (!needsLogin && (!sync.online || sync.pending > 0)) classes.push('is-pending')
+  if (!needsLogin && (!sync.online || sync.pending > 0 || sync.imageFailed > 0)) {
+    classes.push('is-pending')
+  }
   if (sync.error === 'server_error') classes.push('is-error')
 
   function handleClick() {
@@ -46,7 +56,8 @@ function SyncBadge() {
       openLogin()
       return
     }
-    syncNow()
+    // Tocar el badge es la vía manual de reparación: baja todo de nuevo.
+    syncNow({ full: true })
   }
 
   return (

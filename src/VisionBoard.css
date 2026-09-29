@@ -58,6 +58,16 @@
   color: #56503f;
 }
 
+.wall__sub-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dashed currentColor;
+}
+
+.wall__sub-link:hover {
+  color: #2c2a20;
+}
+
 .wall__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));

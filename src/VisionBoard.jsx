@@ -18,6 +18,7 @@ function VisionBoard() {
   const [noteDraft, setNoteDraft] = useState('')
 
   const enMuro = goals.filter((goal) => goal.enMuro && !esHijoDe(goal.id, goals))
+  const enPool = goals.filter((goal) => !goal.enMuro && !esHijoDe(goal.id, goals))
   const titulos = goals.map((goal) => goal.nombre)
   const nota = note ?? titulos.join('\n')
 
@@ -43,9 +44,14 @@ function VisionBoard() {
       <header className="wall__head">
         <h1 className="wall__title">Mi tablero de visión</h1>
         <p className="wall__sub">
-          {enMuro.length === 0
-            ? 'Siete cosas. Nada más.'
-            : `${enMuro.length} de ${MAX_FOCUS} en el muro`}
+          {/* El muro topa en MAX_FOCUS: lo que queda vive en el pool, y
+              decirlo aquí evita que parezcan metas perdidas. */}
+          <Link to="/pool" className="wall__sub-link">
+            {enMuro.length === 0
+              ? 'Siete cosas. Nada más.'
+              : `${enMuro.length} de ${MAX_FOCUS} en el muro`}
+            {enPool.length > 0 ? ` · ${enPool.length} en el pool` : ''}
+          </Link>
         </p>
         <nav className="wall__nav">
           <Link to="/pool" className="tape-link">

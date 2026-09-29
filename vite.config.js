@@ -36,6 +36,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: 'index.html',
+        // Sin esto el SW viejo sigue mandando hasta que el usuario cierre
+        // todas las pestañas: el código nuevo tarda en llegar.
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           // Fotos del muro servidas por el proxy de R2 (claves sin extensión).
           {
