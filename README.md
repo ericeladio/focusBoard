@@ -62,6 +62,11 @@ en el proceso. Funciona igual que producción, sin Vercel CLI.
 3. `npm run db:migrate` desde tu máquina (o un job temporal) para crear tablas.
 4. Deploy. Sin sesión la app funciona en local; con passcode sincroniza.
 
+Producción: **https://myfocusboard.vercel.app** (dominio del proyecto, se
+asigna solo al último deploy de producción; el dominio viejo
+`focus-board-one-blue.vercel.app` se retiró). Para comprobarlo:
+`node scripts/verify-deploy.mjs` (acepta otra URL como argumento).
+
 ## Cómo guarda datos
 
 - **Local**: `localStorage` (metas, tipos, nota, lápidas) + IndexedDB (blobs de

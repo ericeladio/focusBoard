@@ -11,7 +11,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
-const BASE = (process.argv[2] ?? 'https://focus-board-one-blue.vercel.app').replace(/\/+$/, '')
+const BASE = (process.argv[2] ?? 'https://myfocusboard.vercel.app').replace(/\/+$/, '')
 
 if (!existsSync(path.join(ROOT, '.env.local'))) {
   console.error('Falta .env.local (copia .env.example y pega tus valores).')
