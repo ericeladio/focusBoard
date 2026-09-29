@@ -5,7 +5,7 @@ import GoalActions from './GoalActions.jsx'
 import GoalStatus from './GoalStatus.jsx'
 import GoalTrack from './GoalTrack.jsx'
 
-function GoalOptions({ open, onClose, goal }) {
+function GoalOptions({ open, onClose, goal, onEdit }) {
   const { types, goals } = useStore()
   const dialogRef = useRef(null)
 
@@ -25,6 +25,12 @@ function GoalOptions({ open, onClose, goal }) {
 
   function close() {
     dialogRef.current?.close()
+  }
+
+  // Cierra este modal y abre el form con el objetivo cargado: un solo clic.
+  function editar() {
+    close()
+    onEdit?.(goal)
   }
 
   return (
@@ -59,6 +65,11 @@ function GoalOptions({ open, onClose, goal }) {
         <GoalActions goal={goal} variant="wall" />
 
         <div className="sheet__actions">
+          {onEdit && (
+            <button type="button" className="btn btn--ink" onClick={editar}>
+              Editar
+            </button>
+          )}
           <button type="button" className="btn" onClick={close}>
             Cerrar
           </button>

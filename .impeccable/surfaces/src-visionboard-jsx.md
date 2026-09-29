@@ -39,7 +39,11 @@ pinta 0 sola. La nota rayada "TODO" es la única nota decorativa: su lista
 es editable con doble clic y se persiste en localStorage (`fb.note`), acotada a
 8 líneas con `overflow-wrap` para que el texto no desborde la hoja. Doble clic en
 una fila del pool abre el form con los datos
-cargados; orden por `createdAt` descendente. Los % que llevan 3+ días sin
+cargados; orden por `createdAt` descendente. En el muro, la modal que abre el
+doble clic (o el segundo toque) lleva `Editar`: un clic cierra la modal y abre
+el form con ese objetivo. La barra de avance (% y páginas) mueve un borrador
+que solo escribe el botón `Guardar` de al lado (con `Deshacer` al lado), así
+que un roce accidental no carga el progreso. Los % que llevan 3+ días sin
 subir (con valor > 0) muestran "N días sin avance" en rojo `paper-margin`, en
 muro y pool; resetea solo al subir el slider.
 

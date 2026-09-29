@@ -143,6 +143,8 @@ try {
       'Correr cada dia',
       'Terminado',
       '4 de 30 días',
+      // el modal de opciones (doble clic) lleva Editar en un clic
+      'Editar',
     ],
     ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta'],
   )

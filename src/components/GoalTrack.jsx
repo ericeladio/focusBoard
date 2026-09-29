@@ -1,10 +1,37 @@
+import { useState } from 'react'
 import { useStore } from '../lib/storeContext.js'
 import { inactiveDays, markedToday } from '../lib/dates.js'
 import { etiquetaRacha, fechaCorta, metaAlcanzada } from '../lib/cumplidos.js'
 import { etiquetaDe, totalPaginasDe } from '../lib/lectura.js'
 
+// Un avance sin guardar: la barra solo mueve un borrador, y lo escribe el
+// objetivo el botón. Así un roce accidental no carga el porcentaje.
+function AvancePendiente({ onGuardar, onDeshacer }) {
+  return (
+    <>
+      <button type="button" className="btn" onClick={onGuardar}>
+        Guardar
+      </button>
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={onDeshacer}
+        title="Vuelve al avance guardado"
+      >
+        Deshacer
+      </button>
+    </>
+  )
+}
+
 function GoalTrack({ goal }) {
   const { setPercent, setPaginas, markToday, unmarkToday } = useStore()
+
+  // El borrador solo se inicia con el valor guardado: si el objetivo cambia
+  // por fuera (sync, cambio de modo) sigue mandando lo guardado y el par
+  // "Guardar/Deshacer" deja volver al valor real.
+  const guardado = Number(goal.valor) || 0
+  const [borrador, setBorrador] = useState(guardado)
 
   const isMarked = markedToday(goal.marcas)
 
@@ -22,6 +49,8 @@ function GoalTrack({ goal }) {
   if (goal.seguimiento === 'paginas') {
     // El tope es el total del libro, no un 100: el avance lo pinta el front.
     const total = totalPaginasDe(goal)
+    const avance = Math.max(0, Math.min(borrador, total))
+    const previo = Math.max(0, Math.min(guardado, total))
     return (
       <div className="goal__track">
         <input
@@ -29,11 +58,17 @@ function GoalTrack({ goal }) {
           min="0"
           max={total}
           step="1"
-          value={Math.min(Number(goal.valor) || 0, total)}
-          onChange={(event) => setPaginas(goal.id, event.target.value)}
+          value={avance}
+          onChange={(event) => setBorrador(Number(event.target.value))}
           aria-label={`Páginas leídas de ${goal.nombre}`}
         />
-        <span className="goal__value">{etiquetaDe(goal)}</span>
+        <span className="goal__value">{etiquetaDe(goal, avance)}</span>
+        {avance !== previo && (
+          <AvancePendiente
+            onGuardar={() => setPaginas(goal.id, avance)}
+            onDeshacer={() => setBorrador(previo)}
+          />
+        )}
         {inactiveDays(goal) >= 3 && (
           <span className="goal__value goal__value--alert">
             {inactiveDays(goal)} días sin avance
@@ -63,6 +98,8 @@ function GoalTrack({ goal }) {
     )
   }
 
+  const avance = Math.max(0, Math.min(100, borrador))
+  const previo = Math.max(0, Math.min(100, guardado))
   return (
     <div className="goal__track">
       <input
@@ -70,11 +107,17 @@ function GoalTrack({ goal }) {
         min="0"
         max="100"
         step="5"
-        value={goal.valor}
-        onChange={(event) => setPercent(goal.id, event.target.value)}
+        value={avance}
+        onChange={(event) => setBorrador(Number(event.target.value))}
         aria-label={`Avance de ${goal.nombre}`}
       />
-      <span className="goal__value">{goal.valor}%</span>
+      <span className="goal__value">{etiquetaDe(goal, avance)}</span>
+      {avance !== previo && (
+        <AvancePendiente
+          onGuardar={() => setPercent(goal.id, avance)}
+          onDeshacer={() => setBorrador(previo)}
+        />
+      )}
       {inactiveDays(goal) >= 3 && (
         <span className="goal__value goal__value--alert">
           {inactiveDays(goal)} días sin avance

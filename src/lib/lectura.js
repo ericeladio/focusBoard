@@ -44,9 +44,12 @@ export function pctDe(goal) {
 }
 
 // Etiqueta corta del avance: "468 de 1181" o "40%".
-export function etiquetaDe(goal) {
+// `avance` es opcional: la barra lo usa para pintar su borrador antes de
+// guardarlo, sin mentir sobre lo que hay en el objetivo.
+export function etiquetaDe(goal, avance) {
+  const valor = Number(avance ?? goal?.valor) || 0
   if (goal?.seguimiento === 'paginas') {
-    return `${Number(goal.valor) || 0} de ${totalPaginasDe(goal)}`
+    return `${valor} de ${totalPaginasDe(goal)}`
   }
-  return `${Number(goal.valor) || 0}%`
+  return `${valor}%`
 }

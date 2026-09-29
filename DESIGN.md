@@ -147,6 +147,9 @@ hoja.
 **Goal card** — polaroid con foto 4:5, etiqueta de tipo en `label`, nombre en
 `hand-small` y su seguimiento: slider con lectura en `handwriting` o el toggle
 `Hoy` / `Deshacer hoy` (`btn--ink`, estado `is-active`) + contador de racha.
+El slider (porcentaje y páginas) **no escribe nada al moverse**: mueve un
+borrador y solo lo guarda el botón `Guardar` que aparece al lado, con su
+`Deshacer` (vuelve al valor guardado) — un roce accidental no carga el avance.
 La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
 pinta 0 sola. Puede llevar **meta de días** (`metaDias`, 1..3650) o ser
 indefinida: se lee `4 de 30 días` (o `4 días` sin meta) y, al llegar, el
@@ -164,7 +167,9 @@ cuando el slider sube). Acciones fantasma debajo de una línea fina. En móvil
 (≤48rem) solo se ven foto y nombre: el doble clic (o el segundo toque, con
 `touch-action: manipulation` en la tarjeta) abre la modal `sheet` con tipo,
 seguimiento y acciones — mismo contenido que la tarjeta en escritorio, vía
-`GoalControls`. La foto adopta su proporción natural para que el mosaico no
+`GoalControls` — y su botón **Editar**, que cierra la modal y abre el form con
+el objetivo cargado (un clic, sin pasar por el pool). La foto adopta su
+proporción natural para que el mosaico no
 tenga huecos. Las partes de una compuesta no aparecen en el muro (se editan en
 el pool y dentro de la modal), y su chip-cinta es lo que se ve en celular.
 
@@ -324,6 +329,7 @@ se activa solo en `serve` y escribe en los datos reales, igual que producción.
 - Do: sombras con offset y blur suave; foto siempre en marco con proporción 4:5.
 - Do: tope de 7 objetivos en el muro; el pool no tiene cota: se filtra por tipo y pagina de 10 en 10.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
+- Do: la barra de avance se confirma con `Guardar` (borrador + `Deshacer`): un roce accidental no escribe el porcentaje.
 - Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos).
 - Do: `Terminado` siempre disponible en rachas; la meta de días solo resalta el botón, nunca archiva sola.
 - Don't: gradiente en texto, glassmorphism decorativo, tarjetas redondeadas.

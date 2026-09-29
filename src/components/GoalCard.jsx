@@ -13,7 +13,7 @@ function ratioOf(img) {
   return String(Math.min(1.6, Math.max(0.62, w / h)))
 }
 
-function GoalCard({ goal, index = 0, variant = 'wall' }) {
+function GoalCard({ goal, index = 0, variant = 'wall', onEdit }) {
   const { types } = useStore()
 
   const [optionsOpen, setOptionsOpen] = useState(false)
@@ -86,6 +86,7 @@ function GoalCard({ goal, index = 0, variant = 'wall' }) {
       <GoalOptions
         open={optionsOpen}
         goal={goal}
+        onEdit={onEdit}
         onClose={() => setOptionsOpen(false)}
       />
     </>

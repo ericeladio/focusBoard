@@ -39,4 +39,11 @@ assert.equal(totalPaginasDe({ seguimiento: 'paginas', totalPaginas: 1181 }), 118
 assert.equal(pctDe({ seguimiento: 'paginas', valor: 40 }), 20, '40 de 200 → 20%')
 assert.equal(etiquetaDe({ seguimiento: 'paginas', valor: 40 }), '40 de 200')
 
+// --- el borrador de la barra pinta su avance sin tocar el objetivo ---
+assert.equal(etiquetaDe({ seguimiento: 'percent', valor: 40 }, 55), '55%', 'borrador del slider')
+assert.equal(etiquetaDe(libro, 500), '500 de 1181', 'borrador por páginas')
+assert.equal(etiquetaDe({ seguimiento: 'percent', valor: 40 }, undefined), '40%', 'sin borrador → el guardado')
+assert.equal(etiquetaDe({ seguimiento: 'percent', valor: 40 }, null), '40%', 'null → el guardado')
+assert.equal(etiquetaDe({ seguimiento: 'percent', valor: 40 }, 0), '0%', 'el 0 también se puede pintar')
+
 console.log('lectura.test: OK')
