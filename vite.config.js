@@ -13,9 +13,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Vision Board',
-        short_name: 'Vision Board',
-        description: 'Vision board: siete cosas, nada más.',
+        name: 'Focus',
+        short_name: 'Focus',
+        description: 'Focus: siete cosas, nada más.',
         lang: 'es',
         start_url: '/',
         scope: '/',

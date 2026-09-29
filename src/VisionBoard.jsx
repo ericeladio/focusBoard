@@ -42,7 +42,7 @@ function VisionBoard() {
       <div className="wall__vignette" aria-hidden="true" />
 
       <header className="wall__head">
-        <h1 className="wall__title">Mi tablero de visión</h1>
+        <h1 className="wall__title">Focus board</h1>
         <p className="wall__sub">
           {/* El muro topa en MAX_FOCUS: lo que queda vive en el pool, y
               decirlo aquí evita que parezcan metas perdidas. */}
