@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useStore } from '../lib/storeContext.js'
-import { estadoCompuesta } from '../lib/composite.js'
+import { estadoCompuesta, partesVisibles } from '../lib/composite.js'
 import GoalActions from './GoalActions.jsx'
 import GoalStatus from './GoalStatus.jsx'
 import GoalTrack from './GoalTrack.jsx'
@@ -47,15 +47,14 @@ function GoalOptions({ open, onClose, goal, onEdit }) {
         {goal.seguimiento === 'compuesta' ? (
           <>
             <GoalStatus goal={goal} />
+            {/* Igual que los chips: 3 de golpe, las que faltan primero. */}
             <ul className="parts">
-              {partes.map((parte) =>
-                parte ? (
-                  <li className="parts__item" key={parte.id}>
-                    <span className="parts__name">{parte.nombre}</span>
-                    <GoalTrack goal={parte} />
-                  </li>
-                ) : null,
-              )}
+              {partesVisibles(partes).map((parte) => (
+                <li className="parts__item" key={parte.id}>
+                  <span className="parts__name">{parte.nombre}</span>
+                  <GoalTrack goal={parte} />
+                </li>
+              ))}
             </ul>
           </>
         ) : (

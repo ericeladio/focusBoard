@@ -161,7 +161,14 @@ botón se enciende (`btn--ink`) al llegar, pero nunca archiva solo: el gesto
 siempre es del usuario. Los objetivos **compuestos** no muestran slider ni `Hoy`: una
 línea de estado `Listo · N días` (tinta), `Falta M de K · N días` (rojo
 `paper-margin`) o `Sin partes` sobre chips-cinta de sus partes — fondo `tape`, invertidos a
-tinta cuando esa parte avanza hoy. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
+tinta cuando esa parte avanza hoy. **En pantalla solo caben 3 partes**: la
+tarjeta (chips) y la modal (lista `parts`) pintan `partesVisibles()` de
+`composite.js` — ventana `PARTES_VISIBLES = 3`, primero las que faltan y detrás
+las hechas (`parteHecha` es archivada, 100% o al tope de páginas). Al completar
+una, la ventana avanza a las siguientes que falten y, si no queda ninguna
+pendiente, se ven las hechas (la lista nunca se vacía); el recuento `Falta M de
+K` sigue hablando de todas las partes y el `pick` de checkbox del form sigue
+listándolas todas. En objetivos en porcentaje, si el valor es > 0 y lleva 3+
 días sin subir aparece en rojo `paper-margin` "N días sin avance" (reset solo
 cuando el slider sube). Acciones fantasma debajo de una línea fina. En móvil
 (≤48rem) solo se ven foto y nombre: el doble clic (o el segundo toque, con
@@ -171,7 +178,8 @@ seguimiento y acciones — mismo contenido que la tarjeta en escritorio, vía
 el objetivo cargado (un clic, sin pasar por el pool). La foto adopta su
 proporción natural para que el mosaico no
 tenga huecos. Las partes de una compuesta no aparecen en el muro (se editan en
-el pool y dentro de la modal), y su chip-cinta es lo que se ve en celular.
+el pool y dentro de la modal, donde la lista enseña esas mismas 3), y su
+chip-cinta es lo que se ve en celular.
 
 **Goal row** — fila de papel del pool: miniatura 4:5, tipo y nombre, seguimiento
 solo lectura (barra fina de tinta + `%`, días con su meta, o `Listo hoy · N días`
@@ -330,7 +338,7 @@ se activa solo en `serve` y escribe en los datos reales, igual que producción.
 - Do: tope de 7 objetivos en el muro; el pool no tiene cota: se filtra por tipo y pagina de 10 en 10.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
 - Do: la barra de avance se confirma con `Guardar` (borrador + `Deshacer`): un roce accidental no escribe el porcentaje.
-- Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos).
+- Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos). En pantalla solo caben 3: la tarjeta y la modal enseñan las 3 primeras pendientes y, al completar una, la ventana pasa a las que faltan.
 - Do: `Terminado` siempre disponible en rachas; la meta de días solo resalta el botón, nunca archiva sola.
 - Don't: gradiente en texto, glassmorphism decorativo, tarjetas redondeadas.
 - Don't: más de 7 en foco; con el muro lleno, el objetivo nuevo va al pool.

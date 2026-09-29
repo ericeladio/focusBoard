@@ -10,6 +10,9 @@ import {
   compuestoId,
   ensureCompuestoType,
   esCompuestoType,
+  partesVisibles,
+  parteHecha,
+  PARTES_VISIBLES,
 } from '../src/lib/composite.js'
 
 const HOY = '2026-09-28'
@@ -207,5 +210,49 @@ assert.deepEqual(ensureCompuestoType([{ id: 'x', nombre: 'Personal' }])[1], {
 assert.equal(esCompuestoType({ id: 'x', nombre: 'Compuesto' }), true)
 assert.equal(esCompuestoType({ id: 'x', nombre: 'compuesto' }), true, 'sin importar mayúsculas')
 assert.equal(esCompuestoType({ id: 'x', nombre: 'Personal' }), false)
+
+// --- solo 3 partes en pantalla, las que faltan primero ---
+{
+  const p = (id, valor, extra = {}) => ({
+    id, nombre: id, seguimiento: 'percent', valor,
+    marcas: [], componentes: [], ...extra,
+  })
+  const ids = (partes) => partesVisibles(partes).map((parte) => parte.id)
+
+  assert.equal(PARTES_VISIBLES, 3, 'la ventana mide 3')
+
+  assert.deepEqual(ids([p('a', 0), p('b', 0), p('c', 0)]), ['a', 'b', 'c'],
+    '3 o menos → se ven todas')
+  assert.deepEqual(ids([p('a', 0), p('b', 0), p('c', 0), p('d', 0), p('e', 0)]),
+    ['a', 'b', 'c'], '5 → solo las 3 primeras')
+  assert.deepEqual(
+    ids([p('a', 100), p('b', 0), p('c', 0), p('d', 0), p('e', 0)]),
+    ['b', 'c', 'd'],
+    'la hecha se aparta y entra la siguiente que faltaba',
+  )
+  assert.deepEqual(
+    ids([p('a', 0, { finalizadoEn: HOY }), p('b', 0), p('c', 0), p('d', 0), p('e', 0)]),
+    ['b', 'c', 'd'],
+    'la archivada también se aparta',
+  )
+  assert.deepEqual(
+    ids([p('a', 0), null, p('b', 0)]),
+    ['a', 'b'],
+    'parte borrada (null) fuera de la ventana',
+  )
+  assert.deepEqual(
+    ids([p('a', 100), p('b', 100), p('c', 100), p('d', 100)]),
+    ['a', 'b', 'c'],
+    'sin pendientes se ven hechas: la lista nunca queda vacía',
+  )
+
+  assert.equal(parteHecha(pct(40, ANTES)), false, '40% no está hecha')
+  assert.equal(parteHecha(pct(100, ANTES)), true, '100% hecha')
+  assert.equal(parteHecha({ ...pct(40, ANTES), finalizadoEn: HOY }), true,
+    'archivada hecha')
+  assert.equal(parteHecha(pag(1181, 1181, ANTES)), true, 'al tope de páginas')
+  assert.equal(parteHecha(pag(468, 1181, ANTES)), false, 'a medias en páginas')
+  assert.equal(parteHecha(str([HOY])), false, 'una racha nunca se da por hecha')
+}
 
 console.log('composite.test: OK')

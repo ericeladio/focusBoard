@@ -91,6 +91,33 @@ export function estadoCompuesta(meta, goals, hoy = todayISO()) {
   }
 }
 
+// Cuántas partes caben en pantalla: ni el chip de la tarjeta ni la lista de
+// la modal admiten siete de golpe.
+export const PARTES_VISIBLES = 3
+
+// ¿La parte ya está hecha? Terminada (archivada) o en su tope (100%, o el
+// último página). Sirve para apartarla de la ventana: al completar una entra
+// la siguiente que falte.
+export function parteHecha(parte) {
+  if (parte.finalizadoEn) return true
+  if (parte.seguimiento === 'percent') return Number(parte.valor) >= 100
+  if (parte.seguimiento === 'paginas') {
+    return (Number(parte.valor) || 0) >= totalPaginasDe(parte)
+  }
+  return false
+}
+
+// Las primeras `limite` partes a pintar: primero las que faltan (en su orden
+// original) y después las hechas. Así una compuesta de 7 enseña sus 3
+// primeras; cuando una se hace, la ventana pasa a las 3 que siguen faltando,
+// y si no queda ninguna pendiente se ven las hechas (la lista nunca se vacía).
+export function partesVisibles(partes, limite = PARTES_VISIBLES) {
+  const conDatos = partes.filter(Boolean)
+  const faltan = conDatos.filter((parte) => !parteHecha(parte))
+  const hechas = conDatos.filter(parteHecha)
+  return [...faltan, ...hechas].slice(0, limite)
+}
+
 // Auto-marcado: la compuesta se marca si todas sus partes avanzan hoy,
 // y pierde la marca de hoy en cuanto alguna deja de avanzar.
 // Devuelve el mismo array si nada cambia (evita bucles de render).

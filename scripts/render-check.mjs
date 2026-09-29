@@ -59,6 +59,36 @@ const goals = [
     enMuro: false,
     finalizadoEn: '2026-09-15',
   },
+  // compuesta con 5 partes (la primera ya al 100): en pantalla solo caben 3
+  {
+    id: 'g4',
+    nombre: 'Compuesta larga',
+    tipoId: 'seed-personal',
+    imagen: '/seed-photo.png',
+    seguimiento: 'compuesta',
+    valor: 0,
+    marcas: [],
+    componentes: ['w1', 'w2', 'w3', 'w4', 'w5'],
+    ultimoMovimiento: day(0),
+    createdAt: 13,
+    enMuro: true,
+    finalizadoEn: null,
+    metaDias: null,
+  },
+  ...['uno', 'dos', 'tres', 'cuatro', 'cinco'].map((nombre, i) => ({
+    id: `w${i + 1}`,
+    nombre: `Parte ${nombre}`,
+    tipoId: 'seed-personal',
+    imagen: '/seed-photo.png',
+    seguimiento: 'percent',
+    valor: i === 0 ? 100 : 5,
+    marcas: [],
+    ultimoMovimiento: day(i),
+    createdAt: 20 + i,
+    enMuro: false,
+    finalizadoEn: null,
+    metaDias: null,
+  })),
 ]
 
 // Globals mínimos para que store/sync arranquen fuera del navegador.
@@ -151,7 +181,8 @@ try {
   // Con hueco el botón se enseña; lleno desaparece (sin estado "Muro lleno").
   check('/  (con hueco)', render('/'), ['Añadir objetivo'], ['Muro lleno'])
 
-  const extras = Array.from({ length: 5 }, (_, i) => ({
+  // Ojo: el muro está a 3 con la compuesta, así que aquí entran 4 extras.
+  const extras = Array.from({ length: 4 }, (_, i) => ({
     id: `x${i}`,
     nombre: `Extra ${i}`,
     tipoId: 'seed-personal',
@@ -192,6 +223,18 @@ try {
   )
   kv.set('fb.goals', JSON.stringify(goals))
   check('/  (sin local)', render('/'), [], ['solo aquí'])
+
+  // Compuesta con 5 partes: solo caben 3, y al estar la primera hecha (100%)
+  // la ventana avanza a las que faltan. Nota propia para que los nombres de
+  // las partes solo aparezcan en la tarjeta y en el modal.
+  kv.set('fb.note', JSON.stringify('nota fija para el render'))
+  check(
+    '/  (compuesta con 5)',
+    render('/'),
+    ['Compuesta larga', 'Parte dos', 'Parte tres', 'Parte cuatro'],
+    ['Parte uno', 'Parte cinco'],
+  )
+  kv.delete('fb.note')
 
   check(
     '/pool',

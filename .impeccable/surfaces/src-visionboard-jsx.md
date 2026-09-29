@@ -30,6 +30,9 @@ zod. La compuesta se auto-marca en el muro cuando todas sus partes tienen avance
 hoy (percent: subido hoy o en 100%; racha: marcada hoy) y desmarca sola si alguna
 deja de avanzar; sus partes no ocupan cupo de los 7 pero siguen en el pool, con
 la etiqueta "dentro de: <compuesta>", y se editan dentro de su modal. En
+pantalla solo caben 3 de sus partes: la tarjeta (chips) y la modal enseñan
+las 3 primeras pendientes y, al completar una, la ventana pasa a las que
+siguen faltando (el recuento "Falta M de K" sigue hablando de todas). En
 Seguimiento no hay ficha "Compuesta": solo porcentaje y racha, y el tipo
 `Compuesto` viaja siempre en el desplegable (se crea al vuelo si no existía);
 elegido él, Seguimiento desaparece y solo se ven sus partes (se sale cambiando

@@ -1,6 +1,6 @@
 import { useStore } from '../lib/storeContext.js'
 import { markedToday, streakOf } from '../lib/dates.js'
-import { esAvanceHoy, estadoCompuesta } from '../lib/composite.js'
+import { esAvanceHoy, estadoCompuesta, partesVisibles } from '../lib/composite.js'
 
 function GoalStatus({ goal }) {
   const { goals } = useStore()
@@ -27,16 +27,16 @@ function GoalStatus({ goal }) {
       </div>
 
       <div className="goal__chips">
-        {partes.map((parte) =>
-          parte ? (
-            <span
-              key={parte.id}
-              className={esAvanceHoy(parte) ? 'goal__chip is-done' : 'goal__chip'}
-            >
-              {parte.nombre}
-            </span>
-          ) : null,
-        )}
+        {/* Solo las 3 primeras (las que faltan primero): el recuento de
+            arriba sigue hablando de todas. */}
+        {partesVisibles(partes).map((parte) => (
+          <span
+            key={parte.id}
+            className={esAvanceHoy(parte) ? 'goal__chip is-done' : 'goal__chip'}
+          >
+            {parte.nombre}
+          </span>
+        ))}
       </div>
     </>
   )
