@@ -195,8 +195,34 @@ try {
     '/pool',
     render('/pool'),
     ['Pool de objetivos', 'Tesis al 100', 'Correr cada dia', 'Terminado'],
-    ['Archivo ocultoXYZ'],
+    // Con menos de 10 objetivos no hay paginación (ni rango "Mostrando…").
+    ['Archivo ocultoXYZ', 'Mostrando'],
   )
+
+  // Más de 10 en juego → entra la paginación: la primera página no enseña
+  // todo y el pager pinta el rango y el número actual.
+  const paginados = Array.from({ length: 10 }, (_, i) => ({
+    id: `p${i}`,
+    nombre: `Pool ${i}`,
+    tipoId: 'seed-personal',
+    imagen: '/seed-photo.png',
+    seguimiento: 'percent',
+    valor: 10,
+    marcas: [],
+    ultimoMovimiento: day(0),
+    createdAt: 500 + i,
+    enMuro: false,
+    finalizadoEn: null,
+    metaDias: null,
+  }))
+  kv.set('fb.goals', JSON.stringify([...goals, ...paginados]))
+  check(
+    '/pool (paginado)',
+    render('/pool'),
+    ['Mostrando', 'pool__pager__count', 'Pool 9', 'Siguiente ›', 'aria-current="page"'],
+    ['Tesis al 100'],
+  )
+  kv.set('fb.goals', JSON.stringify(goals))
   check(
     '/cumplidos',
     render('/cumplidos'),

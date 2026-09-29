@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../lib/storeContext.js'
 import GoalRow from '../components/GoalRow.jsx'
@@ -6,6 +6,7 @@ import GoalForm from '../components/GoalForm.jsx'
 import GoalTypeForm from '../components/GoalTypeForm.jsx'
 import SyncBadge from '../components/SyncBadge.jsx'
 import { MAX_FOCUS } from '../lib/schemas.js'
+import { POR_PAGINA, paginasVisibles } from '../lib/pager.js'
 import '../VisionBoard.css'
 import '../components/Goals.css'
 
@@ -15,6 +16,8 @@ function Pool() {
   const [addOpen, setAddOpen] = useState(false)
   const [typesOpen, setTypesOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [pagina, setPagina] = useState(1)
+  const listaRef = useRef(null)
 
   const shown = goals
     .filter(
@@ -22,6 +25,31 @@ function Pool() {
     )
     .sort((a, b) => b.createdAt - a.createdAt)
   const enMuro = goals.filter((goal) => goal.enMuro).length
+
+  // El filtro y los borrados encogen la lista: la página pedida se recorta al
+  // rango real para no acabar en una página vacía.
+  const totalPaginas = Math.max(1, Math.ceil(shown.length / POR_PAGINA))
+  const paginaActual = Math.min(pagina, totalPaginas)
+  const desde = (paginaActual - 1) * POR_PAGINA
+  const visibles = shown.slice(desde, desde + POR_PAGINA)
+
+  function cambiarFiltro(event) {
+    setFilter(event.target.value)
+    setPagina(1)
+  }
+
+  function irA(p) {
+    setPagina(p)
+    // La lista es más alta que la pantalla: sin este salto verías a medias la
+    // página nueva desde donde estabas.
+    requestAnimationFrame(() => {
+      const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      listaRef.current?.scrollIntoView({
+        behavior: suave ? 'smooth' : 'auto',
+        block: 'start',
+      })
+    })
+  }
 
   function openNew() {
     setEditing(null)
@@ -64,7 +92,7 @@ function Pool() {
           <select
             className="pool__filter"
             value={filter}
-            onChange={(event) => setFilter(event.target.value)}
+            onChange={cambiarFiltro}
             aria-label="Filtrar por tipo"
           >
             <option value="all">Todos los tipos</option>
@@ -93,12 +121,62 @@ function Pool() {
           </p>
         ) : (
           <>
-            <ul className="pool__list">
-              {shown.map((goal) => (
+            <ul className="pool__list" ref={listaRef}>
+              {visibles.map((goal) => (
                 <GoalRow key={goal.id} goal={goal} onEdit={openEdit} />
               ))}
             </ul>
             <p className="pool__hint">Doble clic en una fila para editarla.</p>
+
+            {totalPaginas > 1 && (
+              <nav className="pool__pager" aria-label="Páginas del pool">
+                <p className="pool__pager__count" aria-live="polite">
+                  Mostrando {desde + 1}–{desde + visibles.length} de {shown.length}
+                </p>
+                <div className="pool__pager__nav">
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={paginaActual === 1}
+                    onClick={() => irA(paginaActual - 1)}
+                  >
+                    ‹ Anterior
+                  </button>
+
+                  <ul className="pool__pages">
+                    {paginasVisibles(paginaActual, totalPaginas).map((item, i) =>
+                      typeof item === 'number' ? (
+                        <li key={item}>
+                          <button
+                            type="button"
+                            className={
+                              item === paginaActual ? 'pool__page is-current' : 'pool__page'
+                            }
+                            aria-current={item === paginaActual ? 'page' : undefined}
+                            onClick={() => irA(item)}
+                          >
+                            {item}
+                          </button>
+                        </li>
+                      ) : (
+                        <li key={`hueco-${i}`} className="pool__gap" aria-hidden="true">
+                          …
+                        </li>
+                      ),
+                    )}
+                  </ul>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={paginaActual === totalPaginas}
+                    onClick={() => irA(paginaActual + 1)}
+                  >
+                    Siguiente ›
+                  </button>
+                </div>
+              </nav>
+            )}
           </>
         )}
       </div>
