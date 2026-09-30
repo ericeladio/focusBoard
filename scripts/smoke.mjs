@@ -355,7 +355,9 @@ assert.equal(libroViejo.valor, 469, 'el resto del put sí se aplicó')
 paso(14, 'put sin totalPaginas → total 1181 intacto ✓')
 
 // --- cumplimientos: meta de días, archivar y reabrir ---
-const HOY_ISO = new Date().toISOString().slice(0, 10)
+// ISO local: la app escribe fechas con `todayISO()` (no UTC).
+const _hoy = new Date()
+const HOY_ISO = `${_hoy.getFullYear()}-${String(_hoy.getMonth() + 1).padStart(2, '0')}-${String(_hoy.getDate()).padStart(2, '0')}`
 const rachaData = (extra) => ({
   id: 'smoke-racha',
   nombre: 'Racha de prueba',

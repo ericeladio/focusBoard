@@ -9,10 +9,14 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const hoy = new Date()
+// ISO local (como hace la app con `todayISO`): toISOString() es UTC y por la
+// tarde ya es "mañana", lo que rompía la racha del render-check.
 const day = (n) => {
   const d = new Date(hoy)
   d.setDate(d.getDate() - n)
-  return d.toISOString().slice(0, 10)
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${mm}-${dd}`
 }
 
 const goals = [
