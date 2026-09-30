@@ -297,12 +297,15 @@ porcentaje con la alerta de "4 días sin avance", racha con meta ("4 de 30
 días") y lectura por páginas —, una compuesta con sus tres partes (una
 hecha, una con avance hoy, una pendiente; sin cupo en el muro) y un cumplido
 archivado para que `/cumplidos` también enseñe algo. Con los mismos
-visitantes, bajo el muro aparece la sección `tour` (hoja de papel, `tour*` en
-`VisionBoard.css`): la intro avisa de que los ejemplos son tuyos y puedes
-borrarlos, y seis fichas resumen todas las funcionalidades (muro con
-arrastre, seguimientos, compuestas con buscador, pool, cumplidos y nota +
-passcode). En cuanto alguien sincroniza con una cuenta se va la sección; los
-ejemplos siguen, marcados `solo aquí`, hasta que los borres o los subas.
+visitantes se enseña el **tutorial guiado** (`components/Tutorial.jsx` +
+`lib/tutorial.js`, `tut*` en `VisionBoard.css`): seis pasos sobre la
+interfaz real, sin cambiar de ruta — el muro, Añadir objetivo, las cartas,
+Pool y cumplidos, la nota y el cierre con el aviso de que los ejemplos son
+tuyos —, cada uno resaltando su elemento con una ventana de luz y una
+tarjeta al lado con Siguiente, Atrás y **Saltar** (también Esc y flechas).
+Termina o salta → la clave `fb.tutorial` queda puesta y ya no vuelve a
+aparecer; en cuanto alguien sincroniza con una cuenta se va. Los ejemplos
+siguen, marcados `solo aquí`, hasta que los borres o los subas.
 
 La **cuenta de prueba** (una segunda pass, la de negocios) es la excepción:
 trae sus propios ejemplos sembrados en el servidor (`scripts/seed-demo.mjs`,
@@ -310,8 +313,8 @@ misma parrilla pero de negocio: facturación, clientes, llamadas en racha,
 lectura, lanzamiento compuesto, algo en el pool, un cumplido y la nota TODO),
 con su propio tipo `Compuesto` (los `id` de `types` son clave global, el de
 serie es de la principal) y sin foto, así que sale con la genérica. Al entrar
-con esa pass se borran los ejemplos del visitante y, con ellos, la sección
-`tour`: ya no es un visitante.
+con esa pass se borran los ejemplos del visitante y, con ellos, el tutorial
+guiado: ya no es un visitante.
 
 **Buttons** — `btn` papel con borde tinta, hover `sticky`; `btn--ink` relleno
 tinta; `btn--ghost` subrayado discreto.

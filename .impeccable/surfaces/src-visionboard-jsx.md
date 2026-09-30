@@ -88,13 +88,14 @@ en storage: al recargar vuelve el orden por defecto. Si este navegador nunca
 ha sincronizado (`!hasSynced()`, los mismos que reciben los ejemplos de
 `lib/seeds.js`: Personal y Lectura, porcentaje con alerta de días sin avance,
 racha "4 de 30 días", lectura por páginas, compuesta con tres partes y un
-cumplido archivado), debajo del muro aparece la sección `tour` "Todo lo que
-puedes hacer": intro con el aviso de que los ejemplos son tuyos y seis fichas
-con todas las funcionalidades; se va en cuanto sincroniza con una cuenta (los
-ejemplos quedan como `solo aquí`). Excepción: la cuenta de prueba (una segunda
-pass, la de negocios) baja desde el servidor sus propios ejemplos de negocio y,
-al entrar con ella, se borran los del visitante (solo los ids de
-`lib/seeds.js`) — así que ni sección ni `solo aquí`. FIRST VIEWPORT (`/pool`): título + select de
+cumplido archivado), se abre el **tutorial guiado** (`Tutorial.jsx`, pasos en
+`lib/tutorial.js`): resalta cada elemento con una ventana de luz y una tarjeta
+con Siguiente/Atrás/**Saltar** (seis pasos sobre la interfaz real, sin cambiar
+de ruta); termina o salta → clave `fb.tutorial`, y se va en cuanto sincroniza
+con una cuenta (los ejemplos quedan como `solo aquí`). Excepción: la cuenta de
+prueba (una segunda pass, la de negocios) baja desde el servidor sus propios
+ejemplos de negocio y, al entrar con ella, se borran los del visitante (solo
+los ids de `lib/seeds.js`) — así que ni tutorial ni `solo aquí`. FIRST VIEWPORT (`/pool`): título + select de
 tipo + barra Tipos/Nuevo objetivo + los mismos tape-links y sync badge en la
 nav; lista de filas (miniatura, tipo, nombre, seguimiento solo lectura,
 Editar/Terminado/Poner/Borrar, con `solo aquí` + `Subir a la cuenta` cuando

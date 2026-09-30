@@ -306,56 +306,88 @@
 
 }
 
-/* --- sección de funcionalidades: solo para quien nunca ha entrado con
-   passcode (los mismos visitantes a los que se cargan los ejemplos) --- */
+/* --- tutorial guiado: solo para quien nunca ha entrado con passcode
+   (los mismos visitantes a los que se cargan los ejemplos) --- */
 
-.tour {
-  position: relative;
-  width: min(100%, 70rem);
-  padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.1rem, 3vw, 1.75rem)
-    clamp(1.5rem, 3vw, 2rem);
+.tut__tapa {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: transparent;
+}
+
+/* Sin diana (la pantalla de cierre, o un elemento que no está): apagamos
+   la escena entera por el velo. */
+.tut__tapa--lleno {
+  background: rgba(28, 26, 22, 0.55);
+}
+
+/* El agujero de luz: el anillo marca el elemento y su sombra gigante
+   oscurece todo lo demás por encima del velo. */
+.tut__resalte {
+  position: fixed;
+  z-index: 61;
+  pointer-events: none;
+  border: 3px solid #f7f4ea;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 9999px rgba(28, 26, 22, 0.55),
+    0 10px 24px rgba(0, 0, 0, 0.3);
+  transition:
+    top 0.25s ease,
+    left 0.25s ease,
+    width 0.25s ease,
+    height 0.25s ease;
+}
+
+.tut__tarjeta {
+  position: fixed;
+  z-index: 62;
+  left: 50%;
+  bottom: 7vh;
+  transform: translateX(-50%);
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(70vh, 30rem);
+  overflow: auto;
+  padding: 1.1rem 1.2rem 1.2rem;
   background: #fbf9f3;
+  color: #2f2a24;
   border: 1px solid rgba(86, 80, 63, 0.35);
   box-shadow:
-    0 14px 30px -12px rgba(74, 68, 50, 0.45),
-    0 3px 8px rgba(74, 68, 50, 0.14);
+    0 18px 34px -14px rgba(74, 68, 50, 0.5),
+    0 4px 10px rgba(74, 68, 50, 0.18);
 }
 
-.tour__titulo {
+.tut__paso {
+  margin: 0 0 0.3rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a8168;
+}
+
+.tut__titulo {
   margin: 0 0 0.35rem;
   font-family: var(--hand);
-  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  font-size: clamp(1.5rem, 4vw, 1.9rem);
   font-weight: 700;
-  color: #2f2a24;
 }
 
-.tour__intro {
-  margin: 0 0 1.1rem;
-  max-width: 46rem;
-  font-size: 0.98rem;
-  color: #56503f;
-}
-
-.tour__lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 1rem 1.4rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tour__item-titulo {
-  margin: 0 0 0.2rem;
-  font-family: var(--hand);
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #2f2a24;
-}
-
-.tour__texto {
-  margin: 0;
+.tut__texto {
+  margin: 0 0 1rem;
   font-size: 0.95rem;
   line-height: 1.5;
   color: #56503f;
+}
+
+.tut__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.tut__derecha {
+  display: flex;
+  gap: 0.5rem;
 }

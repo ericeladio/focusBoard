@@ -182,7 +182,7 @@ try {
       // el arrastre del muro se agarra por `data-goal`
       'data-goal="g1"',
     ],
-    ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta', 'Todo lo que puedes hacer'],
+    ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta', 'Saltar'],
   )
   // Con hueco el botón se enseña; lleno desaparece (sin estado "Muro lleno").
   check('/  (con hueco)', render('/'), ['Añadir objetivo'], ['Muro lleno'])
@@ -194,11 +194,11 @@ try {
     '/  (sin cuenta)',
     render('/'),
     [
-      'Todo lo que puedes hacer',
-      'bórralos cuando',
+      // el tutorial guiado está abierto (paso 1 en SSR); el resto de
+      // frases de los pasos las guarda tests/tutorial.test.mjs
+      'Saltar',
+      'Tutorial de la app',
       'reordenan arrastrándolas',
-      'paginación de 10 en 10',
-      'passcode',
     ],
   )
   kv.set('fb.synced', '1')

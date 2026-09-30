@@ -12,6 +12,7 @@ import GoalForm from './components/GoalForm.jsx'
 import GoalTypeForm from './components/GoalTypeForm.jsx'
 import LocalChip from './components/LocalChip.jsx'
 import SyncBadge from './components/SyncBadge.jsx'
+import Tutorial from './components/Tutorial.jsx'
 
 function VisionBoard() {
   const { goals, wallFull, note, setNote, noteLocal, subirNota } = useStore()
@@ -322,66 +323,11 @@ function VisionBoard() {
         )}
       </div>
 
-      {/* Para el mismo visitante al que se le cargan los ejemplos: una
-          sección con todas las funcionalidades mientras no ha entrado con
-          passcode. En cuanto sincroniza con una cuenta, se va. */}
-      {!hasSynced() && (
-        <section className="tour" aria-labelledby="tour-titulo">
-          <h2 id="tour-titulo" className="tour__titulo">
-            Todo lo que puedes hacer
-          </h2>
-          <p className="tour__intro">
-            Mientras no entras con tu passcode, el tablero viene con estos
-            objetivos de ejemplo para que veas cómo funciona: bórralos cuando
-            quieras. Esto es lo que hay dentro:
-          </p>
-          <ul className="tour__lista">
-            <li className="tour__item">
-              <h3 className="tour__item-titulo">Muro</h3>
-              <p className="tour__texto">
-                Hasta 7 focos en polaroids, con barra de avance, Guardar,
-                Deshacer y Terminado. Las cartas se reordenan arrastrándolas.
-              </p>
-            </li>
-            <li className="tour__item">
-              <h3 className="tour__item-titulo">Tres formas de seguir</h3>
-              <p className="tour__texto">
-                Porcentaje, racha con meta de días (o sin meta, mientras
-                dures) y páginas para la lectura, que se cuentan solas.
-              </p>
-            </li>
-            <li className="tour__item">
-              <h3 className="tour__item-titulo">Compuestas</h3>
-              <p className="tour__texto">
-                Una tarea partida en hasta 7 partes: las eliges con buscador y
-                paginación, y el avance se reparte solo.
-              </p>
-            </li>
-            <li className="tour__item">
-              <h3 className="tour__item-titulo">Pool</h3>
-              <p className="tour__texto">
-                Todos tus objetivos con filtro por tipo, filas con miniatura y
-                paginación de 10 en 10.
-              </p>
-            </li>
-            <li className="tour__item">
-              <h3 className="tour__item-titulo">Cumplidos</h3>
-              <p className="tour__texto">
-                Lo terminado se archiva por año y mes, paginado, con Reabrir
-                para volverlo a poner en marcha.
-              </p>
-            </li>
-            <li className="tour__item">
-              <h3 className="tour__item-titulo">Nota y cuenta</h3>
-              <p className="tour__texto">
-                La lista rayada "TODO" se edita con doble clic y se guarda
-                sola; entras con passcode y todo se sincroniza solo, también
-                sin red.
-              </p>
-            </li>
-          </ul>
-        </section>
-      )}
+      {/* Para el mismo visitante al que se le cargan los ejemplos: el
+          tutorial guiado recorre las funcionalidades apuntando a cada
+          elemento (se salta o se termina y ya no vuelve). En cuanto
+          sincroniza con una cuenta, se va. */}
+      {!hasSynced() && <Tutorial />}
 
       <GoalForm
         key={editing?.id ?? 'new'}
