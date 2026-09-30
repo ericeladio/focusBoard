@@ -25,6 +25,9 @@ function GoalOptions({ open, onClose, goal }) {
 
   function handleDialogClose() {
     // El borrador muere con la modal: lo que no se guardó no se guarda.
+    // `setPendiente(null)` tira el pendiente; el borrador del slider se tira
+    // remontando el GoalTrack con el `key` de abajo (el <dialog> sigue
+    // montado aunque esté cerrado, así que sin el key viviría para siempre).
     setPendiente(null)
     onClose()
   }
@@ -60,13 +63,24 @@ function GoalOptions({ open, onClose, goal }) {
               {partesVisibles(partes).map((parte) => (
                 <li className="parts__item" key={parte.id}>
                   <span className="parts__name">{parte.nombre}</span>
-                  <GoalTrack goal={parte} />
+                  {/* key: al cerrar, el borrador del slider se va con la modal */}
+                  <GoalTrack
+                    key={open ? `abierto-${parte.id}` : `cerrado-${parte.id}`}
+                    goal={parte}
+                  />
                 </li>
               ))}
             </ul>
           </>
         ) : (
-          <GoalTrack goal={goal} externo onPendiente={setPendiente} />
+          // key: el slider vuelve a nacer en cada apertura; lo que no se
+          // guardó al cerrar no reaparece como si estuviera guardado
+          <GoalTrack
+            key={open ? `abierto-${goal.id}` : `cerrado-${goal.id}`}
+            goal={goal}
+            externo
+            onPendiente={setPendiente}
+          />
         )}
 
         <GoalActions goal={goal} variant="wall" />
