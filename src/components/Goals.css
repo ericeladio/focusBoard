@@ -79,6 +79,22 @@
   cursor: pointer;
 }
 
+/* En el muro el avance no se mueve: la misma medida, pero en tinta y sin
+   mando. El valor ya se lee en la etiqueta de al lado. */
+.goal__bar {
+  flex: 1 1 auto;
+  min-width: 2rem;
+  height: 0.5rem;
+  background: rgba(86, 80, 63, 0.25);
+  overflow: hidden;
+}
+
+.goal__bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--ink-soft);
+}
+
 .goal__value {
   font-family: var(--hand);
   font-size: 1.3rem;

@@ -2,33 +2,28 @@ import { useState } from 'react'
 import { useStore } from '../lib/storeContext.js'
 import { inactiveDays, markedToday } from '../lib/dates.js'
 import { etiquetaRacha, fechaCorta, metaAlcanzada } from '../lib/cumplidos.js'
-import { etiquetaDe, totalPaginasDe } from '../lib/lectura.js'
+import { etiquetaDe, pctDe, totalPaginasDe } from '../lib/lectura.js'
 
-// Un avance sin guardar: la barra solo mueve un borrador, y lo escribe el
-// objetivo el botón. Así un roce accidental no carga el porcentaje.
-function AvancePendiente({ onGuardar, onDeshacer }) {
+// El muro no guarda nada: ahí el avance solo se mira. La barra es fija y su
+// valor se lee con la etiqueta de al lado, así que el relleno es decorativo.
+function BarraFija({ pct, etiqueta, alerta }) {
   return (
-    <>
-      <button type="button" className="btn" onClick={onGuardar}>
-        Guardar
-      </button>
-      <button
-        type="button"
-        className="btn btn--ghost"
-        onClick={onDeshacer}
-        title="Vuelve al avance guardado"
-      >
-        Deshacer
-      </button>
-    </>
+    <div className="goal__track">
+      <span className="goal__bar" aria-hidden="true">
+        <span className="goal__bar-fill" style={{ width: `${pct}%` }} />
+      </span>
+      <span className="goal__value">{etiqueta}</span>
+      {alerta && <span className="goal__value goal__value--alert">{alerta}</span>}
+    </div>
   )
 }
 
-// `externo` = el avance lo guarda el botón de la modal: aquí no se enseña el
-// par Guardar/Deshacer (la modal ya tiene su Guardar), solo se avisa del
-// borrador pendiente con `onPendiente(valor | null)`.
+// `externo` = el avance lo mueve y lo guarda el `Guardar` de la modal: el
+// slider mueve un borrador y solo avisa del pendiente con
+// `onPendiente(valor | null)`. Sin `externo` (la tarjeta del muro) no hay
+// slider sino una barra de lectura: el único `Guardar` vive en la modal.
 function GoalTrack({ goal, externo = false, onPendiente }) {
-  const { setPercent, setPaginas, markToday, unmarkToday } = useStore()
+  const { markToday, unmarkToday } = useStore()
 
   function cambiar(valor, previo) {
     setBorrador(valor)
@@ -36,12 +31,14 @@ function GoalTrack({ goal, externo = false, onPendiente }) {
   }
 
   // El borrador solo se inicia con el valor guardado: si el objetivo cambia
-  // por fuera (sync, cambio de modo) sigue mandando lo guardado y el par
-  // "Guardar/Deshacer" deja volver al valor real.
+  // por fuera (sync, cambio de modo) sigue mandando lo guardado y al cerrar
+  // la modal lo que no se guardó no reaparece como si estuviera guardado.
   const guardado = Number(goal.valor) || 0
   const [borrador, setBorrador] = useState(guardado)
 
   const isMarked = markedToday(goal.marcas)
+  const inactivo = inactiveDays(goal)
+  const alerta = inactivo >= 3 ? `${inactivo} días sin avance` : null
 
   // Terminado: ya no admite avance, solo queda la fecha en la que se cerró.
   if (goal.finalizadoEn) {
@@ -59,6 +56,9 @@ function GoalTrack({ goal, externo = false, onPendiente }) {
     const total = totalPaginasDe(goal)
     const avance = Math.max(0, Math.min(borrador, total))
     const previo = Math.max(0, Math.min(guardado, total))
+    if (!externo) {
+      return <BarraFija pct={pctDe(goal)} etiqueta={etiquetaDe(goal)} alerta={alerta} />
+    }
     return (
       <div className="goal__track">
         <input
@@ -71,17 +71,7 @@ function GoalTrack({ goal, externo = false, onPendiente }) {
           aria-label={`Páginas leídas de ${goal.nombre}`}
         />
         <span className="goal__value">{etiquetaDe(goal, avance)}</span>
-        {avance !== previo && !externo && (
-          <AvancePendiente
-            onGuardar={() => setPaginas(goal.id, avance)}
-            onDeshacer={() => setBorrador(previo)}
-          />
-        )}
-        {inactiveDays(goal) >= 3 && (
-          <span className="goal__value goal__value--alert">
-            {inactiveDays(goal)} días sin avance
-          </span>
-        )}
+        {alerta && <span className="goal__value goal__value--alert">{alerta}</span>}
       </div>
     )
   }
@@ -108,6 +98,9 @@ function GoalTrack({ goal, externo = false, onPendiente }) {
 
   const avance = Math.max(0, Math.min(100, borrador))
   const previo = Math.max(0, Math.min(100, guardado))
+  if (!externo) {
+    return <BarraFija pct={pctDe(goal)} etiqueta={etiquetaDe(goal)} alerta={alerta} />
+  }
   return (
     <div className="goal__track">
       <input
@@ -120,17 +113,7 @@ function GoalTrack({ goal, externo = false, onPendiente }) {
         aria-label={`Avance de ${goal.nombre}`}
       />
       <span className="goal__value">{etiquetaDe(goal, avance)}</span>
-      {avance !== previo && !externo && (
-        <AvancePendiente
-          onGuardar={() => setPercent(goal.id, avance)}
-          onDeshacer={() => setBorrador(previo)}
-        />
-      )}
-      {inactiveDays(goal) >= 3 && (
-        <span className="goal__value goal__value--alert">
-          {inactiveDays(goal)} días sin avance
-        </span>
-      )}
+      {alerta && <span className="goal__value goal__value--alert">{alerta}</span>}
     </div>
   )
 }

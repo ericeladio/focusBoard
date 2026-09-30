@@ -5,13 +5,15 @@ import GoalActions from './GoalActions.jsx'
 import GoalStatus from './GoalStatus.jsx'
 import GoalTrack from './GoalTrack.jsx'
 
-// La modal no abre el form: el avance se mueve aquí y lo escribe su botón
-// `Guardar` (sin el par Guardar/Deshacer de la tarjeta, que solo ensucia la
-// pantalla). Para cambiar nombre, foto o tipo está el form desde el pool.
+// La modal es el único sitio donde se mueve y se guarda el avance: su
+// `Guardar` escribe el borrador y cierra. Para cambiar nombre, foto o tipo
+// está el form desde el pool.
 function GoalOptions({ open, onClose, goal }) {
   const { types, goals, setPercent, setPaginas } = useStore()
   const dialogRef = useRef(null)
-  const [pendiente, setPendiente] = useState(null)
+  // Borradores por objetivo: una compuesta puede tener varias partes y todas
+  // comparten el mismo botón.
+  const [pendientes, setPendientes] = useState({})
 
   const type = types.find((item) => item.id === goal.tipoId)
   const { partes } = estadoCompuesta(goal, goals)
@@ -25,10 +27,10 @@ function GoalOptions({ open, onClose, goal }) {
 
   function handleDialogClose() {
     // El borrador muere con la modal: lo que no se guardó no se guarda.
-    // `setPendiente(null)` tira el pendiente; el borrador del slider se tira
+    // `setPendientes({})` tira los pendientes; el borrador del slider se tira
     // remontando el GoalTrack con el `key` de abajo (el <dialog> sigue
     // montado aunque esté cerrado, así que sin el key viviría para siempre).
-    setPendiente(null)
+    setPendientes({})
     onClose()
   }
 
@@ -36,13 +38,35 @@ function GoalOptions({ open, onClose, goal }) {
     dialogRef.current?.close()
   }
 
-  // Escribe el avance que se movió en el slider y deja el botón en reposo.
-  function guardar() {
-    if (pendiente == null) return
-    if (goal.seguimiento === 'paginas') setPaginas(goal.id, pendiente)
-    else setPercent(goal.id, pendiente)
-    setPendiente(null)
+  // `null` = el slider volvió a lo guardado: ese objetivo ya no tiene nada
+  // pendiente y sale del mapa.
+  function pendienteDe(id, valor) {
+    setPendientes((current) => {
+      if (valor == null) {
+        if (!(id in current)) return current
+        const next = { ...current }
+        delete next[id]
+        return next
+      }
+      if (current[id] === valor) return current
+      return { ...current, [id]: valor }
+    })
   }
+
+  // Escribe el avance que se movió en el slider y cierra: guardar y salir es
+  // un solo gesto, y lo que se guardó ya se ve en el muro.
+  function guardar() {
+    const ids = Object.keys(pendientes)
+    if (ids.length === 0) return
+    for (const id of ids) {
+      const objetivo = goals.find((item) => item.id === id) ?? goal
+      if (objetivo.seguimiento === 'paginas') setPaginas(id, pendientes[id])
+      else setPercent(id, pendientes[id])
+    }
+    close()
+  }
+
+  const hayPendiente = Object.keys(pendientes).length > 0
 
   return (
     <dialog className="sheet" ref={dialogRef} onClose={handleDialogClose}>
@@ -67,6 +91,8 @@ function GoalOptions({ open, onClose, goal }) {
                   <GoalTrack
                     key={open ? `abierto-${parte.id}` : `cerrado-${parte.id}`}
                     goal={parte}
+                    externo
+                    onPendiente={(valor) => pendienteDe(parte.id, valor)}
                   />
                 </li>
               ))}
@@ -79,7 +105,7 @@ function GoalOptions({ open, onClose, goal }) {
             key={open ? `abierto-${goal.id}` : `cerrado-${goal.id}`}
             goal={goal}
             externo
-            onPendiente={setPendiente}
+            onPendiente={(valor) => pendienteDe(goal.id, valor)}
           />
         )}
 
@@ -90,11 +116,11 @@ function GoalOptions({ open, onClose, goal }) {
             type="button"
             className="btn btn--ink"
             onClick={guardar}
-            disabled={pendiente == null}
+            disabled={!hayPendiente}
             title={
-              pendiente == null
-                ? 'Mueve el avance para poder guardarlo'
-                : 'Escribe el avance en el objetivo'
+              hayPendiente
+                ? 'Escribe el avance en el objetivo y cierra'
+                : 'Mueve el avance para poder guardarlo'
             }
           >
             Guardar

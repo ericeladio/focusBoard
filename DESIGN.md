@@ -158,12 +158,12 @@ en `localStorage` (`fb.note`) y viaja en el sync; sin edición personalizada, mu
 hoja.
 
 **Goal card** — polaroid con foto 4:5, etiqueta de tipo en `label`, nombre en
-`hand-small` y su seguimiento: slider con lectura en `handwriting` o el toggle
+`hand-small` y su seguimiento: barra de avance de lectura o el toggle
 `Hoy` / `Deshacer hoy` (`btn--ink`, estado `is-active`) + contador de racha.
-El slider (porcentaje y páginas) **no escribe nada al moverse**: mueve un
-borrador y solo lo guarda el botón `Guardar` que aparece al lado, con su
-`Deshacer` (vuelve al valor guardado) — un roce accidental no carga el avance.
-La racha se deriva de `marcas` (cadena consecutiva): si se rompe el hilo se
+El avance **en el muro no se mueve**: la barra (porcentaje y páginas) es fija,
+del mismo grosor que el slider y con su lectura en `handwriting` — el único
+`Guardar` vive en la modal, así que tocar la tarjeta es abrirla. La racha se deriva de
+`marcas` (cadena consecutiva): si se rompe el hilo se
 pinta 0 sola. Puede llevar **meta de días** (`metaDias`, 1..3650) o ser
 indefinida: se lee `4 de 30 días` (o `4 días` sin meta) y, al llegar, el
 contador añade "Meta de días cumplida" en tinta. El botón **Terminado**
@@ -190,10 +190,12 @@ días sin subir aparece en rojo `paper-margin` "N días sin avance" (reset solo
 cuando el slider sube). Acciones fantasma debajo de una línea fina. En móvil
 (≤48rem) solo se ven foto y nombre: el doble clic (o el segundo toque, con
 `touch-action: manipulation` en la tarjeta) abre la modal `sheet` con tipo,
-seguimiento y acciones — mismo contenido que la tarjeta en escritorio, vía
-`GoalControls` — y su botón **Guardar**, que escribe en el propio objetivo el
-avance movido en el slider de la modal (el borrador muere al cerrarla y no
-enseña el par Guardar/Deshacer de la tarjeta); el form con el objetivo cargado
+seguimiento y acciones — el mismo contenido que la tarjeta, pero con el slider
+de verdad, porque es donde se mueve el avance. Su botón **Guardar** es el
+único sitio donde se guarda (y **cierra la modal** al pulsarlo): el slider
+mueve un borrador que se avisa con `onPendiente`, el borrador muere al cerrar
+la modal y las partes de una compuesta comparten ese mismo botón (escribe
+todas las que tengan pendiente); el form con el objetivo cargado
 se abre desde el pool. La foto adopta su
 proporción natural para que el mosaico no
 tenga huecos. Las partes de una compuesta no aparecen en el muro (se editan en
@@ -406,7 +408,7 @@ se activa solo en `serve` y escribe en los datos reales, igual que producción.
 - Do: sombras con offset y blur suave; foto siempre en marco con proporción 4:5.
 - Do: tope de 7 objetivos en el muro; el pool no tiene cota: se filtra por tipo, y pool y cumplidos paginan de 10 en 10.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
-- Do: la barra de avance se confirma con `Guardar` (borrador + `Deshacer`): un roce accidental no escribe el porcentaje.
+- Do: el avance solo se mueve y se guarda en la modal: su `Guardar` escribe el borrador y cierra, así que en el muro la barra es de lectura.
 - Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos). En pantalla solo caben 3: la tarjeta y la modal enseñan las 3 primeras pendientes y, al completar una, la ventana pasa a las que faltan.
 - Do: terminar una parte la saca de su compuesta sola; si era la última que quedaba, la compuesta se termina también.
 - Do: `Terminado` siempre disponible en rachas; la meta de días solo resalta el botón, nunca archiva sola.

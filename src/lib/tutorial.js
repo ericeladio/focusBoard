@@ -30,8 +30,9 @@ export const PASOS = [
     titulo: 'El muro',
     diana: '.wall__head',
     texto:
-      'Hasta 7 focos en polaroids: la barra de avance se escribe con Guardar y ' +
-      'Deshacer, Terminado archiva el objetivo, y las cartas se reordenan arrastrándolas.',
+      'Hasta 7 focos en polaroids: la barra de avance se mira en la carta y se ' +
+      'escribe en su modal, Terminado archiva el objetivo, y las cartas se ' +
+      'reordenan arrastrándolas.',
   },
   {
     id: 'anadir',
@@ -47,9 +48,9 @@ export const PASOS = [
     titulo: 'Tus cartas',
     diana: '.wall__grid .frame--goal',
     texto:
-      'Doble clic (o segundo toque) en una carta abre su modal: mueves el avance y lo ' +
-      'guardas ahí mismo, con Terminado y Borrar a mano. En el pool, el doble clic en ' +
-      'una fila abre su formulario.',
+      'Doble clic (o segundo toque) en una carta abre su modal: mueves el avance y ' +
+      'Guardar lo escribe y cierra, con Terminado y Borrar a mano. En el pool, el ' +
+      'doble clic en una fila abre su formulario.',
   },
   {
     id: 'pool',

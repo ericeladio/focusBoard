@@ -47,12 +47,13 @@ es editable con doble clic y se persiste en localStorage (`fb.note`), acotada a
 una fila del pool abre el form con los datos
 cargados; orden por `createdAt` descendente. En el muro, la modal que abre el
 doble clic (o el segundo toque) lleva `Guardar`: escribe el avance movido en su
-slider (el borrador muere al cerrar, sin `Deshacer`) y no abre el form — ese
-está en el pool. La barra de avance de la tarjeta (% y páginas) mueve un
-borrador que solo escribe su `Guardar` (con `Deshacer` al lado), así que un
-roce accidental no carga el progreso. Los % que llevan 3+ días sin
-subir (con valor > 0) muestran "N días sin avance" en rojo `paper-margin`, en
-muro y pool; resetea solo al subir el slider.
+slider y **cierra la modal** (el borrador muere al cerrar, sin `Deshacer`) y no
+abre el form — ese está en el pool. Es el único sitio donde se mueve y se
+guarda el avance: la barra de la tarjeta (% y páginas) es de lectura, así que
+un roce accidental no carga el progreso. Las partes de una compuesta se mueven
+desde la misma lista de la modal y comparten su `Guardar`. Los % que llevan 3+
+días sin subir (con valor > 0) muestran "N días sin avance" en rojo
+`paper-margin`, en muro y pool; resetea solo al subir el slider.
 
 Cada objetivo se puede TERMINAR: el botón `Terminado` (muro, modal y fila del
 pool) lo archiva con fecha de hoy, lo saca del muro y del pool y lo pasa a
