@@ -154,7 +154,9 @@
 }
 
 /* --- botón-polaroid "Añadir" ---
-   Más pequeño que una meta: es una acción del muro, no un objetivo. */
+   Mide lo que mide una foto: mismo ancho que las cartas y su altura, sin
+   estirarse hasta la fila de la cuadrícula (con la nota o con cartas más
+   altas se quedaba un papel enorme con el "+" enana arriba). */
 
 .frame--add {
   appearance: none;
@@ -162,8 +164,7 @@
   cursor: pointer;
   text-align: center;
   border: 0;
-  width: 65%;
-  padding: 0.6rem 0.6rem 2.1rem;
+  align-self: start;
 }
 
 .frame--add .frame__caption {
