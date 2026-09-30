@@ -47,8 +47,9 @@ export const PASOS = [
     titulo: 'Tus cartas',
     diana: '.wall__grid .frame--goal',
     texto:
-      'Doble clic (o segundo toque) abre la modal con Editar y Terminado; en el ' +
-      'pool, el doble clic en una fila abre la misma ficha.',
+      'Doble clic (o segundo toque) en una carta abre su modal: mueves el avance y lo ' +
+      'guardas ahí mismo, con Terminado y Borrar a mano. En el pool, el doble clic en ' +
+      'una fila abre su formulario.',
   },
   {
     id: 'pool',

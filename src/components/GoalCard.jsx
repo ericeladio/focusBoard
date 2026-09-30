@@ -18,7 +18,6 @@ function GoalCard({
   goal,
   index = 0,
   variant = 'wall',
-  onEdit,
   arrastrando = false,
   sobre = false,
 }) {
@@ -115,7 +114,6 @@ function GoalCard({
       <GoalOptions
         open={optionsOpen}
         goal={goal}
-        onEdit={onEdit}
         onClose={() => setOptionsOpen(false)}
       />
     </>

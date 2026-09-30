@@ -24,8 +24,16 @@ function AvancePendiente({ onGuardar, onDeshacer }) {
   )
 }
 
-function GoalTrack({ goal }) {
+// `externo` = el avance lo guarda el botón de la modal: aquí no se enseña el
+// par Guardar/Deshacer (la modal ya tiene su Guardar), solo se avisa del
+// borrador pendiente con `onPendiente(valor | null)`.
+function GoalTrack({ goal, externo = false, onPendiente }) {
   const { setPercent, setPaginas, markToday, unmarkToday } = useStore()
+
+  function cambiar(valor, previo) {
+    setBorrador(valor)
+    if (externo) onPendiente?.(valor === previo ? null : valor)
+  }
 
   // El borrador solo se inicia con el valor guardado: si el objetivo cambia
   // por fuera (sync, cambio de modo) sigue mandando lo guardado y el par
@@ -59,11 +67,11 @@ function GoalTrack({ goal }) {
           max={total}
           step="1"
           value={avance}
-          onChange={(event) => setBorrador(Number(event.target.value))}
+          onChange={(event) => cambiar(Number(event.target.value), previo)}
           aria-label={`Páginas leídas de ${goal.nombre}`}
         />
         <span className="goal__value">{etiquetaDe(goal, avance)}</span>
-        {avance !== previo && (
+        {avance !== previo && !externo && (
           <AvancePendiente
             onGuardar={() => setPaginas(goal.id, avance)}
             onDeshacer={() => setBorrador(previo)}
@@ -108,11 +116,11 @@ function GoalTrack({ goal }) {
         max="100"
         step="5"
         value={avance}
-        onChange={(event) => setBorrador(Number(event.target.value))}
+        onChange={(event) => cambiar(Number(event.target.value), previo)}
         aria-label={`Avance de ${goal.nombre}`}
       />
       <span className="goal__value">{etiquetaDe(goal, avance)}</span>
-      {avance !== previo && (
+      {avance !== previo && !externo && (
         <AvancePendiente
           onGuardar={() => setPercent(goal.id, avance)}
           onDeshacer={() => setBorrador(previo)}

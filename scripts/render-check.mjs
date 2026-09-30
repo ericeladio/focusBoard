@@ -177,12 +177,13 @@ try {
       'Correr cada dia',
       'Terminado',
       '4 de 30 días',
-      // el modal de opciones (doble clic) lleva Editar en un clic
-      'Editar',
+      // el modal de opciones (doble clic) guarda el avance, no abre el form
+      'Guardar',
       // el arrastre del muro se agarra por `data-goal`
       'data-goal="g1"',
     ],
-    ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta', 'Saltar'],
+    // 'Editar' vive en el pool; en el muro la modal no lo lleva
+    ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta', 'Saltar', 'Editar'],
   )
   // Con hueco el botón se enseña; lleno desaparece (sin estado "Muro lleno").
   check('/  (con hueco)', render('/'), ['Añadir objetivo'], ['Muro lleno'])

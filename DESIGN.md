@@ -191,8 +191,10 @@ cuando el slider sube). Acciones fantasma debajo de una línea fina. En móvil
 (≤48rem) solo se ven foto y nombre: el doble clic (o el segundo toque, con
 `touch-action: manipulation` en la tarjeta) abre la modal `sheet` con tipo,
 seguimiento y acciones — mismo contenido que la tarjeta en escritorio, vía
-`GoalControls` — y su botón **Editar**, que cierra la modal y abre el form con
-el objetivo cargado (un clic, sin pasar por el pool). La foto adopta su
+`GoalControls` — y su botón **Guardar**, que escribe en el propio objetivo el
+avance movido en el slider de la modal (el borrador muere al cerrarla y no
+enseña el par Guardar/Deshacer de la tarjeta); el form con el objetivo cargado
+se abre desde el pool. La foto adopta su
 proporción natural para que el mosaico no
 tenga huecos. Las partes de una compuesta no aparecen en el muro (se editan en
 el pool y dentro de la modal, donde la lista enseña esas mismas 3) y, cuando

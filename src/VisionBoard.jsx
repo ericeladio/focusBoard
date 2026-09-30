@@ -18,7 +18,6 @@ function VisionBoard() {
   const { goals, wallFull, note, setNote, noteLocal, subirNota } = useStore()
   const [addOpen, setAddOpen] = useState(false)
   const [typesOpen, setTypesOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
   const [noteEditing, setNoteEditing] = useState(false)
   const [noteDraft, setNoteDraft] = useState('')
 
@@ -200,15 +199,8 @@ function VisionBoard() {
     setNoteEditing(false)
   }
 
-  // Editar desde el muro: sale el modal de opciones y entra el form ya cargado.
-  function openEdit(goal) {
-    setEditing(goal)
-    setAddOpen(true)
-  }
-
   function closeForm() {
     setAddOpen(false)
-    setEditing(null)
   }
 
   function cancelNoteEdit() {
@@ -253,7 +245,6 @@ function VisionBoard() {
             goal={goal}
             index={index}
             variant="wall"
-            onEdit={openEdit}
             arrastrando={dragId === goal.id}
             sobre={sobreId === goal.id}
           />
@@ -330,9 +321,7 @@ function VisionBoard() {
       {!hasSynced() && <Tutorial />}
 
       <GoalForm
-        key={editing?.id ?? 'new'}
         open={addOpen}
-        editing={editing}
         onClose={closeForm}
         onManageTypes={() => setTypesOpen(true)}
       />
