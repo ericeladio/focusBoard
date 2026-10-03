@@ -613,6 +613,20 @@
   gap: 1rem;
 }
 
+.pool__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* A la medida del select, no a todo lo ancho: el pool es de papel, no un
+   formulario. */
+.pool__search {
+  width: 13rem;
+  max-width: 100%;
+}
+
 .pool__actions {
   display: flex;
   flex-wrap: wrap;
@@ -646,6 +660,15 @@
   .pool__bar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .pool__filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pool__search {
+    width: 100%;
   }
 }
 
