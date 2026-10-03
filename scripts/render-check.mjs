@@ -11,13 +11,21 @@ import { pathToFileURL } from 'node:url'
 const hoy = new Date()
 // ISO local (como hace la app con `todayISO`): toISOString() es UTC y por la
 // tarde ya es "mañana", lo que rompía la racha del render-check.
-const day = (n) => {
-  const d = new Date(hoy)
-  d.setDate(d.getDate() - n)
+const isoDe = (d) => {
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')
   return `${d.getFullYear()}-${mm}-${dd}`
 }
+const day = (n) => {
+  const d = new Date(hoy)
+  d.setDate(d.getDate() - n)
+  return isoDe(d)
+}
+// Fecha dentro del mes en curso. El bloque paginado de /cumplidos la usa para
+// que sus 12 fechas caigan en un solo mes: con `day(i)` el grupo se partía
+// según cuántos días del mes lleváramos usados y el check "10 de 12" un día
+// dejó de cumplirse solo.
+const diaDelMes = (n) => isoDe(new Date(hoy.getFullYear(), hoy.getMonth(), 1 + n))
 
 const goals = [
   // 100% en el muro → debe enseñar "Terminado"
@@ -181,6 +189,8 @@ try {
       'Guardar',
       // el arrastre del muro se agarra por `data-goal`
       'data-goal="g1"',
+      // lo que ya está hecho hoy se apaga y va detrás (`is-hecho-hoy`)
+      'is-hecho-hoy',
     ],
     // 'Editar' vive en el pool; en el muro la modal no lo lleva
     ['Archivo ocultoXYZ', 'solo aquí', 'Subir a la cuenta', 'Saltar', 'Editar'],
@@ -277,6 +287,8 @@ try {
     ['Pool de objetivos', 'Tesis al 100', 'Correr cada dia', 'Terminado'],
     // Con menos de 10 objetivos no hay paginación (ni rango "Mostrando…").
     ['Archivo ocultoXYZ', 'Mostrando'],
+    // El buscador del pool: mismo `filtraPorNombre` que el picker de partes.
+    ['Buscar por nombre', 'aria-label="Buscar objetivo por nombre"', 'type="search"'],
   )
 
   // Más de 10 en juego → entra la paginación: la primera página no enseña
@@ -322,7 +334,9 @@ try {
   )
 
   // Más de 10 terminados → entra la paginación, igual que en el pool: la
-  // primera página no enseña todo y el mes partido se lee "10 de 12".
+  // primera página no enseña todo y el mes partido se lee "10 de 12". Las
+  // fechas van hacia atrás dentro del mes en curso para que ese mes sea el que
+  // se parte (y "Terminado 0" el más reciente).
   const terminados = Array.from({ length: 12 }, (_, i) => ({
     id: `d${i}`,
     nombre: `Terminado ${i}`,
@@ -331,10 +345,10 @@ try {
     seguimiento: 'percent',
     valor: 100,
     marcas: [],
-    ultimoMovimiento: day(i),
+    ultimoMovimiento: diaDelMes(11 - i),
     createdAt: 700 + i,
     enMuro: false,
-    finalizadoEn: day(i),
+    finalizadoEn: diaDelMes(11 - i),
   }))
   kv.set('fb.goals', JSON.stringify(terminados))
   check(

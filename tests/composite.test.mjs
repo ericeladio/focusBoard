@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
+import { todayISO, yesterdayISO } from '../src/lib/dates.js'
 import {
+  avanzaHoy,
   esAvanceHoy,
   estadoCompuesta,
   reconcileComposites,
@@ -44,6 +46,28 @@ assert.equal(esAvanceHoy(pct(100, ANTES), HOY), true, '100% cuenta siempre')
 assert.equal(esAvanceHoy(str([HOY]), HOY), true, 'streak marcado hoy')
 assert.equal(esAvanceHoy(str([AYER]), HOY), false, 'streak no marcado hoy')
 assert.equal(esAvanceHoy(comp(['p1']), HOY), false, 'compuesta no aplica')
+
+// --- avanzaHoy (el muro: misma regla, pero la compuesta sí cuenta) ---
+assert.equal(avanzaHoy(pct(40, HOY), HOY), true, 'muro: percent subido hoy')
+assert.equal(avanzaHoy(pct(40, ANTES), HOY), false, 'muro: percent sin tocar hoy')
+assert.equal(avanzaHoy(pct(100, ANTES), HOY), true, 'muro: 100% está hecho')
+assert.equal(avanzaHoy(str([HOY]), HOY), true, 'muro: racha marcada hoy')
+assert.equal(avanzaHoy(str([AYER]), HOY), false, 'muro: racha sin marcar hoy')
+assert.equal(avanzaHoy(pag(1181, 1181, ANTES), HOY), true, 'muro: libro al tope')
+// La compuesta se lee con `markedToday`, que mira el hoy real (no el HOY fijo
+// del resto del archivo), así que sus marcas se montan con la fecha de verdad.
+const HOY_REAL = todayISO()
+assert.equal(
+  avanzaHoy(comp(['p1'], [HOY_REAL])),
+  true,
+  'muro: compuesta auto-marcada hoy (todas sus partes avanzan)',
+)
+assert.equal(
+  avanzaHoy(comp(['p1'], [HOY_REAL, yesterdayISO()])),
+  false,
+  'muro: compuesta sin cerrar hoy',
+)
+assert.equal(avanzaHoy(comp(['p1'])), false, 'muro: compuesta sin marca no está hecha')
 
 // --- esAvanceHoy en modo páginas ---
 assert.equal(esAvanceHoy(pag(468, 1181, HOY), HOY), true, 'páginas leídas hoy')

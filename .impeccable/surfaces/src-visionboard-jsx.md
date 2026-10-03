@@ -55,6 +55,13 @@ desde la misma lista de la modal y comparten su `Guardar`. Los % que llevan 3+
 días sin subir (con valor > 0) muestran "N días sin avance" en rojo
 `paper-margin`, en muro y pool; resetea solo al subir el slider.
 
+La fila del muro empieza por los objetivos que todavía piden un movimiento hoy
+(`avanzaHoy` = `esAvanceHoy` más la compuesta por su marca: avanzado hoy o ya
+en su tope); los hechos hoy van detrás y apagados (`is-hecho-hoy`,
+`opacity: 0.6`, sin perder lectura ni el hover que los levanta). La partición
+es estable y previa al arrastre, que sigue mandando en la sesión; la carta que
+se arrastra vuelve a opacidad 1.
+
 Cada objetivo se puede TERMINAR: el botón `Terminado` (muro, modal y fila del
 pool) lo archiva con fecha de hoy, lo saca del muro y del pool y lo pasa a
 `/cumplidos`. En porcentaje/páginas aparece solo al 100%, en rachas SIEMPRE
@@ -98,7 +105,9 @@ con una cuenta (los ejemplos quedan como `solo aquí`). Excepción: la cuenta de
 prueba (una segunda pass, la de negocios) baja desde el servidor sus propios
 ejemplos de negocio y, al entrar con ella, se borran los del visitante (solo
 los ids de `lib/seeds.js`) — así que ni tutorial ni `solo aquí`. FIRST VIEWPORT (`/pool`): título + select de
-tipo + barra Tipos/Nuevo objetivo + los mismos tape-links y sync badge en la
+tipo + buscador por nombre (`filtraPorNombre`, sin acentos ni mayúsculas, y
+vuelve a la primera página al escribir) + barra Tipos/Nuevo objetivo + los
+mismos tape-links y sync badge en la
 nav; lista de filas (miniatura, tipo, nombre, seguimiento solo lectura,
 Editar/Terminado/Poner/Borrar, con `solo aquí` + `Subir a la cuenta` cuando
 aplica) y hint de doble clic. FIRST VIEWPORT

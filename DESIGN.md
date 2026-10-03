@@ -148,7 +148,19 @@ sobre la que se apunta se marca con un punteado `is-drag-over` que no mueve
 caja. Al soltar, las dos cambian de sitio (el orden sale de `lib/orden.js`:
 `ordenaIds` + `mueveA`). Es **solo visual**: el orden vive en el estado del
 muro y no toca datos ni `localStorage`, así que al recargar —o al volver de
-otra pantalla— vuelve el orden por defecto, los más recientes primero.
+otra pantalla— vuelve el orden por defecto.
+
+**Lo que ya está hecho hoy** — la fila del muro la encabezan los objetivos que
+todavía exigen un movimiento hoy; los que ya no (se llama `avanzaHoy` en
+`lib/composite.js`, que es `esAvanceHoy` más la compuesta por su marca: contado
+hoy **o** ya en su tope, 100% o libro terminado) van detrás y con la clase
+`is-hecho-hoy`, que los baja a `opacity: 0.6` — se siguen leyendo, y el hover
+sigue levantándolos, pero la foto deja de pedir atención. La partición es estable
+(dentro de cada grupo ninguna carta cambia de sitio) y se hace **antes** de
+`ordenaIds`, así que el arrastre sigue mandando mientras haya arrastre en la
+sesión. Al marcar `Hoy` o al guardar en la modal, la carta se apaga y salta al
+final en el acto: el grid refluye de golpe, sin transición. La que se arrastra
+vuelve a `opacity: 1` (`is-dragging`), para no trabajar a ciegas.
 
 **Nota rayada** — papel con líneas y margen rojo; clip metálico dibujado en CSS.
 Su lista es editable con doble clic y el texto se guarda como `{texto, updatedAt}`
@@ -219,7 +231,7 @@ recientes primero (`createdAt`).
 (`Mostrando 11–20 de 47`) y los controles: `‹ Anterior`, los números (la
 actual en tinta sólida; pasadas 7 páginas se encogen los huecos con `…` y
 siguen cabiendo extremos y vecinas) y `Siguiente ›`, con los extremos
-deshabilitados. Cambiar el filtro del pool vuelve a la primera página; un
+deshabilitados. Cambiar el filtro del pool o escribir en su buscador vuelve a la primera página; un
 borrado o un `Reabrir` que acortan la lista recortan la página pedida (nunca
 acaba en una página vacía); pasar de página lleva el scroll al inicio de la
 lista. Con menos de 10 no aparece el pager: en el pool solo queda el aviso de
@@ -273,9 +285,14 @@ con la cuenta atrás corriendo (sobrevive a cerrar la hoja o a un reload vía
 `fb.bloqueadoHasta`); mientras tanto el botón se desactiva y dice `Espera
 mm:ss`.
 
-**Filtro del pool** — `select` de papel (`pool__filter`) en la barra junto a
-Tipos/Nuevo objetivo: borde tinta, fondo polaroid, esquinas rectas; opciones
-"Todos los tipos" + cada tipo. Los chips de partes (`goal__chip`) siguen siendo
+**Filtro del pool** — `select` de papel (`pool__filter`) en la barra junto al
+buscador por nombre (`pool__search`, al otro lado, medido como el select: 13rem)
+y a Tipos/Nuevo objetivo: borde tinta, fondo polaroid, esquinas rectas; opciones
+"Todos los tipos" + cada tipo. El buscador es el mismo `filtraPorNombre` del
+picker de partes (sin acentos ni mayúsculas, así que "TESIS" o "dia" encuentran
+"Tesis al 100" y "Correr cada día") y, como el filtro, devuelve la lista a la
+primera página al escribir; si se queda sin filas, el papel vacío lo dice con
+el texto buscado (`Nada con "..."`). Los chips de partes (`goal__chip`) siguen siendo
 etiquetas de cinta más pequeñas: `tape` pendiente, fondo tinta cuando avanza hoy. **Sheet** — modal de papel con
 margen rojo, esquinas rectas y sombra alta; `opt` son las fichas de opción
 (porcentaje, racha) y `pick` la lista de partes con checkbox del form. Con más
@@ -409,6 +426,7 @@ se activa solo en `serve` y escribe en los datos reales, igual que producción.
 - Do: tope de 7 objetivos en el muro; el pool no tiene cota: se filtra por tipo, y pool y cumplidos paginan de 10 en 10.
 - Do: la alerta "N días sin avance" solo con `% > 0` y a partir de 3 días; en rojo `paper-margin`.
 - Do: el avance solo se mueve y se guarda en la modal: su `Guardar` escribe el borrador y cierra, así que en el muro la barra es de lectura.
+- Do: la fila del muro empieza por los objetivos que aún piden un movimiento hoy; los hechos hoy (avanzados hoy o ya en su tope) van detrás y apagados (`is-hecho-hoy`, `opacity: 0.6`), con el arrastre por encima de esa agrupación.
 - Do: la compuesta se auto-marca sola cuando todas sus partes avanzan hoy y pierde la marca si alguna deja de avanzar; las partes no ocupan cupo del muro, y al borrar una parte queda desenganchada de la compuesta (también al cargar datos viejos). En pantalla solo caben 3: la tarjeta y la modal enseñan las 3 primeras pendientes y, al completar una, la ventana pasa a las que faltan.
 - Do: terminar una parte la saca de su compuesta sola; si era la última que quedaba, la compuesta se termina también.
 - Do: `Terminado` siempre disponible en rachas; la meta de días solo resalta el botón, nunca archiva sola.

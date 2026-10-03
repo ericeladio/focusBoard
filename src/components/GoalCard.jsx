@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../lib/storeContext.js'
+import { avanzaHoy } from '../lib/composite.js'
 import Foto from './Foto.jsx'
 import GoalControls from './GoalControls.jsx'
 import GoalOptions from './GoalOptions.jsx'
@@ -32,6 +33,9 @@ function GoalCard({
   const type = types.find((item) => item.id === goal.tipoId)
   const tilt = TILTS[index % TILTS.length]
   const pinClass = index % 2 === 0 ? 'frame--pin' : 'frame--tape'
+  // Ya no queda nada que exigirle hoy (avanzó o está al tope): la carta se
+  // apaga y el muro la manda detrás de las que faltan.
+  const hechoHoy = avanzaHoy(goal)
 
   function applyRatio(img) {
     const next = ratioOf(img)
@@ -79,8 +83,8 @@ function GoalCard({
     <>
       <figure
         className={`frame frame--goal ${pinClass}${
-          arrastrando ? ' is-dragging' : ''
-        }${sobre ? ' is-drag-over' : ''}`}
+          hechoHoy ? ' is-hecho-hoy' : ''
+        }${arrastrando ? ' is-dragging' : ''}${sobre ? ' is-drag-over' : ''}`}
         style={{ '--tilt': tilt }}
         data-goal={goal.id}
         onDoubleClick={handleDoubleClick}

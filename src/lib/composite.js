@@ -1,4 +1,4 @@
-import { shiftISO, todayISO } from './dates.js'
+import { markedToday, shiftISO, todayISO } from './dates.js'
 import { esNombreLectura, totalPaginasDe } from './lectura.js'
 
 // El tipo Compuesto es el que define los objetivos compuestos: id y nombre
@@ -75,6 +75,15 @@ export function esAvanceHoy(goal, hoy = todayISO()) {
   }
   if (goal.seguimiento === 'streak') return goal.marcas.includes(hoy)
   return false
+}
+
+// Lo mismo para el muro, con la compuesta resuelta: `esAvanceHoy` no le hace
+// caso (allí solo se consulta sobre partes, que nunca son compuestas), pero en
+// la fila del muro la compuesta sí tiene que decir si está hecha hoy. Cuenta
+// su marca, que el store auto-pinta cuando todas sus partes avanzan.
+export function avanzaHoy(goal, hoy = todayISO()) {
+  if (goal?.seguimiento === 'compuesta') return markedToday(goal.marcas)
+  return esAvanceHoy(goal, hoy)
 }
 
 export function estadoCompuesta(meta, goals, hoy = todayISO()) {

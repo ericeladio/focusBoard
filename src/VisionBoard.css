@@ -90,7 +90,15 @@
   transform: rotate(var(--tilt, 0deg));
   transition:
     transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.32s ease;
+}
+
+/* Ya no exige nada hoy: la carta se apaga, pero sigue leyéndose (foto, nombre
+   y avance) y el hover la sigue levantando. El muro además la coloca detrás
+   de las que todavía piden un movimiento. */
+.frame.frame--goal.is-hecho-hoy {
+  opacity: 0.6;
 }
 
 @media (hover: hover) {
@@ -129,6 +137,7 @@
    ver qué carta hay debajo del puntero. */
 .frame.frame--goal.is-dragging {
   pointer-events: none;
+  opacity: 1;
   transform: rotate(2deg) scale(1.04);
   box-shadow:
     0 34px 55px -20px rgba(74, 68, 50, 0.55),

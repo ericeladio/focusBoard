@@ -4,7 +4,7 @@ import './VisionBoard.css'
 import './components/Goals.css'
 import { useStore } from './lib/storeContext.js'
 import { hasSynced } from './lib/sync.js'
-import { esHijoDe } from './lib/composite.js'
+import { avanzaHoy, esHijoDe } from './lib/composite.js'
 import { ordenaIds, mueveA } from './lib/orden.js'
 import { MAX_FOCUS } from './lib/schemas.js'
 import GoalCard from './components/GoalCard.jsx'
@@ -42,10 +42,14 @@ function VisionBoard() {
   const titulos = goals.filter((goal) => !goal.finalizadoEn).map((goal) => goal.nombre)
   const nota = note ?? titulos.join('\n')
 
-  // El orden visible: por defecto el de `goals`; si ya hubo un arrastre, el
-  // que dejó (con lo nuevo por delante). El ref guarda lo que se ve para el
+  // El orden visible: por defecto el de `goals` reagrupado para que la fila la
+  // encabezuen los que todavía exigen un movimiento hoy; si ya hubo un arrastre,
+  // el que dejó (con lo nuevo por delante). El ref guarda lo que se ve para el
   // momento de soltar, sin leer estado desactualizado del cierre.
-  const idsMuro = enMuro.map((goal) => goal.id)
+  // `sort` es estable: dentro de cada grupo ninguna carta se mueve de sitio.
+  const sinHecho = enMuro.filter((goal) => !avanzaHoy(goal))
+  const hecho = enMuro.filter((goal) => avanzaHoy(goal))
+  const idsMuro = [...sinHecho, ...hecho].map((goal) => goal.id)
   const orden = ordenaIds(idsMuro, ordenMuro)
   const porId = new Map(enMuro.map((goal) => [goal.id, goal]))
   const visibles = orden.map((id) => porId.get(id)).filter(Boolean)
