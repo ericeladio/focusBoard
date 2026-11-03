@@ -7,7 +7,7 @@ import {
 } from '../lib/schemas.js'
 import { useStore } from '../lib/storeContext.js'
 import { markedToday, streakOf } from '../lib/dates.js'
-import { esTipoCompuesto, ensureCompuestoType, modoPorTipo, padreDe } from '../lib/composite.js'
+import { esTipoCompuesto, esTipoPasos, ensureCompuestoType, ensureEmprendimientoType, modoPorTipo, padreDe } from '../lib/composite.js'
 import { PAGINAS_POR_DEFECTO, etiquetaDe } from '../lib/lectura.js'
 import { POR_PAGINA } from '../lib/pager.js'
 import { filtraPorNombre } from '../lib/texto.js'
@@ -89,10 +89,10 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
   // El tipo `Compuesto` viaja siempre en el desplegable: es la única puerta
   // de entrada a un objetivo compuesto (la ficha "Compuesta" del seguimiento
   // ya no existe). Si todavía no está creado, el store lo crea al guardar.
-  const tiposVisibles = useMemo(() => ensureCompuestoType(types), [types])
+  const tiposVisibles = useMemo(() => ensureEmprendimientoType(ensureCompuestoType(types)), [types])
 
   const candidatos = goals.filter(
-    (goal) => goal.id !== editing?.id && goal.seguimiento !== 'compuesta',
+    (goal) => goal.id !== editing?.id && goal.seguimiento !== 'compuesta' && goal.seguimiento !== 'pasos',
   )
 
   // Con más de 10 candidatos la lista no se despliega entera: entra el
@@ -268,7 +268,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
         {/* Seguimiento solo ofrece porcentaje y racha: "compuesta" no es una
             ficha más, se activa eligiendo el tipo `Compuesto` (ahora mismo no
             se despliega nada y aquí solo se eligen sus partes). */}
-        {!esTipoCompuesto(values.tipoId, types) && values.seguimiento !== 'paginas' && (
+        {!esTipoPasos(values.tipoId, types) && values.seguimiento !== 'paginas' && (
         <fieldset className="field">
           <legend>Seguimiento</legend>
           <div className="option-cards">
@@ -403,12 +403,12 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
           </fieldset>
         )}
 
-        {values.seguimiento === 'compuesta' && (
+        {esTipoPasos(values.tipoId, types) && (
           <fieldset className="field">
-            <legend>Partes de la compuesta</legend>
+            <legend>Partes</legend>
             {candidatos.length === 0 ? (
               <p className="field__hint">
-                Crea primero objetivos simples (porcentaje o racha) para poder componer.
+                Crea primero objetivos simples (porcentaje o racha) para poder añadir pasos.
               </p>
             ) : (
               <div className="pick__zone">
@@ -417,7 +417,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                     className="input pick__search"
                     type="search"
                     placeholder="Buscar por nombre…"
-                    aria-label="Buscar parte por nombre"
+                    aria-label="Buscar paso por nombre"
                     value={busqueda}
                     onChange={(event) => {
                       setBusqueda(event.target.value)
@@ -476,7 +476,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                   totalPaginas={totalPaginas}
                   pagina={paginaActual}
                   onIrA={setPagina}
-                  etiqueta="Partes de la compuesta"
+                  etiqueta="Pasos"
                 />
               </div>
             )}
@@ -485,6 +485,9 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                 {errors.componentes}
               </p>
             )}
+            <p className="field__hint">
+              Puedes reordenarlos desde la ficha del objetivo. Basta con que algún paso tenga avance hoy para que se ponga gris en el muro.
+            </p>
           </fieldset>
         )}
 

@@ -5,7 +5,7 @@ import GoalTrack from './GoalTrack.jsx'
 function GoalControls({ goal, variant = 'wall' }) {
   return (
     <>
-      {goal.seguimiento === 'compuesta' ? (
+      {goal.seguimiento === 'compuesta' || goal.seguimiento === 'pasos' ? (
         <GoalStatus goal={goal} />
       ) : (
         <GoalTrack goal={goal} />

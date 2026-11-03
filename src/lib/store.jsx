@@ -4,8 +4,17 @@ import { chainFrom, todayISO, yesterdayISO } from './dates.js'
 import {
   alTerminar,
   compuestoId,
+  emprendimientoId,
   ensureCompuestoType,
+  ensureEmprendimientoType,
   esHijoDe,
+  esTipoCompuesto,
+  esTipoEmprendimiento,
+  esTipoPasos,
+  ID_COMPUESTO,
+  ID_EMPRENDIMIENTO,
+  NOMBRE_COMPUESTO,
+  NOMBRE_EMPRENDIMIENTO,
   reconcileComposites,
 } from './composite.js'
 import { StoreContext } from './storeContext.js'
@@ -177,7 +186,15 @@ export function StoreProvider({ children }) {
     const loaded = read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES)
     const crudo = read(KEY_GOALS, SYNCED_AT_START ? [] : SEED_GOALS)
     const tieneCompuesta = crudo.some((goal) => goal?.seguimiento === 'compuesta')
-    const lista = tieneCompuesta ? ensureCompuestoType(loaded) : loaded
+    const tienePasos = crudo.some((goal) => goal?.seguimiento === 'pasos')
+    // Migrar objetivos que usaban el tipo llamado "Emprendimiento" al nuevo
+    // seguimiento 'pasos' con el tipo del sistema.
+    const hayEmprendimientoNombre = loaded.some(
+      (t) => t?.nombre && t.nombre.toLowerCase() === 'emprendimiento',
+    )
+    let lista = loaded
+    if (tieneCompuesta) lista = ensureCompuestoType(lista)
+    if (tienePasos || hayEmprendimientoNombre) lista = ensureEmprendimientoType(lista)
     return SYNCED_AT_START ? lista : marcarLocales(lista)
   })
   const [goals, setGoalsRaw] = useState(() => {
@@ -186,14 +203,32 @@ export function StoreProvider({ children }) {
     )
     const ids = new Set(loaded.map((goal) => goal.id))
     const tipoCompuesto = compuestoId(read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES))
+    const tipoEmprendimiento = emprendimientoId(read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES))
+    const emprendimientoIdByName =
+      (read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES).find(
+        (t) => t?.nombre && t.nombre.toLowerCase() === 'emprendimiento',
+      )?.id) || null
     return loaded.map((goal) => {
       const limpio = goal.componentes.some((id) => !ids.has(id))
         ? { ...goal, componentes: goal.componentes.filter((id) => ids.has(id)) }
         : goal
-      const base =
-        limpio.seguimiento !== 'compuesta' || limpio.tipoId === tipoCompuesto
-          ? limpio
-          : { ...limpio, tipoId: tipoCompuesto }
+      let base = limpio
+      if (limpio.seguimiento === 'compuesta') {
+        base = limpio.tipoId === tipoCompuesto ? limpio : { ...limpio, tipoId: tipoCompuesto }
+      } else if (limpio.seguimiento === 'pasos') {
+        base =
+          limpio.tipoId === tipoEmprendimiento
+            ? limpio
+            : { ...limpio, tipoId: tipoEmprendimiento }
+      } else if (
+        emprendimientoIdByName &&
+        limpio.tipoId === emprendimientoIdByName &&
+        Array.isArray(limpio.componentes) &&
+        limpio.componentes.length > 0
+      ) {
+        // Convertir el objetivo de tipo "Emprendimiento" con pasos a seguimiento 'pasos'.
+        base = { ...limpio, seguimiento: 'pasos', tipoId: tipoEmprendimiento }
+      }
       return SYNCED_AT_START ? base : marcarLocal(base)
     })
   })
@@ -595,12 +630,18 @@ export function StoreProvider({ children }) {
   const addGoal = useCallback(
     async (values, file) => {
       const esCompuesta = values.seguimiento === 'compuesta'
+      const esPasos = values.seguimiento === 'pasos'
       if (esCompuesta) setTypes((current) => ensureCompuestoType(current, duenioNuevo()))
-      const tipoId = esCompuesta ? compuestoId(types) : values.tipoId
+      if (esPasos) setTypes((current) => ensureEmprendimientoType(current, duenioNuevo()))
+      const tipoId = esCompuesta
+        ? compuestoId(types)
+        : esPasos
+          ? emprendimientoId(types)
+          : values.tipoId
       const imagenKey = await storeImage(file)
       // El tipo `lectura` manda el modo: por páginas, no por porcentaje.
       const tipo = types.find((item) => item.id === tipoId)
-      const seguimiento = esLectura(tipo) && !esCompuesta ? 'paginas' : values.seguimiento
+      const seguimiento = esLectura(tipo) && !esCompuesta && !esPasos ? 'paginas' : values.seguimiento
       setGoals((current) => [
         ...current,
         {
@@ -613,7 +654,9 @@ export function StoreProvider({ children }) {
           metaDias: Number(values.metaDias) || null,
           finalizadoEn: null,
           componentes:
-            seguimiento === 'compuesta' ? values.componentes.slice(0, MAX_FOCUS) : [],
+            seguimiento === 'compuesta' || seguimiento === 'pasos'
+              ? values.componentes.slice(0, MAX_FOCUS)
+              : [],
           valor: 0,
           marcas: [],
           ultimoMovimiento: todayISO(),
@@ -631,8 +674,14 @@ export function StoreProvider({ children }) {
   const updateGoal = useCallback(
     async (id, values, file) => {
       const esCompuesta = values.seguimiento === 'compuesta'
+      const esPasos = values.seguimiento === 'pasos'
       if (esCompuesta) setTypes((current) => ensureCompuestoType(current, duenioNuevo()))
-      const tipoId = esCompuesta ? compuestoId(types) : values.tipoId
+      if (esPasos) setTypes((current) => ensureEmprendimientoType(current, duenioNuevo()))
+      const tipoId = esCompuesta
+        ? compuestoId(types)
+        : esPasos
+          ? emprendimientoId(types)
+          : values.tipoId
       const anterior = goals.find((goal) => goal.id === id)
       const imagenKey = file ? await storeImage(file) : null
 
@@ -641,12 +690,12 @@ export function StoreProvider({ children }) {
           if (goal.id !== id) return goal
           const tipo = types.find((item) => item.id === tipoId)
           const seguimiento =
-            esLectura(tipo) && values.seguimiento !== 'compuesta'
+            esLectura(tipo) && values.seguimiento !== 'compuesta' && values.seguimiento !== 'pasos'
               ? 'paginas'
               : values.seguimiento
           const cambioModo = goal.seguimiento !== seguimiento
           const componentes =
-            seguimiento === 'compuesta'
+            seguimiento === 'compuesta' || seguimiento === 'pasos'
               ? values.componentes.filter((item) => item !== id).slice(0, MAX_FOCUS)
               : []
           return {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../lib/storeContext.js'
-import { estadoCompuesta, partesVisibles } from '../lib/composite.js'
+import { estadoCompuesta, estadoPasos, partesVisibles } from '../lib/composite.js'
 import GoalActions from './GoalActions.jsx'
 import GoalStatus from './GoalStatus.jsx'
 import GoalTrack from './GoalTrack.jsx'
@@ -16,7 +16,8 @@ function GoalOptions({ open, onClose, goal }) {
   const [pendientes, setPendientes] = useState({})
 
   const type = types.find((item) => item.id === goal.tipoId)
-  const { partes } = estadoCompuesta(goal, goals)
+  const isPasos = goal.seguimiento === 'pasos'
+  const { partes } = isPasos ? estadoPasos(goal, goals) : estadoCompuesta(goal, goals)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -79,7 +80,7 @@ function GoalOptions({ open, onClose, goal }) {
           {type ? type.nombre : 'Sin tipo'}
         </p>
 
-        {goal.seguimiento === 'compuesta' ? (
+        {goal.seguimiento === 'compuesta' || goal.seguimiento === 'pasos' ? (
           <>
             <GoalStatus goal={goal} />
             {/* Igual que los chips: 3 de golpe, las que faltan primero. */}

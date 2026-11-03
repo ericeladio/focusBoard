@@ -20,7 +20,7 @@ const nombreField = z
 
 const tipoField = z.string()
 
-const seguimientoField = z.enum(['percent', 'streak', 'compuesta', 'paginas'], {
+const seguimientoField = z.enum(['percent', 'streak', 'compuesta', 'pasos', 'paginas'], {
   message: 'Elige cómo darle seguimiento',
 })
 
@@ -49,7 +49,7 @@ const metaDiasField = z.coerce
   .default(null)
 
 function checkTipo(data, ctx) {
-  if (data.seguimiento === 'compuesta' || data.tipoId) return
+  if (data.seguimiento === 'compuesta' || data.seguimiento === 'pasos' || data.tipoId) return
   ctx.addIssue({
     code: 'custom',
     path: ['tipoId'],
@@ -58,7 +58,7 @@ function checkTipo(data, ctx) {
 }
 
 function checkComponentes(data, ctx) {
-  if (data.seguimiento !== 'compuesta') return
+  if (data.seguimiento !== 'compuesta' && data.seguimiento !== 'pasos') return
   if (data.componentes.length === 0) {
     ctx.addIssue({
       code: 'custom',

@@ -17,6 +17,7 @@ function GoalDone({ goal }) {
   const meta = metaDiasDe(goal)
   const conMeta = goal.seguimiento === 'streak' && meta !== null
   const listo = !conMeta || metaAlcanzada(goal)
+  const esPasos = goal.seguimiento === 'compuesta' || goal.seguimiento === 'pasos'
 
   return (
     <button
@@ -26,7 +27,9 @@ function GoalDone({ goal }) {
       title={
         listo
           ? 'Pasa este objetivo a Cumplidos'
-          : `Aún no llegas a la meta: ${etiquetaRacha(goal)}`
+          : esPasos
+            ? 'Aún no hay avance hoy en ningún paso'
+            : `Aún no llegas a la meta: ${etiquetaRacha(goal)}`
       }
     >
       Terminado

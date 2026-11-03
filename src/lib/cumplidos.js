@@ -52,13 +52,14 @@ export function metaDiasDe(goal) {
 //   percent/paginas → solo al 100%
 //   streak          → siempre (el botón es la única salida de una racha)
 //   compuesta       → cuando enseña "Listo" hoy (misma condición que la tarjeta)
+//   pasos           → cuando enseña "Listo hoy" (algún paso avanzó hoy)
 export function puedeFinalizar(goal) {
   if (!goal || goal.finalizadoEn) return false
   if (goal.seguimiento === 'percent' || goal.seguimiento === 'paginas') {
     return pctDe(goal) >= 100
   }
   if (goal.seguimiento === 'streak') return true
-  if (goal.seguimiento === 'compuesta') return markedToday(goal.marcas)
+  if (goal.seguimiento === 'compuesta' || goal.seguimiento === 'pasos') return markedToday(goal.marcas)
   return false
 }
 

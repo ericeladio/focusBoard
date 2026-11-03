@@ -48,13 +48,17 @@ function GoalRow({ goal, onEdit }) {
         ) : (
           <span
             className={
-              goal.seguimiento === 'compuesta' && marcado
-                ? 'goal__value goal__value--done'
+              goal.seguimiento === 'compuesta' || goal.seguimiento === 'pasos'
+                ? marcado
+                  ? 'goal__value goal__value--done'
+                  : 'goal__value'
                 : 'goal__value'
             }
           >
-            {goal.seguimiento === 'compuesta' && marcado
-              ? `Listo hoy · ${streak} ${streak === 1 ? 'día' : 'días'}`
+            {goal.seguimiento === 'compuesta' || goal.seguimiento === 'pasos'
+              ? marcado
+                ? `Listo hoy · ${streak} ${streak === 1 ? 'día' : 'días'}`
+                : `${streak} ${streak === 1 ? 'día' : 'días'}`
               : `${streak} ${streak === 1 ? 'día' : 'días'}`}
           </span>
         )}

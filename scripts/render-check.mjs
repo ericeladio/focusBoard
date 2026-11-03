@@ -400,7 +400,7 @@ try {
     'form(compuesta con buscador)',
     renderForm(compuesta.find((goal) => goal.id === 'g4')),
     [
-      'Partes de la compuesta',
+      'Pasos',
       'Buscar por nombre',
       'Mostrando',
       'Siguiente ›',

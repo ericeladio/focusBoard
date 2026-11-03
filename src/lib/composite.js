@@ -6,12 +6,26 @@ import { esNombreLectura, totalPaginasDe } from './lectura.js'
 export const ID_COMPUESTO = 'tipo-compuesto'
 export const NOMBRE_COMPUESTO = 'Compuesto'
 
+// Emprendimiento: pasos como compuesta, pero basta con que alguna parte
+// tenga avance hoy para ponerse gris en el muro.
+export const ID_EMPRENDIMIENTO = 'tipo-emprendimiento'
+export const NOMBRE_EMPRENDIMIENTO = 'Emprendimiento'
+
 export function esCompuestoType(type) {
   return type.id === ID_COMPUESTO || type.nombre.toLowerCase() === 'compuesto'
 }
 
+export function esEmprendimientoType(type) {
+  if (!type) return false
+  return type.id === ID_EMPRENDIMIENTO || type.nombre.toLowerCase() === 'emprendimiento'
+}
+
 export function compuestoId(types) {
   return types.find(esCompuestoType)?.id ?? ID_COMPUESTO
+}
+
+export function emprendimientoId(types) {
+  return types.find(esEmprendimientoType)?.id ?? ID_EMPRENDIMIENTO
 }
 
 // `extra` permite que el llamante le ponga el dueño (ver `lib/local.js`):
@@ -22,11 +36,26 @@ export function ensureCompuestoType(types, extra = {}) {
     : [...types, { id: ID_COMPUESTO, nombre: NOMBRE_COMPUESTO, ...extra }]
 }
 
+export function ensureEmprendimientoType(types, extra = {}) {
+  return types.some(esEmprendimientoType)
+    ? types
+    : [...types, { id: ID_EMPRENDIMIENTO, nombre: NOMBRE_EMPRENDIMIENTO, ...extra }]
+}
+
 // ¿El objetivo es del tipo Compuesto? (si el tipo ni siquiera está en la
 // lista, manda el id: es el que usa el store al guardar una compuesta)
 export function esTipoCompuesto(tipoId, types) {
   const tipo = types.find((type) => type.id === tipoId)
   return tipo ? esCompuestoType(tipo) : tipoId === ID_COMPUESTO
+}
+
+export function esTipoEmprendimiento(tipoId, types) {
+  const tipo = types.find((type) => type.id === tipoId)
+  return tipo ? esEmprendimientoType(tipo) : tipoId === ID_EMPRENDIMIENTO
+}
+
+export function esTipoPasos(tipoId, types) {
+  return esTipoCompuesto(tipoId, types) || esTipoEmprendimiento(tipoId, types)
 }
 
 // El tipo manda el modo de seguimiento: `Compuesto` → compuesta y `lectura`
@@ -35,10 +64,11 @@ export function esTipoCompuesto(tipoId, types) {
 // todavía, manda lo elegido en el formulario.
 export function modoPorTipo(seguimiento, tipoId, types) {
   if (esTipoCompuesto(tipoId, types)) return 'compuesta'
+  if (esTipoEmprendimiento(tipoId, types)) return 'pasos'
   const tipo = types.find((type) => type.id === tipoId)
   if (esNombreLectura(tipo?.nombre)) return 'paginas'
   if (!tipoId) return seguimiento
-  return seguimiento === 'compuesta' || seguimiento === 'paginas'
+  return seguimiento === 'compuesta' || seguimiento === 'pasos' || seguimiento === 'paginas'
     ? 'percent'
     : seguimiento
 }
@@ -81,8 +111,12 @@ export function esAvanceHoy(goal, hoy = todayISO()) {
 // caso (allí solo se consulta sobre partes, que nunca son compuestas), pero en
 // la fila del muro la compuesta sí tiene que decir si está hecha hoy. Cuenta
 // su marca, que el store auto-pinta cuando todas sus partes avanzan.
+//
+// Emprendimiento (pasos): basta con que *alguna* parte tenga avance hoy
+// para ponerse gris; se marca cuando cumple esa condición.
 export function avanzaHoy(goal, hoy = todayISO()) {
   if (goal?.seguimiento === 'compuesta') return markedToday(goal.marcas)
+  if (goal?.seguimiento === 'pasos') return markedToday(goal.marcas)
   return esAvanceHoy(goal, hoy)
 }
 
@@ -98,6 +132,22 @@ export function estadoCompuesta(meta, goals, hoy = todayISO()) {
     total,
     cumplidas,
     completa: total > 0 && cumplidas === total,
+  }
+}
+
+export function estadoPasos(meta, goals, hoy = todayISO()) {
+  const partes = (meta.componentes ?? []).map((id) =>
+    goals.find((goal) => goal.id === id),
+  )
+  const existentes = partes.filter(Boolean)
+  const total = existentes.length
+  const cumplidas = existentes.filter((goal) => esAvanceHoy(goal, hoy)).length
+  return {
+    partes,
+    total,
+    cumplidas,
+    // Basta con que alguna parte avance hoy.
+    completa: total > 0 && cumplidas > 0,
   }
 }
 
@@ -167,25 +217,47 @@ export function alTerminar(goals, id, hoy = todayISO()) {
 
 // Auto-marcado: la compuesta se marca si todas sus partes avanzan hoy,
 // y pierde la marca de hoy en cuanto alguna deja de avanzar.
+// Emprendimiento (pasos): se marca si alguna parte avanza hoy,
+// y pierde la marca cuando ninguna avanza hoy.
 // Devuelve el mismo array si nada cambia (evita bucles de render).
 export function reconcileComposites(goals, hoy = todayISO()) {
   let changed = false
 
   const next = goals.map((goal) => {
-    if (goal.seguimiento !== 'compuesta') return goal
+    if (goal.seguimiento === 'compuesta') {
+      const { completa } = estadoCompuesta(goal, goals, hoy)
+      const last = goal.marcas[goal.marcas.length - 1]
 
-    const { completa } = estadoCompuesta(goal, goals, hoy)
-    const last = goal.marcas[goal.marcas.length - 1]
+      if (completa && last !== hoy) {
+        changed = true
+        const marcas = last === shiftISO(hoy, -1) ? [...goal.marcas, hoy] : [hoy]
+        return { ...goal, marcas }
+      }
 
-    if (completa && last !== hoy) {
-      changed = true
-      const marcas = last === shiftISO(hoy, -1) ? [...goal.marcas, hoy] : [hoy]
-      return { ...goal, marcas }
+      if (!completa && last === hoy) {
+        changed = true
+        return { ...goal, marcas: goal.marcas.slice(0, -1) }
+      }
+
+      return goal
     }
 
-    if (!completa && last === hoy) {
-      changed = true
-      return { ...goal, marcas: goal.marcas.slice(0, -1) }
+    if (goal.seguimiento === 'pasos') {
+      const { completa } = estadoPasos(goal, goals, hoy)
+      const last = goal.marcas[goal.marcas.length - 1]
+
+      if (completa && last !== hoy) {
+        changed = true
+        const marcas = last === shiftISO(hoy, -1) ? [...goal.marcas, hoy] : [hoy]
+        return { ...goal, marcas }
+      }
+
+      if (!completa && last === hoy) {
+        changed = true
+        return { ...goal, marcas: goal.marcas.slice(0, -1) }
+      }
+
+      return goal
     }
 
     return goal
@@ -193,3 +265,6 @@ export function reconcileComposites(goals, hoy = todayISO()) {
 
   return changed ? next : goals
 }
+
+export { estadoPasos as estadoEmprendimiento }
+
