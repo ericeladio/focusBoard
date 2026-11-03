@@ -6,10 +6,13 @@ import { esNombreLectura, totalPaginasDe } from './lectura.js'
 export const ID_COMPUESTO = 'tipo-compuesto'
 export const NOMBRE_COMPUESTO = 'Compuesto'
 
-// Emprendimiento: pasos como compuesta, pero basta con que alguna parte
-// tenga avance hoy para ponerse gris en el muro.
+// Pasos: como una compuesta, pero basta con que alguna parte tenga avance
+// hoy para ponerse gris en el muro. El id se conserva para no romper los
+// datos que ya existían con el nombre anterior ("Emprendimiento").
 export const ID_EMPRENDIMIENTO = 'tipo-emprendimiento'
-export const NOMBRE_EMPRENDIMIENTO = 'Emprendimiento'
+export const NOMBRE_EMPRENDIMIENTO = 'Pasos'
+
+const NOMBRES_EMPRENDIMIENTO = ['emprendimiento', 'pasos']
 
 export function esCompuestoType(type) {
   return type.id === ID_COMPUESTO || type.nombre.toLowerCase() === 'compuesto'
@@ -17,7 +20,8 @@ export function esCompuestoType(type) {
 
 export function esEmprendimientoType(type) {
   if (!type) return false
-  return type.id === ID_EMPRENDIMIENTO || type.nombre.toLowerCase() === 'emprendimiento'
+  const nombre = typeof type.nombre === 'string' ? type.nombre.toLowerCase() : ''
+  return type.id === ID_EMPRENDIMIENTO || NOMBRES_EMPRENDIMIENTO.includes(nombre)
 }
 
 export function compuestoId(types) {
@@ -37,9 +41,16 @@ export function ensureCompuestoType(types, extra = {}) {
 }
 
 export function ensureEmprendimientoType(types, extra = {}) {
-  return types.some(esEmprendimientoType)
-    ? types
-    : [...types, { id: ID_EMPRENDIMIENTO, nombre: NOMBRE_EMPRENDIMIENTO, ...extra }]
+  if (!types.some(esEmprendimientoType)) {
+    return [...types, { id: ID_EMPRENDIMIENTO, nombre: NOMBRE_EMPRENDIMIENTO, ...extra }]
+  }
+  let renamed = false
+  const siguiente = types.map((type) => {
+    if (!esEmprendimientoType(type) || type.nombre === NOMBRE_EMPRENDIMIENTO) return type
+    renamed = true
+    return { ...type, nombre: NOMBRE_EMPRENDIMIENTO }
+  })
+  return renamed ? siguiente : types
 }
 
 // ¿El objetivo es del tipo Compuesto? (si el tipo ni siquiera está en la
@@ -112,8 +123,8 @@ export function esAvanceHoy(goal, hoy = todayISO()) {
 // la fila del muro la compuesta sí tiene que decir si está hecha hoy. Cuenta
 // su marca, que el store auto-pinta cuando todas sus partes avanzan.
 //
-// Emprendimiento (pasos): basta con que *alguna* parte tenga avance hoy
-// para ponerse gris; se marca cuando cumple esa condición.
+// Pasos: basta con que *alguna* parte tenga avance hoy para ponerse gris;
+// se marca cuando cumple esa condición.
 export function avanzaHoy(goal, hoy = todayISO()) {
   if (goal?.seguimiento === 'compuesta') return markedToday(goal.marcas)
   if (goal?.seguimiento === 'pasos') return markedToday(goal.marcas)
@@ -217,8 +228,8 @@ export function alTerminar(goals, id, hoy = todayISO()) {
 
 // Auto-marcado: la compuesta se marca si todas sus partes avanzan hoy,
 // y pierde la marca de hoy en cuanto alguna deja de avanzar.
-// Emprendimiento (pasos): se marca si alguna parte avanza hoy,
-// y pierde la marca cuando ninguna avanza hoy.
+// Pasos: se marca si alguna parte avanza hoy, y pierde la marca cuando
+// ninguna avanza hoy.
 // Devuelve el mismo array si nada cambia (evita bucles de render).
 export function reconcileComposites(goals, hoy = todayISO()) {
   let changed = false

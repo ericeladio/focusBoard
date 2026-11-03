@@ -7,14 +7,8 @@ import {
   emprendimientoId,
   ensureCompuestoType,
   ensureEmprendimientoType,
+  esEmprendimientoType,
   esHijoDe,
-  esTipoCompuesto,
-  esTipoEmprendimiento,
-  esTipoPasos,
-  ID_COMPUESTO,
-  ID_EMPRENDIMIENTO,
-  NOMBRE_COMPUESTO,
-  NOMBRE_EMPRENDIMIENTO,
   reconcileComposites,
 } from './composite.js'
 import { StoreContext } from './storeContext.js'
@@ -24,6 +18,7 @@ import { encodeImage, newImageKey } from './image.js'
 import { mergeCollection } from './lww.js'
 import { migrateLegacyImages } from './migrate.js'
 import { PAGINAS_POR_DEFECTO, esLectura } from './lectura.js'
+import { mueveA } from './orden.js'
 import { SEED_GOALS, SEED_TYPES, esEjemplo } from './seeds.js'
 import {
   clavesOutbox,
@@ -187,14 +182,12 @@ export function StoreProvider({ children }) {
     const crudo = read(KEY_GOALS, SYNCED_AT_START ? [] : SEED_GOALS)
     const tieneCompuesta = crudo.some((goal) => goal?.seguimiento === 'compuesta')
     const tienePasos = crudo.some((goal) => goal?.seguimiento === 'pasos')
-    // Migrar objetivos que usaban el tipo llamado "Emprendimiento" al nuevo
-    // seguimiento 'pasos' con el tipo del sistema.
-    const hayEmprendimientoNombre = loaded.some(
-      (t) => t?.nombre && t.nombre.toLowerCase() === 'emprendimiento',
-    )
+    // El tipo del sistema se llama "Pasos"; los datos viejos que todavía lo
+    // llaman "Emprendimiento" se renombran al cargar.
+    const hayTipoPasos = loaded.some(esEmprendimientoType)
     let lista = loaded
     if (tieneCompuesta) lista = ensureCompuestoType(lista)
-    if (tienePasos || hayEmprendimientoNombre) lista = ensureEmprendimientoType(lista)
+    if (tienePasos || hayTipoPasos) lista = ensureEmprendimientoType(lista)
     return SYNCED_AT_START ? lista : marcarLocales(lista)
   })
   const [goals, setGoalsRaw] = useState(() => {
@@ -204,10 +197,9 @@ export function StoreProvider({ children }) {
     const ids = new Set(loaded.map((goal) => goal.id))
     const tipoCompuesto = compuestoId(read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES))
     const tipoEmprendimiento = emprendimientoId(read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES))
-    const emprendimientoIdByName =
-      (read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES).find(
-        (t) => t?.nombre && t.nombre.toLowerCase() === 'emprendimiento',
-      )?.id) || null
+    const tipoPasosExistente =
+      read(KEY_TYPES, SYNCED_AT_START ? [] : SEED_TYPES).find(esEmprendimientoType)?.id ||
+      null
     return loaded.map((goal) => {
       const limpio = goal.componentes.some((id) => !ids.has(id))
         ? { ...goal, componentes: goal.componentes.filter((id) => ids.has(id)) }
@@ -221,12 +213,13 @@ export function StoreProvider({ children }) {
             ? limpio
             : { ...limpio, tipoId: tipoEmprendimiento }
       } else if (
-        emprendimientoIdByName &&
-        limpio.tipoId === emprendimientoIdByName &&
+        tipoPasosExistente &&
+        limpio.tipoId === tipoPasosExistente &&
         Array.isArray(limpio.componentes) &&
         limpio.componentes.length > 0
       ) {
-        // Convertir el objetivo de tipo "Emprendimiento" con pasos a seguimiento 'pasos'.
+        // Convertir el objetivo del tipo "Pasos" (antes "Emprendimiento")
+        // con partes al seguimiento 'pasos'.
         base = { ...limpio, seguimiento: 'pasos', tipoId: tipoEmprendimiento }
       }
       return SYNCED_AT_START ? base : marcarLocal(base)
@@ -762,6 +755,26 @@ export function StoreProvider({ children }) {
     [setGoals],
   )
 
+  // Reordena una parte de una compuesta o de un objetivo de Pasos dentro de
+  // su lista: sube o baja una posición. El orden es el que se guarda en
+  // `componentes` y se ve en la ficha y en los chips del muro.
+  const moverParte = useCallback(
+    (id, parteId, direccion) => {
+      setGoals((current) =>
+        current.map((goal) => {
+          if (goal.id !== id) return goal
+          const componentes = Array.isArray(goal.componentes) ? goal.componentes : []
+          const indice = componentes.indexOf(parteId)
+          if (indice === -1) return goal
+          const destino = indice + (direccion === 'subir' ? -1 : 1)
+          if (destino < 0 || destino >= componentes.length) return goal
+          return { ...goal, componentes: mueveA(componentes, parteId, destino) }
+        }),
+      )
+    },
+    [setGoals],
+  )
+
   // Terminar: archiva el objetivo (fecha de hoy) y lo saca del muro. Vive
   // entonces en /cumplidos; no se borra ni pierde su avance. Si era una parte
   // de una compuesta, se sale de ella sola (y si era la última, la compuesta
@@ -903,6 +916,7 @@ export function StoreProvider({ children }) {
     placeInWall,
     removeFromWall,
     removeGoal,
+    moverParte,
     finalizarGoal,
     reabrirGoal,
     setPercent,

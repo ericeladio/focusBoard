@@ -9,7 +9,7 @@ import GoalTrack from './GoalTrack.jsx'
 // `Guardar` escribe el borrador y cierra. Para cambiar nombre, foto o tipo
 // está el form desde el pool.
 function GoalOptions({ open, onClose, goal }) {
-  const { types, goals, setPercent, setPaginas } = useStore()
+  const { types, goals, setPercent, setPaginas, moverParte } = useStore()
   const dialogRef = useRef(null)
   // Borradores por objetivo: una compuesta puede tener varias partes y todas
   // comparten el mismo botón.
@@ -18,6 +18,7 @@ function GoalOptions({ open, onClose, goal }) {
   const type = types.find((item) => item.id === goal.tipoId)
   const isPasos = goal.seguimiento === 'pasos'
   const { partes } = isPasos ? estadoPasos(goal, goals) : estadoCompuesta(goal, goals)
+  const partesOrden = partes.filter(Boolean)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -98,6 +99,41 @@ function GoalOptions({ open, onClose, goal }) {
                 </li>
               ))}
             </ul>
+
+            {/* Solo con la modal abierta: el orden completo se ve aquí y se
+                cambia en el momento (no espera al Guardar del avance). */}
+            {open && partesOrden.length > 1 && (
+              <div className="parts__order">
+                <p className="field__label">
+                  {isPasos ? 'Orden de los pasos' : 'Orden de las partes'}
+                </p>
+                <ol className="parts__order-list">
+                  {partesOrden.map((parte, indice) => (
+                    <li className="parts__order-item" key={parte.id}>
+                      <span className="parts__order-name">{parte.nombre}</span>
+                      <button
+                        type="button"
+                        className="btn btn--ghost parts__order-btn"
+                        aria-label={`Subir ${parte.nombre}`}
+                        disabled={indice === 0}
+                        onClick={() => moverParte(goal.id, parte.id, 'subir')}
+                      >
+                        Subir
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--ghost parts__order-btn"
+                        aria-label={`Bajar ${parte.nombre}`}
+                        disabled={indice === partesOrden.length - 1}
+                        onClick={() => moverParte(goal.id, parte.id, 'bajar')}
+                      >
+                        Bajar
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </>
         ) : (
           // key: el slider vuelve a nacer en cada apertura; lo que no se

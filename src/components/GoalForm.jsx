@@ -7,8 +7,9 @@ import {
 } from '../lib/schemas.js'
 import { useStore } from '../lib/storeContext.js'
 import { markedToday, streakOf } from '../lib/dates.js'
-import { esTipoCompuesto, esTipoPasos, ensureCompuestoType, ensureEmprendimientoType, modoPorTipo, padreDe } from '../lib/composite.js'
+import { esTipoPasos, ensureCompuestoType, ensureEmprendimientoType, modoPorTipo, padreDe } from '../lib/composite.js'
 import { PAGINAS_POR_DEFECTO, etiquetaDe } from '../lib/lectura.js'
+import { mueveA } from '../lib/orden.js'
 import { POR_PAGINA } from '../lib/pager.js'
 import { filtraPorNombre } from '../lib/texto.js'
 import Foto from './Foto.jsx'
@@ -145,6 +146,21 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
       }
     })
     setErrors((current) => ({ ...current, componentes: undefined }))
+  }
+
+  // Orden de los pasos elegidos: se guarda tal cual en `componentes`, sin
+  // esperar a Guardar (el orden es parte de lo que se está editando).
+  function moverParte(id, direccion) {
+    setValues((current) => {
+      const indice = current.componentes.indexOf(id)
+      if (indice === -1) return current
+      const destino = indice + (direccion === 'subir' ? -1 : 1)
+      if (destino < 0 || destino >= current.componentes.length) return current
+      return {
+        ...current,
+        componentes: mueveA(current.componentes, id, destino),
+      }
+    })
   }
 
   function pickImage(event) {
@@ -425,21 +441,40 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                     }}
                   />
                 )}
-                {conBuscador && elegidas.length > 0 && (
-                  <ul className="pick__chips">
-                    {elegidas.map((parte) => (
-                      <li key={parte.id}>
+                {elegidas.length > 0 && (
+                  <ol className="pick__chips">
+                    {elegidas.map((parte, indice) => (
+                      <li key={parte.id} className="pick__chip">
+                        <span className="pick__chip-name">{parte.nombre}</span>
                         <button
                           type="button"
-                          className="pick__chip"
+                          className="pick__chip-btn"
+                          aria-label={`Subir ${parte.nombre}`}
+                          disabled={indice === 0}
+                          onClick={() => moverParte(parte.id, 'subir')}
+                        >
+                          Subir
+                        </button>
+                        <button
+                          type="button"
+                          className="pick__chip-btn"
+                          aria-label={`Bajar ${parte.nombre}`}
+                          disabled={indice === elegidas.length - 1}
+                          onClick={() => moverParte(parte.id, 'bajar')}
+                        >
+                          Bajar
+                        </button>
+                        <button
+                          type="button"
+                          className="pick__chip-btn pick__chip-btn--remove"
                           aria-label={`Quitar ${parte.nombre}`}
                           onClick={() => toggleParte(parte.id)}
                         >
-                          {parte.nombre} <span aria-hidden="true">×</span>
+                          ×
                         </button>
                       </li>
                     ))}
-                  </ul>
+                  </ol>
                 )}
                 <div className="pick">
                   {visibles.map((candidato) => {
@@ -486,7 +521,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
               </p>
             )}
             <p className="field__hint">
-              Puedes reordenarlos desde la ficha del objetivo. Basta con que algún paso tenga avance hoy para que se ponga gris en el muro.
+              Usa Subir y Bajar para cambiar el orden; también puedes hacerlo desde la ficha del objetivo. Basta con que algún paso tenga avance hoy para que se ponga gris en el muro.
             </p>
           </fieldset>
         )}

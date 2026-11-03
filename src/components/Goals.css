@@ -966,6 +966,40 @@
   color: var(--ink-soft);
 }
 
+.parts__order {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(86, 80, 63, 0.35);
+}
+
+.parts__order-list {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.parts__order-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.parts__order-name {
+  flex: 1;
+  font-family: var(--hand);
+  font-size: 1.15rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.parts__order-btn {
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+}
+
 .pick {
   display: flex;
   flex-direction: column;
@@ -1038,20 +1072,49 @@
 
 .pick__chip {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.15rem;
+  background: var(--polaroid);
+  border: 1px dashed var(--ink-soft);
+  padding: 0.15rem 0.3rem 0.15rem 0.55rem;
+}
+
+.pick__chip-name {
   font-family: var(--hand);
   font-size: 0.95rem;
   color: var(--ink);
-  background: var(--polaroid);
-  border: 1px dashed var(--ink-soft);
-  padding: 0.15rem 0.55rem;
+  margin-right: 0.2rem;
+}
+
+.pick__chip-btn {
+  font-family: inherit;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  padding: 0.25rem 0.3rem;
   cursor: pointer;
 }
 
-.pick__chip:hover {
-  border-color: var(--ink);
-  background: var(--paper-margin);
+.pick__chip-btn:hover:not(:disabled) {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.pick__chip-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pick__chip-btn--remove {
+  font-size: 0.95rem;
+  padding: 0.1rem 0.3rem;
+}
+
+.pick__chip-btn--remove:hover {
+  color: var(--paper-margin);
 }
 
 .row__parent {

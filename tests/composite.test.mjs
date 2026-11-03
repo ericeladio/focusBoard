@@ -8,10 +8,16 @@ import {
   esHijoDe,
   padreDe,
   esTipoCompuesto,
+  esTipoPasos,
   modoPorTipo,
   compuestoId,
   ensureCompuestoType,
   esCompuestoType,
+  esEmprendimientoType,
+  emprendimientoId,
+  ensureEmprendimientoType,
+  ID_EMPRENDIMIENTO,
+  NOMBRE_EMPRENDIMIENTO,
   partesVisibles,
   parteHecha,
   alTerminar,
@@ -235,6 +241,47 @@ assert.deepEqual(ensureCompuestoType([{ id: 'x', nombre: 'Personal' }])[1], {
 assert.equal(esCompuestoType({ id: 'x', nombre: 'Compuesto' }), true)
 assert.equal(esCompuestoType({ id: 'x', nombre: 'compuesto' }), true, 'sin importar mayúsculas')
 assert.equal(esCompuestoType({ id: 'x', nombre: 'Personal' }), false)
+
+// --- el tipo del sistema se llama "Pasos" (antes "Emprendimiento") ---
+assert.equal(NOMBRE_EMPRENDIMIENTO, 'Pasos')
+assert.equal(esEmprendimientoType({ id: ID_EMPRENDIMIENTO, nombre: 'Pasos' }), true)
+assert.equal(esEmprendimientoType({ id: 'x', nombre: 'Pasos' }), true)
+assert.equal(
+  esEmprendimientoType({ id: 'x', nombre: 'Emprendimiento' }),
+  true,
+  'el nombre viejo sigue reconociéndose para migrar',
+)
+assert.equal(esEmprendimientoType({ id: 'x', nombre: 'Personal' }), false)
+assert.equal(esEmprendimientoType(null), false)
+
+const TIPOS_PASOS = [
+  { id: 'tipo-emprendimiento', nombre: 'Emprendimiento' },
+  { id: 't-personal', nombre: 'Personal' },
+]
+assert.equal(emprendimientoId(TIPOS_PASOS), ID_EMPRENDIMIENTO, 'encuentra el tipo existente')
+assert.equal(emprendimientoId([]), ID_EMPRENDIMIENTO, 'si falta, devuelve el id conocido')
+assert.equal(
+  ensureEmprendimientoType([{ id: ID_EMPRENDIMIENTO, nombre: 'Pasos' }]).at(-1).nombre,
+  'Pasos',
+)
+{
+  const migrados = ensureEmprendimientoType(TIPOS_PASOS)
+  assert.equal(migrados[0].nombre, 'Pasos', 'el nombre viejo se renombra')
+  assert.equal(migrados[0].id, ID_EMPRENDIMIENTO, 'y conserva el id')
+  assert.notEqual(migrados, TIPOS_PASOS, 'el cambio devuelve una lista nueva')
+}
+{
+  const unico = [{ id: 'x', nombre: 'Pasos' }]
+  assert.equal(ensureEmprendimientoType(unico), unico, 'sin cambios → misma lista')
+}
+assert.deepEqual(ensureEmprendimientoType([{ id: 'x', nombre: 'Personal' }])[1], {
+  id: ID_EMPRENDIMIENTO,
+  nombre: 'Pasos',
+})
+assert.equal(esTipoPasos(ID_EMPRENDIMIENTO, []), true)
+assert.equal(esTipoPasos('tipo-compuesto', []), true)
+assert.equal(esTipoPasos('t-personal', [{ id: 't-personal', nombre: 'Personal' }]), false)
+assert.equal(modoPorTipo('percent', ID_EMPRENDIMIENTO, []), 'pasos')
 
 // --- solo 3 partes en pantalla, las que faltan primero ---
 {
