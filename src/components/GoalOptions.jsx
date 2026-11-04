@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../lib/storeContext.js'
 import { estadoCompuesta, estadoPasos, partesVisibles } from '../lib/composite.js'
+import { useArrastreLista } from '../lib/useArrastreLista.js'
 import GoalActions from './GoalActions.jsx'
 import GoalStatus from './GoalStatus.jsx'
 import GoalTrack from './GoalTrack.jsx'
@@ -9,7 +10,7 @@ import GoalTrack from './GoalTrack.jsx'
 // `Guardar` escribe el borrador y cierra. Para cambiar nombre, foto o tipo
 // está el form desde el pool.
 function GoalOptions({ open, onClose, goal }) {
-  const { types, goals, setPercent, setPaginas, moverParte } = useStore()
+  const { types, goals, setPercent, setPaginas, reordenarPartes } = useStore()
   const dialogRef = useRef(null)
   // Borradores por objetivo: una compuesta puede tener varias partes y todas
   // comparten el mismo botón.
@@ -19,6 +20,15 @@ function GoalOptions({ open, onClose, goal }) {
   const isPasos = goal.seguimiento === 'pasos'
   const { partes } = isPasos ? estadoPasos(goal, goals) : estadoCompuesta(goal, goals)
   const partesOrden = partes.filter(Boolean)
+  // Cerrada solo lleva las 3 visibles (la tarjeta no crece); abierta lleva
+  // todas y la lista scrollea para poder marcar las que no caben.
+  const partesAMarcar = open
+    ? partesVisibles(partes, partesOrden.length)
+    : partesVisibles(partes)
+  const { listaRef, arrastrando, punto, propsAsa } = useArrastreLista(
+    partesOrden.map((parte) => parte.id),
+    (siguiente) => reordenarPartes(goal.id, siguiente),
+  )
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -86,7 +96,7 @@ function GoalOptions({ open, onClose, goal }) {
             <GoalStatus goal={goal} />
             {/* Igual que los chips: 3 de golpe, las que faltan primero. */}
             <ul className="parts">
-              {partesVisibles(partes).map((parte) => (
+              {partesAMarcar.map((parte) => (
                 <li className="parts__item" key={parte.id}>
                   <span className="parts__name">{parte.nombre}</span>
                   {/* key: al cerrar, el borrador del slider se va con la modal */}
@@ -107,30 +117,48 @@ function GoalOptions({ open, onClose, goal }) {
                 <p className="field__label">
                   {isPasos ? 'Orden de los pasos' : 'Orden de las partes'}
                 </p>
-                <ol className="parts__order-list">
-                  {partesOrden.map((parte, indice) => (
-                    <li className="parts__order-item" key={parte.id}>
-                      <span className="parts__order-name">{parte.nombre}</span>
-                      <button
-                        type="button"
-                        className="btn btn--ghost parts__order-btn"
-                        aria-label={`Subir ${parte.nombre}`}
-                        disabled={indice === 0}
-                        onClick={() => moverParte(goal.id, parte.id, 'subir')}
+                <p className="field__hint">
+                  Arrastra desde el asa para cambiar el orden.
+                </p>
+                <ol
+                  ref={listaRef}
+                  className={
+                    arrastrando ? 'parts__order-list is-arrastrando' : 'parts__order-list'
+                  }
+                >
+                  {partesOrden.map((parte, indice) => {
+                    const clases = ['parts__order-item']
+                    if (arrastrando === parte.id) clases.push('is-dragging')
+                    if (arrastrando && punto === indice) clases.push('is-drop-before')
+                    if (
+                      arrastrando &&
+                      punto === partesOrden.length &&
+                      indice === partesOrden.length - 1
+                    ) {
+                      clases.push('is-drop-after')
+                    }
+                    return (
+                      <li
+                        key={parte.id}
+                        data-drag-id={parte.id}
+                        className={clases.join(' ')}
                       >
-                        Subir
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn--ghost parts__order-btn"
-                        aria-label={`Bajar ${parte.nombre}`}
-                        disabled={indice === partesOrden.length - 1}
-                        onClick={() => moverParte(goal.id, parte.id, 'bajar')}
-                      >
-                        Bajar
-                      </button>
-                    </li>
-                  ))}
+                        <button
+                          type="button"
+                          className="drag-handle"
+                          title="Arrastra para cambiar el orden"
+                          aria-label={`Mover ${parte.nombre}, posición ${indice + 1} de ${partesOrden.length}`}
+                          aria-keyshortcuts="ArrowUp ArrowDown"
+                          {...propsAsa(parte.id)}
+                        >
+                          <span className="drag-handle__bar" aria-hidden="true" />
+                          <span className="drag-handle__bar" aria-hidden="true" />
+                          <span className="drag-handle__bar" aria-hidden="true" />
+                        </button>
+                        <span className="parts__order-name">{parte.nombre}</span>
+                      </li>
+                    )
+                  })}
                 </ol>
               </div>
             )}

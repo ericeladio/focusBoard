@@ -382,6 +382,11 @@
   );
   padding: 1.75rem 1.5rem 1.5rem 2.5rem;
   box-shadow: var(--shadow-hover);
+  /* La ficha nunca se sale de la pantalla: si el contenido crece, el papel
+     scrollea y los botones de guardar/cerrar siguen siendo alcanzables. */
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .sheet__title {
@@ -950,6 +955,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  /* Con más de 3 partes la ficha no crece sin fin: la lista scrollea y todas
+     las sub tareas quedan a mano para marcar su avance. */
+  max-height: min(48vh, 21rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 0.4rem;
 }
 
 .parts__item {
@@ -995,9 +1007,58 @@
   overflow-wrap: anywhere;
 }
 
-.parts__order-btn {
-  padding: 0.1rem 0.45rem;
-  font-size: 0.75rem;
+/* Asa de arrastre: solo esta zona inicia el gesto, así el scroll del papel y
+   los demás controles de la ficha siguen funcionando con normalidad. */
+.drag-handle {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  width: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0.25rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: grab;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.drag-handle__bar {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--ink-soft);
+}
+
+.parts__order-list.is-arrastrando,
+.pick__chips.is-arrastrando {
+  user-select: none;
+}
+
+.parts__order-item.is-dragging,
+.pick__chip.is-dragging {
+  opacity: 0.45;
+}
+
+.parts__order-item.is-drop-before,
+.pick__chip.is-drop-before {
+  box-shadow: inset 0 2px 0 var(--ink);
+}
+
+.parts__order-item.is-drop-after,
+.pick__chip.is-drop-after {
+  box-shadow: inset 0 -2px 0 var(--ink);
 }
 
 .pick {
@@ -1077,7 +1138,7 @@
   gap: 0.15rem;
   background: var(--polaroid);
   border: 1px dashed var(--ink-soft);
-  padding: 0.15rem 0.3rem 0.15rem 0.55rem;
+  padding: 0.1rem 0.3rem 0.1rem 0.1rem;
 }
 
 .pick__chip-name {

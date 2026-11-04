@@ -9,8 +9,8 @@ import { useStore } from '../lib/storeContext.js'
 import { markedToday, streakOf } from '../lib/dates.js'
 import { esTipoPasos, ensureCompuestoType, ensureEmprendimientoType, modoPorTipo, padreDe } from '../lib/composite.js'
 import { PAGINAS_POR_DEFECTO, etiquetaDe } from '../lib/lectura.js'
-import { mueveA } from '../lib/orden.js'
 import { POR_PAGINA } from '../lib/pager.js'
+import { useArrastreLista } from '../lib/useArrastreLista.js'
 import { filtraPorNombre } from '../lib/texto.js'
 import Foto from './Foto.jsx'
 import Pager from './Pager.jsx'
@@ -109,6 +109,12 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
     .map((id) => goals.find((goal) => goal.id === id))
     .filter(Boolean)
 
+  const { listaRef, arrastrando, punto, propsAsa } = useArrastreLista(
+    elegidas.map((parte) => parte.id),
+    (siguiente) =>
+      setValues((current) => ({ ...current, componentes: siguiente })),
+  )
+
   function usadoPor(candidato) {
     const padre = padreDe(candidato.id, goals)
     return padre && padre.id !== editing?.id ? padre : null
@@ -146,21 +152,6 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
       }
     })
     setErrors((current) => ({ ...current, componentes: undefined }))
-  }
-
-  // Orden de los pasos elegidos: se guarda tal cual en `componentes`, sin
-  // esperar a Guardar (el orden es parte de lo que se está editando).
-  function moverParte(id, direccion) {
-    setValues((current) => {
-      const indice = current.componentes.indexOf(id)
-      if (indice === -1) return current
-      const destino = indice + (direccion === 'subir' ? -1 : 1)
-      if (destino < 0 || destino >= current.componentes.length) return current
-      return {
-        ...current,
-        componentes: mueveA(current.componentes, id, destino),
-      }
-    })
   }
 
   function pickImage(event) {
@@ -442,38 +433,53 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
                   />
                 )}
                 {elegidas.length > 0 && (
-                  <ol className="pick__chips">
-                    {elegidas.map((parte, indice) => (
-                      <li key={parte.id} className="pick__chip">
-                        <span className="pick__chip-name">{parte.nombre}</span>
-                        <button
-                          type="button"
-                          className="pick__chip-btn"
-                          aria-label={`Subir ${parte.nombre}`}
-                          disabled={indice === 0}
-                          onClick={() => moverParte(parte.id, 'subir')}
+                  <ol
+                    ref={listaRef}
+                    className={
+                      arrastrando ? 'pick__chips is-arrastrando' : 'pick__chips'
+                    }
+                  >
+                    {elegidas.map((parte, indice) => {
+                      const clases = ['pick__chip']
+                      if (arrastrando === parte.id) clases.push('is-dragging')
+                      if (arrastrando && punto === indice) clases.push('is-drop-before')
+                      if (
+                        arrastrando &&
+                        punto === elegidas.length &&
+                        indice === elegidas.length - 1
+                      ) {
+                        clases.push('is-drop-after')
+                      }
+                      return (
+                        <li
+                          key={parte.id}
+                          data-drag-id={parte.id}
+                          className={clases.join(' ')}
                         >
-                          Subir
-                        </button>
-                        <button
-                          type="button"
-                          className="pick__chip-btn"
-                          aria-label={`Bajar ${parte.nombre}`}
-                          disabled={indice === elegidas.length - 1}
-                          onClick={() => moverParte(parte.id, 'bajar')}
-                        >
-                          Bajar
-                        </button>
-                        <button
-                          type="button"
-                          className="pick__chip-btn pick__chip-btn--remove"
-                          aria-label={`Quitar ${parte.nombre}`}
-                          onClick={() => toggleParte(parte.id)}
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
+                          <button
+                            type="button"
+                            className="drag-handle drag-handle--chip"
+                            title="Arrastra para cambiar el orden"
+                            aria-label={`Mover ${parte.nombre}, posición ${indice + 1} de ${elegidas.length}`}
+                            aria-keyshortcuts="ArrowUp ArrowDown"
+                            {...propsAsa(parte.id)}
+                          >
+                            <span className="drag-handle__bar" aria-hidden="true" />
+                            <span className="drag-handle__bar" aria-hidden="true" />
+                            <span className="drag-handle__bar" aria-hidden="true" />
+                          </button>
+                          <span className="pick__chip-name">{parte.nombre}</span>
+                          <button
+                            type="button"
+                            className="pick__chip-btn pick__chip-btn--remove"
+                            aria-label={`Quitar ${parte.nombre}`}
+                            onClick={() => toggleParte(parte.id)}
+                          >
+                            ×
+                          </button>
+                        </li>
+                      )
+                    })}
                   </ol>
                 )}
                 <div className="pick">
@@ -521,7 +527,7 @@ function GoalForm({ open, onClose, onManageTypes, editing = null }) {
               </p>
             )}
             <p className="field__hint">
-              Usa Subir y Bajar para cambiar el orden; también puedes hacerlo desde la ficha del objetivo. Basta con que algún paso tenga avance hoy para que se ponga gris en el muro.
+              Arrastra desde el asa para cambiar el orden; también puedes hacerlo desde la ficha del objetivo. Basta con que algún paso tenga avance hoy para que se ponga gris en el muro.
             </p>
           </fieldset>
         )}

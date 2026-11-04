@@ -18,7 +18,6 @@ import { encodeImage, newImageKey } from './image.js'
 import { mergeCollection } from './lww.js'
 import { migrateLegacyImages } from './migrate.js'
 import { PAGINAS_POR_DEFECTO, esLectura } from './lectura.js'
-import { mueveA } from './orden.js'
 import { SEED_GOALS, SEED_TYPES, esEjemplo } from './seeds.js'
 import {
   clavesOutbox,
@@ -755,20 +754,23 @@ export function StoreProvider({ children }) {
     [setGoals],
   )
 
-  // Reordena una parte de una compuesta o de un objetivo de Pasos dentro de
-  // su lista: sube o baja una posición. El orden es el que se guarda en
-  // `componentes` y se ve en la ficha y en los chips del muro.
-  const moverParte = useCallback(
-    (id, parteId, direccion) => {
+  // Guarda el orden de las partes de una compuesta o de un objetivo de Pasos.
+  // Solo se admiten ids que ya estaban en la lista; si por datos viejos
+  // quedaba alguno fuera de `partesOrden`, se conserva al final.
+  const reordenarPartes = useCallback(
+    (id, partes) => {
       setGoals((current) =>
         current.map((goal) => {
           if (goal.id !== id) return goal
-          const componentes = Array.isArray(goal.componentes) ? goal.componentes : []
-          const indice = componentes.indexOf(parteId)
-          if (indice === -1) return goal
-          const destino = indice + (direccion === 'subir' ? -1 : 1)
-          if (destino < 0 || destino >= componentes.length) return goal
-          return { ...goal, componentes: mueveA(componentes, parteId, destino) }
+          const actuales = Array.isArray(goal.componentes) ? goal.componentes : []
+          const validos = new Set(actuales)
+          const orden = partes.filter((parte) => validos.has(parte))
+          const resto = actuales.filter((parte) => !orden.includes(parte))
+          const siguiente = [...orden, ...resto]
+          const igual =
+            siguiente.length === actuales.length &&
+            siguiente.every((parte, indice) => parte === actuales[indice])
+          return igual ? goal : { ...goal, componentes: siguiente }
         }),
       )
     },
@@ -916,7 +918,7 @@ export function StoreProvider({ children }) {
     placeInWall,
     removeFromWall,
     removeGoal,
-    moverParte,
+    reordenarPartes,
     finalizarGoal,
     reabrirGoal,
     setPercent,
